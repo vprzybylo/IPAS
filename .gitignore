@@ -1,0 +1,8 @@
+# Ignore Mac system files
+.DS_store
+
+# Ignore these folders
+instance_files
+db_files
+profile_stats
+*.pyc
