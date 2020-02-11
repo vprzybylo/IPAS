@@ -1,3 +1,5 @@
+"""Sub class to IceCluster in ice_cluster_sql_master.py that holds methods to plot the aggregate(s)"""
+
 import ipas
 import math
 import numpy as np
@@ -9,13 +11,16 @@ import random
 from descartes.patch import PolygonPatch
 import descartes
 from matplotlib.patches import Ellipse
+import shapely.ops as shops
+import numpy.linalg as la
+from mpl_toolkits.mplot3d import Axes3D
         
-#Child
-class Plot_Cluster(ipas.IceCluster):
-    
-    def __init__(self, ncrystals, points, n):
-        # call parent constructor 
-        super().__init__(ncrystals, points, n)
+#Sub Class
+class Plot_Cluster(ipas.Ice_Cluster):
+
+    def __init__(self, cluster):
+        # call parent constructor IceCluster
+        super().__init__(cluster)
 
     def _crystal_projectxy(self, n):
         return geom.MultiPoint(self.points[n][['x', 'y']]).convex_hull
@@ -37,15 +42,15 @@ class Plot_Cluster(ipas.IceCluster):
     def projectyz(self):
         polygons = [self._crystal_projectyz(n) for n in range(self.ncrystals)]
         return shops.cascaded_union(polygons)
+   
     def ellipse(self, u, v, rx, ry, rz):
         x = rx * np.cos(u) * np.cos(v)
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
-
         return x, y, z
-
-    def plot_ellipsoid(self):
-
+        
+        
+    def _get_ellipsoid_points(self):
         A, centroid = self._mvee()
         # print('centroid', centroid)
         U, D, V = la.svd(A)
@@ -62,214 +67,111 @@ class Plot_Cluster(ipas.IceCluster):
         E = np.dot(E, V) + centroid
 
         xell, yell, zell = np.rollaxis(E, axis=-1)
+        return xell, yell, zell
+    
+    def _plot_crystal(self, ncrys, ax, color):  
+        #plots individual monomers
+        
+        x = np.zeros(27)
+        y = np.zeros(27)
+        z = np.zeros(27)
+        
+        X = self.points['x'][ncrys]
+        Y = self.points['y'][ncrys]
+        Z = self.points['z'][ncrys]
+        
+        prismind = [0, 6, 7, 1, 2, 8, 9, 3, 4, 10, 11, 5]  # prism lines
+        i = 0
+        for n in prismind:
+            x[i] = X[n]
+            y[i] = Y[n]
+            z[i] = Z[n]
+            i += 1
+  
+        ax.plot(x[0:12], y[0:12], z[0:12], color=color)
 
-        x = np.zeros((len(self.points['x']), 27))
-        y = np.zeros((len(self.points['x']), 27))
-        z = np.zeros((len(self.points['x']), 27))
+        i = 0
+        for n in range(0, 6):  # basal face lines
 
-        X = self.points['x']
-        Y = self.points['y']
-        Z = self.points['z']
+            x[i + 12] = X[n]
+            y[i + 12] = Y[n]
+            z[i + 12] = Z[n]
+            i += 1
 
-        Xlim = self.points['x'][:self.ncrystals]
-        Ylim = self.points['y'][:self.ncrystals]
-        Zlim = self.points['z'][:self.ncrystals]
-        # for i in range(0, 360, 60):
-        #    print('angle', i)
+        x[18] = X[0]
+        y[18] = Y[0]
+        z[18] = Z[0]
+        
+        ax.plot(x[12:19], y[12:19], z[12:19], color=color)
 
-        fig = plt.figure(figsize=(10, 7))
-        ax = fig.add_subplot(111, projection='3d')
-        # 90, 0 for z orientation, 0, 90 for y orientation, 0, 0 for x orientation
-        # ax.view_init(elev=90, azim=270)
-        ax.view_init(elev=0, azim=90)
-        ax.plot_surface(xell, yell, zell, cstride=1, rstride=1, alpha=0.2)
+        i = 0
+        for n in range(6, 12):  # basal face lines
 
-        data = []
-        # print(self.ncrystals)
-        for l in range(self.ncrystals):
+            x[i + 19] = X[n]
+            y[i + 19] = Y[n]
+            z[i + 19] = Z[n]
+            i += 1
 
-            prismind = [0, 6, 7, 1, 2, 8, 9, 3, 4, 10, 11, 5]  # prism lines
-            i = 0
-            for n in prismind:
-                x[l][i] = X[l][n]
-                y[l][i] = Y[l][n]
-                z[l][i] = Z[l][n]
-                i += 1
+        x[25] = X[6]
+        y[25] = Y[6]
+        z[25] = Z[6]
 
-            if l == len(self.points['x'][:self.ncrystals]) - 1:
-                color = 'k'
-            else:
-                color = 'b'
+        ax.plot(x[19:26], y[19:26], z[19:26], color=color)
 
-            ax.plot(x[l][0:12], y[l][0:12], z[l][0:12], color=color)
 
-            i = 0
-            for n in range(0, 6):  # basal face lines
-
-                x[l][i + 12] = X[l][n]
-                y[l][i + 12] = Y[l][n]
-                z[l][i + 12] = Z[l][n]
-                i += 1
-
-            x[l][18] = X[l][0]
-            y[l][18] = Y[l][0]
-            z[l][18] = Z[l][0]
-
-            ax.plot(x[l][12:19], y[l][12:19], z[l][12:19], color=color)
-
-            i = 0
-            for n in range(6, 12):  # basal face lines
-
-                x[l][i + 19] = X[l][n]
-                y[l][i + 19] = Y[l][n]
-                z[l][i + 19] = Z[l][n]
-                i += 1
-
-            x[l][25] = X[l][6]
-            y[l][25] = Y[l][6]
-            z[l][25] = Z[l][6]
-
-            ax.plot(x[l][19:26], y[l][19:26], z[l][19:26], color=color)
-
-            maxX = np.max(Xlim)
-            minX = np.min(Xlim)
-            maxY = np.max(Ylim)
-            minY = np.min(Ylim)
-            maxZ = np.max(Zlim)
-            minZ = np.min(Zlim)
-
-            maxXe = np.max(xell)
-            minXe = np.min(xell)
-            maxYe = np.max(yell)
-            minYe = np.min(yell)
-            maxZe = np.max(zell)
-            minZe = np.min(zell)
-
-            maxxyz = max(maxX, maxY, maxZ)
-            minxyz = min(minX, minY, minZ)
-
-            minell = min(minXe, minYe, minZe)
-            maxell = max(maxXe, maxYe, maxZe)
-            # print('min',minell, maxell)
-            ax.set_xlim(minxyz, maxxyz)
-            ax.set_ylim(minxyz, maxxyz)
-            ax.set_zlim(minxyz, maxxyz)
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
-            ax.set_zlabel('Z')
-            # ax.set_zticklabels([])
-            # ax.view_init(30, i)
-            ax.view_init(0, 90)
-            # plt.pause(.001)
-        plt.show()
-        # fig.savefig(fname='ellipsoid_columns.eps')
-
-    def plot_ellipsoid_agg_agg(self, cluster, nearest_geoms, nearest_geoms_y, view):
-
-        A, centroid = self._mvee()
-        # print('centroid', centroid)
-        U, D, V = la.svd(A)
-        # print(U, D, V)
-        rx, ry, rz = 1. / np.sqrt(D)
-
-        u, v = np.mgrid[0:2 * np.pi:20j, -np.pi / 2:np.pi / 2:10j]
-
-        Ve = 4. / 3. * rx * ry * rz
-        # print(Ve)
-
-        E = np.dstack(self.ellipse(u, v, rx, ry, rz))
-
-        E = np.dot(E, V) + centroid
-
-        xell, yell, zell = np.rollaxis(E, axis=-1)
-
-        x = np.zeros((len(self.points['x']), 27))
-        y = np.zeros((len(self.points['x']), 27))
-        z = np.zeros((len(self.points['x']), 27))
+    def plot_ellipsoid_aggs(self, clusters, nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy, view, circle=None):
+        #plot multiple aggregates, each a different color
+        
+        xell, yell, zell = self._get_ellipsoid_points()
 
         fig = plt.figure(figsize=(10, 7))
         ax = fig.add_subplot(111, projection='3d')
         # 90, 0 for z orientation, 0, 90 for y orientation, 0, 0 for x orientation
         # ax.view_init(elev=90, azim=270)
-        print(view)
+        
         if view == 'x':
             ax.view_init(elev=0, azim=90)
         elif view == 'y':
             ax.view_init(elev=0, azim=0)
         else:
             ax.view_init(elev=90, azim=180)
-        ax.plot_surface(xell, yell, zell, cstride=1, rstride=1, alpha=0.2, zorder=-1)
-        # clusters = [self, cluster2]
-        # for i in clusters:
-
-        # color = 'orange'
-        X = self.points['x']
-        Y = self.points['y']
-        Z = self.points['z']
-
-        Xlim = self.points['x']
-        Ylim = self.points['y']
-        Zlim = self.points['z']
+        ax.plot_surface(xell, yell, zell, cstride=1, rstride=1, alpha=0.1)
+        
         # for i in range(0, 360, 60):
         #    print('angle', i)
         data = []
-        print('ncrys', self.ncrystals, cluster.ncrystals)
-        for l in range(self.ncrystals):
 
-            if l < self.ncrystals - cluster.ncrystals:
-                color = 'r'
-            else:
-                color = 'k'
+        start_list = [clus.ncrystals for clus in clusters]
+        start = [0]+start_list
+        end= [(np.sum([start[i], start[i+1]])) for i in range(len(start_list))] 
+        
+        for clus in range(len(clusters)): 
+            #lowered color range so that darker colors are generated
+            color = list(np.random.choice(range(10), size=3)/10)
+            for crys in range(start[:-1][clus], end[clus]):
+                self._plot_crystal(crys, ax, color)
+                
+            
+        if circle is not None:
+            xcirc,ycirc = circle.exterior.xy
+            ax.plot(xcirc,ycirc, color='green')
+            maxXc = np.max(xcirc)
+            minXc = np.min(xcirc)
+            maxYc = np.max(ycirc)
+            minYc = np.min(ycirc)
+            maxXe = np.max(xell)
+            minXe = np.min(xell)
+            maxYe = np.max(yell)
+            minYe = np.min(yell)
+            maxZe = np.max(zell)
+            minZe = np.min(zell)
 
-            prismind = [0, 6, 7, 1, 2, 8, 9, 3, 4, 10, 11, 5]  # prism lines
-            i = 0
-            for n in prismind:
-                x[l][i] = X[l][n]
-                y[l][i] = Y[l][n]
-                z[l][i] = Z[l][n]
-                i += 1
-
-            # if l == len(self.points['x'][:self.ncrystals])-1:
-            #    color = 'white'
-            # else:
-            #    color = 'orange'
-
-            ax.plot(x[l][0:12], y[l][0:12], z[l][0:12], color=color)
-
-            i = 0
-            for n in range(0, 6):  # basal face lines
-
-                x[l][i + 12] = X[l][n]
-                y[l][i + 12] = Y[l][n]
-                z[l][i + 12] = Z[l][n]
-                i += 1
-
-            x[l][18] = X[l][0]
-            y[l][18] = Y[l][0]
-            z[l][18] = Z[l][0]
-
-            ax.plot(x[l][12:19], y[l][12:19], z[l][12:19], color=color)
-
-            i = 0
-            for n in range(6, 12):  # basal face lines
-
-                x[l][i + 19] = X[l][n]
-                y[l][i + 19] = Y[l][n]
-                z[l][i + 19] = Z[l][n]
-                i += 1
-
-            x[l][25] = X[l][6]
-            y[l][25] = Y[l][6]
-            z[l][25] = Z[l][6]
-
-            ax.plot(x[l][19:26], y[l][19:26], z[l][19:26], color=color)
-
-            maxX = np.max(Xlim)
-            minX = np.min(Xlim)
-            maxY = np.max(Ylim)
-            minY = np.min(Ylim)
-            maxZ = np.max(Zlim)
-            minZ = np.min(Zlim)
+            maxc = max(maxXc, maxYc, maxXe, maxYe, maxZe)
+            minc = min(minXc, minYc, minXe, minYe, minZe)
+            ax.set_xlim(minc, maxc)
+            ax.set_ylim(minc, maxc)
+            ax.set_zlim(minc, maxc)
+        else:
 
             maxXe = np.max(xell)
             minXe = np.min(xell)
@@ -278,97 +180,40 @@ class Plot_Cluster(ipas.IceCluster):
             maxZe = np.max(zell)
             minZe = np.min(zell)
 
-            maxxyz = max(maxX, maxY, maxZ)
-            minxyz = min(minX, minY, minZ)
+            maxxyz = max(maxXe, maxYe, maxZe)
+            minxyz = min(minXe, minYe, minZe)
 
-            minell = min(minXe, minYe, minZe)
-            maxell = max(maxXe, maxYe, maxZe)
-            # print('min',minell, maxell)
             ax.set_xlim(minxyz, maxxyz)
             ax.set_ylim(minxyz, maxxyz)
             ax.set_zlim(minxyz, maxxyz)
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
-            ax.set_zlabel('Z')
-            ##ax.set_zticklabels([])
-            # ax.set_yticklabels([])
-            # ax.set_xticklabels([])
-            # ax.grid(False)
 
-            # ax.view_init(30, i)
-            # plt.pause(.001)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+            
+        # ax.set_zticklabels([])
+        # ax.set_yticklabels([])
+        # ax.set_xticklabels([])
+        # ax.grid(False)
 
-        if view == 'x':
-            ax.scatter(nearest_geoms[0].x, nearest_geoms_y[0].y, nearest_geoms[0].y, c='red', s=100, zorder=10)
-            ax.scatter(nearest_geoms[1].x, nearest_geoms_y[1].y, nearest_geoms[1].y, c='k', s=100, zorder=10)
-        elif view == 'y':
-            ax.scatter(nearest_geoms[0].x, nearest_geoms_y[0].x, nearest_geoms_y[0].y, c='red', s=100, zorder=10)
-            ax.scatter(nearest_geoms[1].x, nearest_geoms_y[1].x, nearest_geoms_y[1].y, c='k', s=100, zorder=10)
+        # ax.view_init(30, i)
+        # plt.pause(.001)
+
+#         if view == 'x':
+#             ax.scatter(nearest_geoms_xz[0].x, nearest_geoms_yz[0].y, nearest_geoms_xz[0].y, c='red', s=100, zorder=10)
+#             ax.scatter(nearest_geoms_xz[1].x, nearest_geoms_yz[1].y, nearest_geoms_xz[1].y, c='k', s=100, zorder=10)
+#         elif view == 'y':
+#             ax.scatter(nearest_geoms_xz[0].x, nearest_geoms_yz[0].x, nearest_geoms_yz[0].y, c='red', s=100, zorder=10)
+#             ax.scatter(nearest_geoms_xz[1].x, nearest_geoms_yz[1].x, nearest_geoms_yz[1].y, c='k', s=100, zorder=10)
+#         else: 
+#             ax.scatter(nearest_geoms_xy[0].x, nearest_geoms_xy[0].y, nearest_geoms_yz[0].y, c='red', s=100, zorder=10)
+#             ax.scatter(nearest_geoms_xy[1].x, nearest_geoms_xy[1].y, nearest_geoms_yz[1].y, c='k', s=100, zorder=10)
+
 
         # fig.savefig('plot_ellipsoids/ellipse.eps',rasterized=True)
 
         plt.show()
-
-    def fit_ellipse(self, dims):
-        # Emulating this function, but for polygons in continuous
-        # space rather than blobs in discrete space:
-        # http://www.idlcoyote.com/ip_tips/fit_ellipse.html
-
-        if dims == [['x', 'y']]:
-            try:
-                poly = self.projectxy()
-            except ValueError:
-                return None
-        if dims == [['x', 'z']]:
-            try:
-                poly = self.projectxz()
-            except ValueError:
-                return None
-        if dims == [['y', 'z']]:
-            try:
-                poly = self.projectyz()
-            except ValueError:
-                return None
-
-        xy_area = poly.area
-
-        # center the polygon around the centroid
-        centroid = poly.centroid
-        poly = sha.translate(poly, -centroid.x, -centroid.y)
-
-        # occasionally we get multipolygons
-        if isinstance(poly, geom.MultiPolygon):
-            xx = 0
-            yy = 0
-            xy = 0
-            for poly2 in poly:
-                moments = self._get_moments(poly2)
-                xx += moments[0] / xy_area
-                yy += moments[1] / xy_area
-                xy -= moments[2] / xy_area
-        else:
-            moments = self._get_moments(poly)
-            xx = moments[0] / xy_area
-            yy = moments[1] / xy_area
-            xy = -moments[2] / xy_area
-
-        # get fit ellipse axes lengths, orientation, center
-        m = np.matrix([[yy, xy], [xy, xx]])
-        evals, evecs = np.linalg.eigh(m)
-        semimajor = np.sqrt(evals[0]) * 2
-        semiminor = np.sqrt(evals[1]) * 2
-        major = semimajor * 2
-        minor = semiminor * 2
-        # print('semi', semimajor, evals)
-
-        evec = np.squeeze(np.asarray(evecs[0]))
-        orientation = np.arctan2(evec[1], evec[0]) * 180 / np.pi
-
-        ellipse = {'xy': [centroid.x, centroid.y], 'width': minor,
-                   'height': major, 'angle': orientation}
-        # print('crystals',self.ncrystals)
-        # print('ell',ellipse['height'])
-        return ellipse
+        
 
     def plot_ellipse(self, dims):
 
