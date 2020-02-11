@@ -22,14 +22,22 @@ from matplotlib.patches import Ellipse
 import operator
         
 #Master Class
-class Ice_Cluster(cluster):
+class Ice_Cluster():
     
-    def __init__(self, cluster.ncrystals, cluster.points):
+    def __init__(self, cluster):
 
         # needed for bookkeeping:
-        self.ncrystals = 1
+        self.ncrystals = cluster.ncrystals-1  #crystal 1 is not appended to db
         self.rotation = Quaternion()
         self.points = cluster.points
+        self.a = cluster.a
+        self.b = cluster.b
+        self.c = cluster.c
+        self.monor = cluster.r
+        self.monophi = cluster.phi
+        self.r = cluster.agg_r
+        self.phi = cluster.agg_phi
+        self.plates = None
 
         # used for some calculations involving shapely objects
         self.tol = 10 ** -11
@@ -37,9 +45,6 @@ class Ice_Cluster(cluster):
         # I have to set this so high, arrr.
         # self.tol_ellipse = 10 ** -4.5
         self.tol_ellipse = 10 ** -3
-        
-        self.maxz = self.points['z'].max()
-        self.minz = self.points['z'].min()
 
 
     def add_cluster(self, cluster):
@@ -52,7 +57,7 @@ class Ice_Cluster(cluster):
         self.ncrystals -= cluster.ncrystals
 
     def move(self, xyz):
-        # move the entire cluster
+        # move the entire cluster 
         self.points['x'][:self.ncrystals] += xyz[0]
         self.points['y'][:self.ncrystals] += xyz[1]
         self.points['z'][:self.ncrystals] += xyz[2]
@@ -111,16 +116,37 @@ class Ice_Cluster(cluster):
     #     # save the new rotation
     #     self.rotation = angles
 
-    def _center_of_mass(self):  # of cluster
+    def center_of_mass(self):  # of cluster
         x = np.mean(self.points[:self.ncrystals]['x'])
         y = np.mean(self.points[:self.ncrystals]['y'])
         z = np.mean(self.points[:self.ncrystals]['z'])
         return [x, y, z]
 
     def recenter(self):
-        center_move = self._center_of_mass()
+        center_move = self.center_of_mass()
         self.move([-x for x in center_move])
         return center_move
+    
+    def _crystal_projectxy(self, n):
+        return geom.MultiPoint(self.points[n][['x', 'y']]).convex_hull
+
+    def _crystal_projectxz(self, n):
+        return geom.MultiPoint(self.points[n][['x', 'z']]).convex_hull
+
+    def _crystal_projectyz(self, n):
+        return geom.MultiPoint(self.points[n][['y', 'z']]).convex_hull
+
+    def projectxy(self):
+        polygons = [self._crystal_projectxy(n) for n in range(self.ncrystals)]
+        return shops.cascaded_union(polygons)
+
+    def projectxz(self):
+        polygons = [self._crystal_projectxz(n) for n in range(self.ncrystals)]
+        return shops.cascaded_union(polygons)
+
+    def projectyz(self):
+        polygons = [self._crystal_projectyz(n) for n in range(self.ncrystals)]
+        return shops.cascaded_union(polygons)
 
     def generate_random_point_fast(self, new_crystal, number=1):
 
@@ -157,29 +183,35 @@ class Ice_Cluster(cluster):
             cluster2.move([0, 0, diffmins])
 
         try:
-            nearest_geoms = nearest_points(self.projectxz(), cluster2.projectxz())
-            nearest_geoms_y = nearest_points(self.projectyz(), cluster2.projectyz())
+            nearest_geoms_xz = nearest_points(self.projectxz(), cluster2.projectxz())
+            nearest_geoms_yz = nearest_points(self.projectyz(), cluster2.projectyz())
+            nearest_geoms_xy = nearest_points(self.projectxy(), cluster2.projectxy())
+            
 
         except ValueError:
             return (None, None)
 
-        # print('before moving')
+        #print('before moving')
+        #self.add_cluster(cluster2)
+        #self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='x')
+        #self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='y')
+        #self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='z')
+        #self.remove_cluster(cluster2)
 
-        # self._add_cluster(cluster2)
-        # self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='x')
-        # self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='y')
-        # self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='z')
-        # self._remove_cluster(cluster2)
-
-        movex = nearest_geoms[1].x - nearest_geoms[0].x
-        movey = nearest_geoms_y[1].x - nearest_geoms_y[0].x
-        movez_xz = nearest_geoms[1].y - nearest_geoms[0].y
-        movez_yz = nearest_geoms_y[1].y - nearest_geoms_y[0].y
+        movex = nearest_geoms_xz[1].x - nearest_geoms_xz[0].x
+        movey = nearest_geoms_yz[1].x - nearest_geoms_yz[0].x
+        movez_xz = nearest_geoms_xz[1].y - nearest_geoms_xz[0].y
+        movez_yz = nearest_geoms_yz[1].y - nearest_geoms_yz[0].y
         # print(movez_xz, movez_yz)
         # print(-movex, -movey, -(max(abs(movez_xz), abs(movez_yz))))
         cluster2.move([-movex, -movey, -(max(abs(movez_xz), abs(movez_yz)))])
+        
+        #move in x-y
+        movex = nearest_geoms_xy[1].x - nearest_geoms_xy[0].x
+        movey = nearest_geoms_xy[1].y - nearest_geoms_xy[0].y
+        cluster2.move([-movex, -movey, 0])
 
-        return (nearest_geoms, nearest_geoms_y)
+        return (nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy)
 
     def _reorient(self, method='random', rotations=1):
 

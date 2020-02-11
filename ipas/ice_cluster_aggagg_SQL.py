@@ -863,11 +863,11 @@ class IceCluster(ipas.Base):
         self.a, self.b, self.c = sorted([rx, ry, rz])
 
         if plates:
-            self.agg_phi = self.c / self.a
-            self.agg_r = np.power((np.power(self.a, 2) * self.c), (1. / 3.))
-        else:
             self.agg_phi = self.a / self.c
-            self.agg_r = np.power((np.power(self.c, 2) * self.a), (1. / 3.))
+            
+        else:
+            self.agg_phi = self.c / self.a
+        self.agg_r = np.power((np.power(self.a, 2) * self.c), (1. / 3.))
 
         return self.a, self.b, self.c
 

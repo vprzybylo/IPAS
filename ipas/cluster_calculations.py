@@ -8,14 +8,15 @@ import shapely.affinity as sha
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import random
+import shapely.ops as shops
         
 #subclass
-class Cluster_Calculations(ipas.IceCluster):
+class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
     
-    def __init__(self, ncrystals, points, n):
+    def __init__(self, cluster):
         # call parent constructor 
-        super().__init__(ncrystals, points, n) 
-
+        super().__init__(cluster) 
+    
     def max(self, dim):
         return self.points[:self.ncrystals][dim].max()
 
@@ -64,13 +65,6 @@ class Cluster_Calculations(ipas.IceCluster):
         U, D, V = la.svd(A)  # singular-value decomposition
         rx, ry, rz = 1. / np.sqrt(D)  # D is a diagonal matrix
         self.a, self.b, self.c = sorted([rx, ry, rz])
-
-        if plates:
-            self.agg_phi = self.c / self.a
-            self.agg_r = np.power((np.power(self.a, 2) * self.c), (1. / 3.))
-        else:
-            self.agg_phi = self.a / self.c
-            self.agg_r = np.power((np.power(self.c, 2) * self.a), (1. / 3.))
 
         return self.a, self.b, self.c
 
@@ -459,19 +453,29 @@ class Cluster_Calculations(ipas.IceCluster):
         return (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0)
 
 
-    def complexity(self):
-        poly = self.projectxy()
-        Ap = poly.area
-        P = poly.length  # perim
-
-        x, y = poly.buffer(0).exterior.xy
+    def complexity(self, cluster1, cluster2):
+        #poly1 = cluster1.projectxy()
+        #poly2 = cluster2.projectxy()   
+        poly3 = self.projectxy()
+        Ap = poly3.area
+        P = poly3.length
+    
+        #Ap = poly1.area+poly2.area
+        
+        #in the case that the clusters don't perfectly touch, we are still summing both cluster perims
+        #since there is such minimal overlap between clusters
+        #P = poly1.length +poly2.length # perim
+        
+        #next line is for a convex hull around both clusters (even if they are not touching)
+        poly = shops.cascaded_union([geom.MultiPoint(self.points[n][['x','y']]) for n in range(self.ncrystals)]).convex_hull
+        x, y = poly.exterior.xy
 
         circ = self._make_circle([x[i], y[i]] for i in range(len(x)))
         circle = Point(circ[0], circ[1]).buffer(circ[2])
         x, y = circle.exterior.xy
         Ac = circle.area
 
-        # print(Ap, Ac, 0.1-(np.sqrt(Ac*Ap))
+        #print('Ap, Ac, P = ', Ap, Ac, P)
         self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
-        return (self.cplx)
+        return (self.cplx, circle)
 

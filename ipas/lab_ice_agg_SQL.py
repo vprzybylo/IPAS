@@ -43,7 +43,7 @@ def collect_clusters(phio, notebook, r, nclusters, ncrystals, rand_orient=False,
         plates = True
 
     # all monomers the same for now
-    
+
     r = np.power((np.power(width, 2) * length), (1. / 3.))  # of monomer
     #outfile = open('outfile_allrand_rall.dat', "a+")
 
