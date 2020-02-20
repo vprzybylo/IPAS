@@ -7,27 +7,33 @@ import copy
 
 def collect_clusters(clusters, rand_orient=False):
     start_time = time.time()
-    array_size = np.sum(range(len(clusters)))
+#    array_size = np.sum(range(len(clusters)))
     
     #NEW AGGREGATE PROPERTIES
-    cplxs = np.zeros(array_size, dtype=np.float64)
-    rxs = np.zeros(array_size, dtype=np.float64)
-    rys = np.zeros(array_size, dtype=np.float64)
-    rzs = np.zeros(array_size, dtype=np.float64)
-    phi2Ds = np.zeros(array_size, dtype=np.float64)  
-    dd = np.zeros(array_size, dtype=np.float64)  
+#     cplxs = np.zeros(array_size, dtype=np.float64)
+#     rxs = np.zeros(array_size, dtype=np.float64)
+#     rys = np.zeros(array_size, dtype=np.float64)
+#     rzs = np.zeros(array_size, dtype=np.float64)
+#     phi2Ds = np.zeros(array_size, dtype=np.float64)  
+#     dd = np.zeros(array_size, dtype=np.float64) 
+    cplxs = []
+    rs = []
+    phi2Ds = []    
+    dd = []
     
     '''----START AGG-AGG COLLECTION ------'''
     c=1
     ct = 0
     
-    while c <= len(clusters):
-        for n in range(len(clusters)-c):
-            #print('n', c, n, len(clusters)-c)
+    while c <= 24:
+        #print(c)
+        for n in range(24-c):
+            if n % 50 == 0:
+                print('nclusters', c, n, 24-c)
             cluster1 = clusters[n]
             cluster2 = clusters[n+c] 
+            print('clus 2', cluster2.ncrystals)
            
-            
             if rand_orient:
                 cluster1.orient_cluster(rand_orient=True) 
                 cluster2.orient_cluster(rand_orient=True)
@@ -54,8 +60,9 @@ def collect_clusters(clusters, rand_orient=False):
             else:
                 cluster3.orient_cluster()
 
-            rx,ry,rz = cluster3.spheroid_axes(cluster1.plates)         
-            rxs[ct],rys[ct],rzs[ct] = sorted([rx,ry,rz])
+            rx,ry,rz = cluster3.spheroid_axes(cluster1.plates)    
+            rs.append(sorted([rx,ry,rz]))
+            #rxs[ct],rys[ct],rzs[ct] = sorted([rx,ry,rz])
 
             #FOR DENSITY CHANGE ------------------
             #monomer a and c
@@ -76,22 +83,27 @@ def collect_clusters(clusters, rand_orient=False):
             Vr_avg = np.average([Vr1,Vr2])
             Vr3 = Va3/Ve3  #volumetric ratio after adding an agg, not a monomer
             #print('Vr1, Vr2, Vr3, Vravg', Vr1, Vr2, Vr3, Vr_avg)
-            dd[ct] = Vr3-Vr_avg
+            #dd[ct] = Vr3-Vr_avg
+            dd.append(Vr3-Vr_avg)
             #print('dd = ', dd[ct])
             #-------------------------------------
 
             cluster3.recenter()
-            cplxs[ct], circle=cluster3.complexity(cluster1, cluster2)
+            #cplxs[ct], circle=cluster3.complexity(cluster1, cluster2)
+            cplx, circle= cluster3.complexity(cluster1, cluster2)
+            cplxs.append(cplx)
             #print('after moving')
             #print('cplx', cplxs[ct])
-            #print('cluster3 ncrystals', cluster1_hold.ncrystals, cluster2.ncrystals, cluster3.ncrystals)
+            print('cluster3 ncrystals', cluster1_hold.ncrystals, cluster2.ncrystals, cluster3.ncrystals)
+            cluster3.plot_ellipsoid_aggs([cluster1_hold, cluster2], nearest_geoms_xz, \
+                                              nearest_geoms_yz, nearest_geoms_xy, view='z', circle=None)
 #             cluster3.plot_ellipsoid_aggs([cluster1_hold, cluster2], nearest_geoms_xz, \
-#                                               nearest_geoms_yz, nearest_geoms_xy, view='z', circle=circle)
+#                                               nearest_geoms_yz, nearest_geoms_xy, view='x', circle=None)
 #             cluster3.plot_ellipsoid_aggs([cluster1_hold, cluster2], nearest_geoms_xz, \
-#                                               nearest_geoms_yz, nearest_geoms_xy, view='x', circle=circle)
-#             cluster3.plot_ellipsoid_aggs([cluster1_hold, cluster2], nearest_geoms_xz, \
-#                                               nearest_geoms_yz, nearest_geoms_xy, view='y', circle=circle)
-            phi2Ds[ct] = cluster3.phi_2D()
+#                                               nearest_geoms_yz, nearest_geoms_xy, view='y', circle=None)
+            #phi2Ds[ct] = cluster3.phi_2D()
+            phi2Ds.append(cluster3.phi_2D())
+    
             ct+=1
         c+=1
     
@@ -99,5 +111,6 @@ def collect_clusters(clusters, rand_orient=False):
     
     #returns arrays of len(# of collections)
     #characteristic values determined in postprocessing
-    return rxs, rys, rzs, phi2Ds, cplxs, dd
+    print('len of data: ', len(rxs), len(dd))
+    return rs, phi2Ds, cplxs, dd
   

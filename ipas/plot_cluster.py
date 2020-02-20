@@ -14,7 +14,8 @@ from matplotlib.patches import Ellipse
 import shapely.ops as shops
 import numpy.linalg as la
 from mpl_toolkits.mplot3d import Axes3D
-        
+import datetime
+
 #Sub Class
 class Plot_Cluster(ipas.Ice_Cluster):
 
@@ -117,6 +118,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
         z[25] = Z[6]
 
         ax.plot(x[19:26], y[19:26], z[19:26], color=color)
+        return self
 
 
     def plot_ellipsoid_aggs(self, clusters, nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy, view, circle=None):
@@ -124,7 +126,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
         
         xell, yell, zell = self._get_ellipsoid_points()
 
-        fig = plt.figure(figsize=(10, 7))
+        fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111, projection='3d')
         # 90, 0 for z orientation, 0, 90 for y orientation, 0, 0 for x orientation
         # ax.view_init(elev=90, azim=270)
@@ -147,8 +149,10 @@ class Plot_Cluster(ipas.Ice_Cluster):
         
         for clus in range(len(clusters)): 
             #lowered color range so that darker colors are generated
+          
             color = list(np.random.choice(range(10), size=3)/10)
             for crys in range(start[:-1][clus], end[clus]):
+               
                 self._plot_crystal(crys, ax, color)
                 
             
@@ -209,8 +213,8 @@ class Plot_Cluster(ipas.Ice_Cluster):
 #             ax.scatter(nearest_geoms_xy[0].x, nearest_geoms_xy[0].y, nearest_geoms_yz[0].y, c='red', s=100, zorder=10)
 #             ax.scatter(nearest_geoms_xy[1].x, nearest_geoms_xy[1].y, nearest_geoms_yz[1].y, c='k', s=100, zorder=10)
 
-
-        # fig.savefig('plot_ellipsoids/ellipse.eps',rasterized=True)
+        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        #fig.savefig('plot_clusters/'+current_time+'.png',rasterized=True, bbox_inches = 'tight')
 
         plt.show()
         
