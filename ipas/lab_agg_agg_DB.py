@@ -18,6 +18,8 @@ def collect_clusters(clusters, rand_orient=False):
     rs = []
     phi2Ds = []    
     dd = []
+    cluster1_ncrystals = []
+    cluster2_ncrystals = []
     
     '''----START AGG-AGG COLLECTION ------'''
     c=0
@@ -26,6 +28,8 @@ def collect_clusters(clusters, rand_orient=False):
     for n in range(len(clusters)-1):
         cluster1 = clusters[n]
         cluster2 = clusters[n+1] 
+        cluster1_ncrystals.append(cluster1.ncrystals)
+        cluster2_ncrystals.append(cluster2.ncrystals)
 #     while c <= 24:
 #         #print(c)
 #         for n in range(24-c):
@@ -124,5 +128,5 @@ def collect_clusters(clusters, rand_orient=False):
     #returns arrays of len(# of collections)
     #characteristic values determined in postprocessing
     print('len of data: ', len(rs), len(dd))
-    return rs, phi2Ds, cplxs, dd, cluster1.ncrystals, cluster2.ncrystals
+    return rs, phi2Ds, cplxs, dd, cluster1_ncrystals, cluster2_ncrystals
   

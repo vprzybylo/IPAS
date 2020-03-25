@@ -7,6 +7,7 @@ import copy
 
 def collect_clusters(monomers, clusters, rand_orient=False):
     
+    
     #NEW AGGREGATE PROPERTIES
 #     cplxs = np.zeros(array_size, dtype=np.float64)
 #     rxs = np.zeros(array_size, dtype=np.float64)
@@ -18,15 +19,20 @@ def collect_clusters(monomers, clusters, rand_orient=False):
     rs = []
     phi2Ds = []    
     dd = []
+    cluster1_ncrystals = []
+    cluster2_ncrystals = []
     
-    '''----START AGG-AGG COLLECTION ------'''
+    '''----START ICE-AGG COLLECTION ------'''
     c=0
     ct = 0
     
     for n in range(len(clusters)):
         cluster1 = monomers[n]
-        cluster2 = clusters[n] 
-        print('here')
+        cluster2 = clusters[n]
+        cluster1_ncrystals.append(cluster1.ncrystals)
+        cluster2_ncrystals.append(cluster2.ncrystals)
+        #print(cluster1.points)
+
 #     while c <= 24:
 #         #print(c)
 #         for n in range(24-c):
@@ -116,14 +122,13 @@ def collect_clusters(monomers, clusters, rand_orient=False):
         #phi2Ds[ct] = cluster3.phi_2D()
         phi2Ds.append(cluster3.phi_2D())
 
-
 #            ct+=1
-        c+=1
+#        c+=1
     
     print('made it to the end of collect_clusters loops')
     
     #returns arrays of len(# of collections)
     #characteristic values determined in postprocessing
     print('len of data: ', len(rs), len(dd))
-    return rs, phi2Ds, cplxs, dd, cluster1.ncrystals, cluster2.ncrystals
+    return rs, phi2Ds, cplxs, dd, cluster1_ncrystals, cluster2_ncrystals
   
