@@ -481,6 +481,8 @@ class IceCrystal(ipas.Base):
 
         fig = plt.figure(figsize=(10,7))
         ax = fig.add_subplot(111, projection='3d')
+        fig, ax = plt.subplots(1,1)
+        
         #90, 0 for z orientation, 0, 90 for y orientation, 0, 0 for x orientation
         #ax.view_init(elev=90, azim=270)
         ax.view_init(elev=0, azim=90)

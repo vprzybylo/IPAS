@@ -11,21 +11,14 @@ from sqlalchemy.engine import Engine
 from sqlalchemy import create_engine, event, select
 from sqlite3 import Connection as SQLite3Connection
 
-def _set_sqlite_pragma(dbapi_connection, connection_record):
-    if isinstance(dbapi_connection, SQLite3Connection):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON;")
-        #cursor.execute("PRAGMA journal_mode=WAL;")
-        cursor.close()
-
-    
 def collect_clusters(phio, notebook, r, nclusters, ncrystals, rand_orient=False, lodge=0):
-    engine = create_engine('sqlite:///db_files/IPAS_%d_%d_%.3f_lastmono.sqlite' %(notebook, r, phio))
-    event.listen(engine, 'connect', _set_sqlite_pragma)
-    ipas.base.Base.metadata.create_all(engine, checkfirst=True)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+#     engine = create_engine('sqlite:///db_files/test_%d_%d_%.3f_lastmono.sqlite' %(notebook, r, phio))
+#     event.listen(engine, 'connect', _set_sqlite_pragma)
+#     ipas.base.Base.metadata.create_all(engine, checkfirst=True)
+#     Session = sessionmaker(bind=engine)
+#     session = Session()
     
+    start1 = time.time()
     cplxs = np.zeros((nclusters, ncrystals - 1), dtype=np.float64)
     rxs = np.zeros((nclusters, ncrystals - 1), dtype=np.float64)
     rys = np.zeros((nclusters, ncrystals - 1), dtype=np.float64)
@@ -49,7 +42,7 @@ def collect_clusters(phio, notebook, r, nclusters, ncrystals, rand_orient=False,
     count = 0
     for n in range(nclusters):
         if n % 20 == 0.:
-            print('nclus',int(np.round(r)), phio, n, float(time.time())/60)
+            print('nclus',int(np.round(r)), phio, n)
             #outfile.write('%.0f\t %.3f\t %d\t\n' % (r, phio, n))
             #outfile.flush()
 
@@ -115,47 +108,46 @@ def collect_clusters(phio, notebook, r, nclusters, ncrystals, rand_orient=False,
             cluster1cp.crystal.append(new_crystal)
             #new_crystal.aggs.append(cluster1cp)
             
-            #list_of_clusters.append(cluster1cp)
-            try:
-                session.add(cluster1cp)
-                session.commit()
-            except:
-                print('in except')
-                raise
+            list_of_clusters.append(cluster1cp)
+#             try:
+#                 session.add(cluster1cp)
+#             except:
+#                 print('in except')
+#                 raise
      
             count += 1
             l += 1
+            
+#     start = time.time()
+#     session.add_all(list_of_clusters)
+#     session.commit()
+#     end = time.time()
+#     time_taken = end - start
+#     print('time to commit in bulk: ', time_taken)
+            
+#     end1 = time.time()
+#     time_taken = end1 - start1
+#     print('time to collect clusters: ', time_taken)
+        
 
 #     try:
-#         session.add_all(list_of_clusters)  # crystal id has been appended into cluster relationship
+#         start = time.time()
+#         session.bulk_save_objects(list_of_clusters)  # crystal id has been appended into cluster relationship
 #         session.commit()
+#         end = time.time()
+#         time_taken = end - start
+#         print('time to add and commit in bulk: ', time_taken)
         
 #     except:
 #         print('in except')
 #         raise        
-    session.close() 
-    print('done committing phio = %.3f %.3f' %(phio, float(time.time())/60))
+#    session.close() 
 
     
-#     # ADD TO DATABASE
-#     try:
-#         session = Session()
-#         start = time.time()
-#         session.add_all(list_of_clusters)  # crystal id has been appended into cluster relationship
-#         session.commit()
-#         end = time.time()
-#         time_taken = end - start
-#         print(time_taken)
-        
-        
-#         #session.close()
-#     except:
-#         print('in except')
-#         raise
 
     #print('made it to the end of collect_clusters loops')
     #outfile.close()
     
-    return 
-    #return list_of_clusters
+    #return 
+    return list_of_clusters
     #return [phio, r, width, length, rxs, rys, rzs, phi2Ds, cplxs]

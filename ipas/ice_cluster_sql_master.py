@@ -26,7 +26,6 @@ class Ice_Cluster():
     
     def __init__(self, cluster):
 
-        # needed for bookkeeping:
         self.ncrystals = cluster.ncrystals-1  #crystal 1 is not appended to db
         self.rotation = Quaternion()
         self.points = cluster.points
@@ -46,7 +45,6 @@ class Ice_Cluster():
         # self.tol_ellipse = 10 ** -4.5
         self.tol_ellipse = 10 ** -3
 
-
     def add_cluster(self, cluster):
         self.points = np.vstack((self.points, cluster.points))
         self.ncrystals += cluster.ncrystals
@@ -58,15 +56,9 @@ class Ice_Cluster():
 
     def move(self, xyz):
         # move the entire cluster 
-        self.points['x'][:self.ncrystals] += xyz[0]
-        self.points['y'][:self.ncrystals] += xyz[1]
-        self.points['z'][:self.ncrystals] += xyz[2]
-
-    def max(self, dim):
-        return self.points[:self.ncrystals][dim].max()
-
-    def min(self, dim):
-        return self.points[:self.ncrystals][dim].min()
+        self.points['x'] += xyz[0]
+        self.points['y'] += xyz[1]
+        self.points['z'] += xyz[2]
 
     def _euler_to_mat(self, xyz):
         # Euler's rotation theorem, any rotation may be described using three angles
@@ -78,12 +70,9 @@ class Ice_Cluster():
 
     def _rotate_mat(self, mat):
         points = cp.copy(self.points)
-        self.points['x'][:self.ncrystals] = points['x'][:self.ncrystals] * mat[0, 0] + points['y'][:self.ncrystals] * \
-                                            mat[0, 1] + points['z'][:self.ncrystals] * mat[0, 2]
-        self.points['y'][:self.ncrystals] = points['x'][:self.ncrystals] * mat[1, 0] + points['y'][:self.ncrystals] * \
-                                            mat[1, 1] + points['z'][:self.ncrystals] * mat[1, 2]
-        self.points['z'][:self.ncrystals] = points['x'][:self.ncrystals] * mat[2, 0] + points['y'][:self.ncrystals] * \
-                                            mat[2, 1] + points['z'][:self.ncrystals] * mat[2, 2]
+        self.points['x'] = points['x'] * mat[0, 0] + points['y'] * mat[0, 1] + points['z'] * mat[0, 2]
+        self.points['y'] = points['x'] * mat[1, 0] + points['y'] * mat[1, 1] + points['z'] * mat[1, 2]
+        self.points['z'] = points['x'] * mat[2, 0] + points['y'] * mat[2, 1] + points['z'] * mat[2, 2]
 
     def rotate_to(self, angles):
         # rotate to the orientation given by the 3 angles
@@ -264,7 +253,7 @@ class Ice_Cluster():
         return current_rot
 
     def orient_cluster(self, rand_orient=False):
-        # orient a crystal either randomly or to the rotation that maximizes the area
+        # orient a cluster either randomly or to the rotation that maximizes the area
 
         if rand_orient:
             self._reorient()
@@ -276,12 +265,8 @@ class Ice_Cluster():
 
             f = lambda x: -self.rotate_to([0, x, 0]).projectxy().area
             yrot = opt.minimize_scalar(f, bounds=(0, np.pi / 2), method='Bounded').x
-            zrot = random.uniform(0, 2 * np.pi)
-
-            best_rot = [xrot, yrot, zrot]
-
             best_rotation = [xrot, yrot, 0]
             self.rotate_to(best_rotation)
-        return self
+      
 
    

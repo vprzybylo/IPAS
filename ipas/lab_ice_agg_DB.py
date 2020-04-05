@@ -16,7 +16,9 @@ def collect_clusters(monomers, clusters, rand_orient=False):
 #     phi2Ds = np.zeros(array_size, dtype=np.float64)  
 #     dd = np.zeros(array_size, dtype=np.float64) 
     cplxs = []
-    rs = []
+    rxs = []
+    rys = []
+    rzs = []
     phi2Ds = []    
     dd = []
     cluster1_ncrystals = []
@@ -27,8 +29,9 @@ def collect_clusters(monomers, clusters, rand_orient=False):
     ct = 0
     
     for n in range(len(clusters)):
-        cluster1 = monomers[n]
-        cluster2 = clusters[n]
+        cluster1 = clusters[n]
+        cluster2 = monomers[n]
+        
         cluster1_ncrystals.append(cluster1.ncrystals)
         cluster2_ncrystals.append(cluster2.ncrystals)
         #print(cluster1.points)
@@ -43,17 +46,17 @@ def collect_clusters(monomers, clusters, rand_orient=False):
 #             cluster2 = clusters[n+c] 
             
 #             print(cluster1.phi, cluster1.r)
-#             cluster1.plot_ellipse([['x','z']])
+#        cluster1.plot_ellipse([['x','z']])
 #             print('cluster 2')
 #             print(cluster2.phi, cluster2.r)
-#             cluster2.plot_ellipse([['x','z']])
+#        cluster2.plot_ellipse([['x','z']])
         
         if rand_orient:
             cluster1.orient_cluster(rand_orient=True) 
-            cluster2.orient_cluster(rand_orient=True)
+            cluster2.orient_crystal(rand_orient=True)
         else:
             cluster1.orient_cluster() 
-            cluster2.orient_cluster()
+            cluster2.orient_crystal()
 
         agg_pt, new_pt = cluster1.generate_random_point_fast(cluster2, 1)
         movediffx = new_pt.x - agg_pt.x
@@ -74,17 +77,19 @@ def collect_clusters(monomers, clusters, rand_orient=False):
         else:
             cluster3.orient_cluster()
 
-
-        rx,ry,rz = cluster3.spheroid_axes(cluster1.plates)    
-        rs.append(sorted([rx,ry,rz]))
+        rx,ry,rz = cluster3.spheroid_axes()  
+        rx, ry, rz = sorted([rx,ry,rz])
+        rxs.append(rx)
+        rys.append(ry)
+        rzs.append(rz)
         #rxs[ct],rys[ct],rzs[ct] = sorted([rx,ry,rz])
 
         #FOR DENSITY CHANGE ------------------
         #monomer a and c
         a1=np.power((np.power(cluster1.monor,3)/cluster1.monophi),(1./3.))
         c1= cluster1.monophi*a1
-        a2=np.power((np.power(cluster2.monor,3)/cluster2.monophi),(1./3.))
-        c2= cluster2.monophi*a2
+        a2=np.power((np.power(cluster2.r,3)/cluster2.phi),(1./3.))
+        c2= cluster2.phi*a2
         Va1 = 3*(np.sqrt(3)/2) * np.power(c1,2) * a1 * cluster1.ncrystals
         Va2 = 3*(np.sqrt(3)/2) * np.power(c2,2) * a2 * cluster2.ncrystals
         Va3 = np.sum(Va1+Va2) #new volume of agg 
@@ -111,12 +116,12 @@ def collect_clusters(monomers, clusters, rand_orient=False):
 
 
         #print('cluster3 ncrystals', cluster1.ncrystals, cluster2.ncrystals, cluster3.ncrystals)
-#             cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
-#                                               nearest_geoms_yz, nearest_geoms_xy, view='z', circle=None)
+        cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
+                                     nearest_geoms_yz, nearest_geoms_xy, view='z', circle=None)
 
 
-#             cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
-#                                              nearest_geoms_yz, nearest_geoms_xy, view='x', circle=None)
+        cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
+                                              nearest_geoms_yz, nearest_geoms_xy, view='x', circle=None)
         #cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
         #                                  nearest_geoms_yz, nearest_geoms_xy, view='y', circle=None)
         #phi2Ds[ct] = cluster3.phi_2D()
@@ -124,11 +129,8 @@ def collect_clusters(monomers, clusters, rand_orient=False):
 
 #            ct+=1
 #        c+=1
-    
-    print('made it to the end of collect_clusters loops')
-    
-    #returns arrays of len(# of collections)
+        
     #characteristic values determined in postprocessing
-    print('len of data: ', len(rs), len(dd))
-    return rs, phi2Ds, cplxs, dd, cluster1_ncrystals, cluster2_ncrystals
+    print('len of data: ', len(rxs), len(dd))
+    return rxs, rys, rzs, phi2Ds, cplxs, dd, cluster1_ncrystals
   

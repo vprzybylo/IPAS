@@ -60,7 +60,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
 
         return A, c
 
-    def spheroid_axes(self, plates):
+    def spheroid_axes(self):
         A, c = self._mvee()
         U, D, V = la.svd(A)  # singular-value decomposition
         rx, ry, rz = 1. / np.sqrt(D)  # D is a diagonal matrix
@@ -467,15 +467,26 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         #P = poly1.length +poly2.length # perim
         
         #next line is for a convex hull around both clusters (even if they are not touching)
-        poly = shops.cascaded_union([geom.MultiPoint(self.points[n][['x','y']]) for n in range(self.ncrystals)]).convex_hull
-        x, y = poly.exterior.xy
+        
+        try:
+            multipt = [geom.MultiPoint(self.points[n][['x','y']]) for n in range(self.ncrystals)]
+        except IndexError:
+            print('in index error in cplx')
+            multipt = None
+            
+        if multipt is not None:
+            poly = shops.cascaded_union(multipt).convex_hull
+            x, y = poly.exterior.xy
 
-        circ = self._make_circle([x[i], y[i]] for i in range(len(x)))
-        circle = Point(circ[0], circ[1]).buffer(circ[2])
-        x, y = circle.exterior.xy
-        Ac = circle.area
+            circ = self._make_circle([x[i], y[i]] for i in range(len(x)))
+            circle = Point(circ[0], circ[1]).buffer(circ[2])
+            x, y = circle.exterior.xy
+            Ac = circle.area
 
-        #print('Ap, Ac, P = ', Ap, Ac, P)
-        self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
-        return (self.cplx, circle)
+            
+            self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
+            #print('Ap, Ac, P cplx= ', Ap, Ac, P, self.cplx)
+            return (self.cplx, circle)
+        else:
+            return -999, None
 

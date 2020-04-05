@@ -15,7 +15,9 @@ def collect_clusters(clusters, rand_orient=False):
 #     phi2Ds = np.zeros(array_size, dtype=np.float64)  
 #     dd = np.zeros(array_size, dtype=np.float64) 
     cplxs = []
-    rs = []
+    rxs = []
+    rys = []
+    rzs = []
     phi2Ds = []    
     dd = []
     cluster1_ncrystals = []
@@ -71,9 +73,12 @@ def collect_clusters(clusters, rand_orient=False):
         else:
             cluster3.orient_cluster()
 
-
-        rx,ry,rz = cluster3.spheroid_axes(cluster1.plates)    
-        rs.append(sorted([rx,ry,rz]))
+        rx,ry,rz = cluster3.spheroid_axes()    
+        rx, ry, rz = sorted([rx,ry,rz])
+        rxs.append(rx)
+        rys.append(ry)
+        rzs.append(rz)
+        
         #rxs[ct],rys[ct],rzs[ct] = sorted([rx,ry,rz])
 
         #FOR DENSITY CHANGE ------------------
@@ -108,12 +113,18 @@ def collect_clusters(clusters, rand_orient=False):
 
 
         #print('cluster3 ncrystals', cluster1.ncrystals, cluster2.ncrystals, cluster3.ncrystals)
-#             cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
-#                                               nearest_geoms_yz, nearest_geoms_xy, view='z', circle=None)
+        width = (cluster1.monor ** 3 / cluster1.monophi) ** (1. / 3.)
+        length = cluster1.monophi * width
+        if length > width:
+            plates = False
+        else:
+            plates = True
+        
+        cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
+                                              nearest_geoms_yz, nearest_geoms_xy, view='z', circle=None)
 
-
-#             cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
-#                                              nearest_geoms_yz, nearest_geoms_xy, view='x', circle=None)
+        cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
+                                            nearest_geoms_yz, nearest_geoms_xy, view='x', circle=None)
         #cluster3.plot_ellipsoid_aggs([cluster1, cluster2], nearest_geoms_xz, \
         #                                  nearest_geoms_yz, nearest_geoms_xy, view='y', circle=None)
         #phi2Ds[ct] = cluster3.phi_2D()
@@ -127,6 +138,6 @@ def collect_clusters(clusters, rand_orient=False):
     
     #returns arrays of len(# of collections)
     #characteristic values determined in postprocessing
-    print('len of data: ', len(rs), len(dd))
-    return rs, phi2Ds, cplxs, dd, cluster1_ncrystals, cluster2_ncrystals
+    print('len of data: ', len(rxs), len(dd))
+    return rxs, rys, rzs, phi2Ds, cplxs, dd, cluster1_ncrystals, cluster2_ncrystals
   

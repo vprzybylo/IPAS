@@ -15,6 +15,7 @@ import shapely.ops as shops
 import numpy.linalg as la
 from mpl_toolkits.mplot3d import Axes3D
 import datetime
+import operator
 
 #Sub Class
 class Plot_Cluster(ipas.Ice_Cluster):
@@ -24,24 +25,33 @@ class Plot_Cluster(ipas.Ice_Cluster):
         super().__init__(cluster)
 
     def _crystal_projectxy(self, n):
-        return geom.MultiPoint(self.points[n][['x', 'y']]).convex_hull
+        try:
+            return geom.MultiPoint(self.points[n][['x', 'y']]).convex_hull
+        except IndexError:
+            return None
 
     def _crystal_projectxz(self, n):
-        return geom.MultiPoint(self.points[n][['x', 'z']]).convex_hull
+        try:
+            return geom.MultiPoint(self.points[n][['x', 'z']]).convex_hull
+        except IndexError:
+            return None
 
     def _crystal_projectyz(self, n):
-        return geom.MultiPoint(self.points[n][['y', 'z']]).convex_hull
-
+        try:
+            return geom.MultiPoint(self.points[n][['y', 'z']]).convex_hull
+        except IndexError:
+            return None
+        
     def projectxy(self):
-        polygons = [self._crystal_projectxy(n) for n in range(self.ncrystals)]
+        polygons = [self._crystal_projectxy(n) for n in range(self.ncrystals) if self._crystal_projectxy(n) is not None]
         return shops.cascaded_union(polygons)
 
     def projectxz(self):
-        polygons = [self._crystal_projectxz(n) for n in range(self.ncrystals)]
+        polygons = [self._crystal_projectxz(n) for n in range(self.ncrystals) if self._crystal_projectxz(n) is not None]
         return shops.cascaded_union(polygons)
 
     def projectyz(self):
-        polygons = [self._crystal_projectyz(n) for n in range(self.ncrystals)]
+        polygons = [self._crystal_projectyz(n) for n in range(self.ncrystals) if self._crystal_projectyz(n) is not None]
         return shops.cascaded_union(polygons)
    
     def ellipse(self, u, v, rx, ry, rz):
@@ -76,10 +86,11 @@ class Plot_Cluster(ipas.Ice_Cluster):
         x = np.zeros(27)
         y = np.zeros(27)
         z = np.zeros(27)
-        
+
         X = self.points['x'][ncrys]
         Y = self.points['y'][ncrys]
         Z = self.points['z'][ncrys]
+
         
         prismind = [0, 6, 7, 1, 2, 8, 9, 3, 4, 10, 11, 5]  # prism lines
         i = 0
@@ -118,25 +129,23 @@ class Plot_Cluster(ipas.Ice_Cluster):
         z[25] = Z[6]
 
         ax.plot(x[19:26], y[19:26], z[19:26], color=color)
-        return self
-
-
-    def plot_ellipsoid_aggs(self, clusters, nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy, view, circle=None):
-        #plot multiple aggregates, each a different color
         
-        xell, yell, zell = self._get_ellipsoid_points()
 
+    def plot_ellipsoid_aggs(self, clusters, view='x', circle=None):
+        #plot multiple aggregates, each a different color
+        xell, yell, zell = self._get_ellipsoid_points()
+        
         fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111, projection='3d')
         # 90, 0 for z orientation, 0, 90 for y orientation, 0, 0 for x orientation
         # ax.view_init(elev=90, azim=270)
         
         if view == 'x':
-            ax.view_init(elev=0, azim=90)
-        elif view == 'y':
             ax.view_init(elev=0, azim=0)
+        elif view == 'y':
+            ax.view_init(elev=0, azim=90)
         else:
-            ax.view_init(elev=90, azim=180)
+            ax.view_init(elev=90, azim=0)
         ax.plot_surface(xell, yell, zell, cstride=1, rstride=1, alpha=0.1)
         
         # for i in range(0, 360, 60):
@@ -146,16 +155,15 @@ class Plot_Cluster(ipas.Ice_Cluster):
         start_list = [clus.ncrystals for clus in clusters]
         start = [0]+start_list
         end= [(np.sum([start[i], start[i+1]])) for i in range(len(start_list))] 
-        
         for clus in range(len(clusters)): 
+
             #lowered color range so that darker colors are generated
           
             color = list(np.random.choice(range(10), size=3)/10)
-            for crys in range(start[:-1][clus], end[clus]):
-               
+            color='k'
+            for crys in range(start[:-1][clus], end[clus]):    
                 self._plot_crystal(crys, ax, color)
                 
-            
         if circle is not None:
             xcirc,ycirc = circle.exterior.xy
             ax.plot(xcirc,ycirc, color='green')
@@ -203,20 +211,11 @@ class Plot_Cluster(ipas.Ice_Cluster):
         # ax.view_init(30, i)
         # plt.pause(.001)
 
-#         if view == 'x':
-#             ax.scatter(nearest_geoms_xz[0].x, nearest_geoms_yz[0].y, nearest_geoms_xz[0].y, c='red', s=100, zorder=10)
-#             ax.scatter(nearest_geoms_xz[1].x, nearest_geoms_yz[1].y, nearest_geoms_xz[1].y, c='k', s=100, zorder=10)
-#         elif view == 'y':
-#             ax.scatter(nearest_geoms_xz[0].x, nearest_geoms_yz[0].x, nearest_geoms_yz[0].y, c='red', s=100, zorder=10)
-#             ax.scatter(nearest_geoms_xz[1].x, nearest_geoms_yz[1].x, nearest_geoms_yz[1].y, c='k', s=100, zorder=10)
-#         else: 
-#             ax.scatter(nearest_geoms_xy[0].x, nearest_geoms_xy[0].y, nearest_geoms_yz[0].y, c='red', s=100, zorder=10)
-#             ax.scatter(nearest_geoms_xy[1].x, nearest_geoms_xy[1].y, nearest_geoms_yz[1].y, c='k', s=100, zorder=10)
-
-        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        #current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         #fig.savefig('plot_clusters/'+current_time+'.png',rasterized=True, bbox_inches = 'tight')
-
+        
         plt.show()
+        fig.clear()
         
 
     def plot_ellipse(self, dims):
@@ -239,8 +238,10 @@ class Plot_Cluster(ipas.Ice_Cluster):
         params = self.fit_ellipse(dims)
         ellipse = Ellipse(**params)
 
-        fig = plt.figure(0)
-        ax = fig.add_subplot(111)
+        #fig = plt.figure(0)
+        #ax = fig.add_subplot(111)
+        fig, ax = plt.subplots(1,1)
+      
         ax.add_artist(ellipse)
         ellipse.set_alpha(.9)  # opacity
         ellipse.set_facecolor('darkorange')
@@ -362,9 +363,12 @@ class Plot_Cluster(ipas.Ice_Cluster):
             newy = [newyleft, newyright]
             ax.plot(newx, newy, color='white', linewidth=3)
             ax.plot(newx, newy, 'wo', markersize=2)
+            ax.set_xlim(-5,5)
+            ax.set_ylim(-5,5)
 
             ax.set_aspect('equal', 'datalim')
             plt.show()
+            
         return params
 
     
