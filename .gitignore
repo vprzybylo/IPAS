@@ -3,9 +3,11 @@
 
 # Ignore these folders
 instance_files
-db_files
+db_files*
 profile_stats
 *.pyc
 slurm-*
 worker
 *checkpoint.ipynb
+ dask-worker-space
+plot*
