@@ -1,4 +1,3 @@
-
 """Class representing ice clusters or aggregates. Parent class that defines point arrays, 
 crystals within the cluster, and methods to move and reorient the arrays"""
 

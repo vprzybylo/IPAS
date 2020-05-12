@@ -15,10 +15,7 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
     list_of_clusters = []
     a = (r ** 3 / phio) ** (1. / 3.)
     c = phio * a
-    if c < a:
-        plates = True
-    else:
-        plates = False
+
 
     count = 0
     for n in range(nclusters):
@@ -60,9 +57,10 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             cluster.spheroid_axes()  # radii lengths - 3 axes
             cluster.complexity()
             cluster.phi_2D_rotate()
+            cluster.points = cluster.orient_points
              
-#             print('w')
-#             cluster.plot_ellipsoid_aggs([cluster], view='w', circle=None)
+            print('w')
+            cluster.plot_ellipsoid_aggs([cluster], view='w', circle=None)
 #             print('x')
 #             cluster.plot_ellipsoid_aggs([cluster], view='x', circle=None)
 #             print('y')

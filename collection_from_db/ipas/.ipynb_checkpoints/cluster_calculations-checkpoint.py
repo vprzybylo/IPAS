@@ -238,51 +238,28 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         return [xxtotal, yytotal, xytotal]
 
 
-    def aspect_ratio(self, cluster2, method, minor):
-        # rotation = self.rotation
+    def depth(self):
+        maxz = self.points['z'].max()
+        minz = self.points['z'].min()
+        return maxz - minz
 
-        # get depth measurement in z
-
-        self.maxz = self.points['z'][:self.ncrystals].max()
-        self.minz = self.points['z'][:self.ncrystals].min()
-        # print(self.maxz, self.minz, self.maxz-self.minz)
-        self.depth = self.maxz - self.minz
-
-        # self.rotate_to([0, 0, 0]) #commented out to keep at current rotation
+    def major_ax(self, dim):
+        major_axis = {}
+        minor_axis = {}
         # getting ellipse axes from 3 perspectives
         ellipse = {}
         dims = [['x', 'y']]
         ellipse['z'] = self.fit_ellipse(dims)
         dims = [['x', 'z']]
-        # self.rotate_to([np.pi / 2, 0, 0])
         ellipse['y'] = self.fit_ellipse(dims)
         dims = [['y', 'z']]
-        # self.rotate_to([np.pi / 2, np.pi / 2, 0])
         ellipse['x'] = self.fit_ellipse(dims)
 
-        # put the cluster back
-        # self.rotate_to([0, 0, 0])
-
         for dim in ellipse.keys():
-            self.major_axis[dim] = max(ellipse[dim]['height'], ellipse[dim]['width'])
-            self.minor_axis[dim] = min(ellipse[dim]['height'], ellipse[dim]['width'])
-
-        if minor == 'minorxy':
-            if method == 1:
-                return max(self.major_axis.values()) / max(self.minor_axis.values())
-            elif method == 'plate':
-                return max(self.minor_axis['x'], self.minor_axis['y']) / self.major_axis['z']
-            elif method == 'column':
-                return self.major_axis['z'] / max(self.minor_axis['x'], self.minor_axis['y'])
-        elif minor == 'depth':  # use depth as minor dimension of aggregate
-            if method == 1:
-                return max(self.major_axis.values()) / max(self.minor_axis.values())
-            elif method == 'plate':
-                # print(self.depth, self.major_axis['z'], self.depth/self.major_axis['z'])
-                return self.depth / self.major_axis['z']
-            elif method == 'column':
-                # print(self.major_axis['z'], self.depth, self.major_axis['z']/self.depth)
-                return self.major_axis['z'] / self.depth
+            major_axis[dim] = max(ellipse[dim]['height'], ellipse[dim]['width'])
+            minor_axis[dim] = min(ellipse[dim]['height'], ellipse[dim]['width'])
+        
+        return major_axis[dim]
 
     def phi_2D(self):
 

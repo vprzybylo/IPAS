@@ -233,54 +233,30 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
             yytotal -= hole_moments[1]
             xytotal -= hole_moments[2]
         return [xxtotal, yytotal, xytotal]
-
-
-    def aspect_ratio(self, cluster2, method, minor):
-        # rotation = self.rotation
-
-        # get depth measurement in z
-
+    
+    def depth(self):
         self.maxz = self.points['z'][:self.ncrystals].max()
         self.minz = self.points['z'][:self.ncrystals].min()
-        # print(self.maxz, self.minz, self.maxz-self.minz)
-        self.depth = self.maxz - self.minz
+        return self.maxz - self.minz
 
-        # self.rotate_to([0, 0, 0]) #commented out to keep at current rotation
+    def major_ax(self, dim):
+        major_axis = {}
+        minor_axis = {}
         # getting ellipse axes from 3 perspectives
         ellipse = {}
         dims = [['x', 'y']]
         ellipse['z'] = self.fit_ellipse(dims)
         dims = [['x', 'z']]
-        # self.rotate_to([np.pi / 2, 0, 0])
         ellipse['y'] = self.fit_ellipse(dims)
         dims = [['y', 'z']]
-        # self.rotate_to([np.pi / 2, np.pi / 2, 0])
         ellipse['x'] = self.fit_ellipse(dims)
-
-        # put the cluster back
-        # self.rotate_to([0, 0, 0])
 
         for dim in ellipse.keys():
             self.major_axis[dim] = max(ellipse[dim]['height'], ellipse[dim]['width'])
             self.minor_axis[dim] = min(ellipse[dim]['height'], ellipse[dim]['width'])
-
-        if minor == 'minorxy':
-            if method == 1:
-                return max(self.major_axis.values()) / max(self.minor_axis.values())
-            elif method == 'plate':
-                return max(self.minor_axis['x'], self.minor_axis['y']) / self.major_axis['z']
-            elif method == 'column':
-                return self.major_axis['z'] / max(self.minor_axis['x'], self.minor_axis['y'])
-        elif minor == 'depth':  # use depth as minor dimension of aggregate
-            if method == 1:
-                return max(self.major_axis.values()) / max(self.minor_axis.values())
-            elif method == 'plate':
-                # print(self.depth, self.major_axis['z'], self.depth/self.major_axis['z'])
-                return self.depth / self.major_axis['z']
-            elif method == 'column':
-                # print(self.major_axis['z'], self.depth, self.major_axis['z']/self.depth)
-                return self.major_axis['z'] / self.depth
-
+        
+        return self.major_axis[dim]
+    
     def phi_2D(self):
 
         ellipse = self.fit_ellipse([['x', 'z']])
@@ -318,7 +294,6 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
             self.plot_ellipse(dims=[['x', 'y']])
 
         self.phi2D = sum(phi) / len(phi)
-        self.points = self.orient_points
 
         # if np.isnan(phi).any():
 
@@ -327,27 +302,14 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         return self.phi2D
         # return reduce(lambda x, y: x + y, phi) / len(phi)
 
-    def depth_horizontal_phi(self):
+    def depth_horizontal_phi(self, depth):
         # "A Statistical and Physical Description
         # of Hydrometeor Distributions in Colorado Snowstorms
         # Using a Video Disdrometer” by Brandes
         maxx = np.nanmax(self.points['x'])
         minx = np.nanmin(self.points['x'])
-        return (self.depth / (maxx - minx))
+        return (depth / (maxx - minx))
 
-    def overlap(self, new_crystal, seedcrystal):
-
-        agg_nonew = self.projectxy().buffer(0)
-
-        rel_area = self.projectxy().buffer(0).intersection(new_crystal.projectxy().buffer(0))
-        # rel_area = self.projectxy().buffer(0).intersection(new_crystal.projectxy().buffer(0))
-
-        # pctovrlp1 = (rel_area.area/(seedcrystal.projectxy().area+new_crystal.projectxy().area-rel_area.area))*100
-        pctovrlp = (rel_area.area / (self.projectxy().area + new_crystal.projectxy().area)) * 100
-        # pctovrlp = (rel_area.area/(new_crystal.projectxy().area+self.projectxy().area))*100
-        # print('rel',rel_area.area)
-        # print(pctovrlp)
-        return (pctovrlp)
 
     def _make_circle(self, points):
         # Convert to float and randomize order

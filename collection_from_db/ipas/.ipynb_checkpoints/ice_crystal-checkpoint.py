@@ -15,11 +15,11 @@ import numpy.linalg as la
 class Ice_Crystal():
 
     """A hexagonal prism representing a single ice crystal."""     
-    def __init__(self, c, a, center=[0, 0, 0], rotation=[0, 0, 0]):
+    def __init__(self, a, c, center=[0, 0, 0], rotation=[0, 0, 0]):
         """Create an ice crystal."""
         
-        self.c = c
         self.a = a
+        self.c = c
         self.phi = self.c/self.a
         self.r = int(np.round(np.power((np.power(self.a,2)*self.c),(1./3.))))
         self.center = [0, 0, 0] # start the crystal at the origin

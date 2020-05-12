@@ -229,47 +229,53 @@ class Ice_Crystal():
         new_pt = list_of_points[1]
         return (agg_pt, new_pt)
     
-    def closest_points(self, cluster2):
-            
+     def closest_points(self, cluster2):
+
         minclus2 = np.amin(cluster2.points['z'])
         maxclus1 = np.amax(self.points['z'])
 
         if minclus2 < maxclus1:
             diffmins = maxclus1 - minclus2
-            #self.plot_ellipsoid()
-            #cluster2.plot_ellipsoid()
-            #print('moving cluster2 up')
             cluster2.move([0, 0, diffmins])
 
         try:
-            clus1projxz = self.projectxz()
-            clus2projxz = cluster2.projectxz()
-            clus1projyz = self.projectyz()
-            clus2projyz = cluster2.projectyz()
-            clus1projxy = self.projectxy()
-            clus2projxy = cluster2.projectxy()
+            nearest_geoms_xz = nearest_points(self.projectxz(), cluster2.projectxz())
+            nearest_geoms_yz = nearest_points(self.projectyz(), cluster2.projectyz())
+            nearest_geoms_xy = nearest_points(self.projectxy(), cluster2.projectxy())
+            #print('z from yz', nearest_geoms_yz[0].x, nearest_geoms_yz[0].y)
 
-            nearest_geoms_xz = nearest_points(clus1projxz, clus2projxz)
-            nearest_geoms_yz = nearest_points(clus1projyz, clus2projyz)
-            nearest_geoms_xy = nearest_points(clus1projxy, clus2projxy)
         except ValueError:
-            return (None, None)  
-                
-        movex = nearest_geoms_xz[1].x - nearest_geoms_xz[0].x
-        movey = nearest_geoms_yz[1].x - nearest_geoms_yz[0].x
-        movez_xz = nearest_geoms_xz[1].y - nearest_geoms_xz[0].y
-        movez_yz = nearest_geoms_yz[1].y - nearest_geoms_yz[0].y
-        
-        #print('movez_xz, movez_yz', movez_xz, movez_yz)
-        cluster2.move([-movex, -movey, -(max(abs(movez_xz), abs(movez_yz)))])
-        #print('pts1', cluster2.points['x'].max(), cluster2.points['y'].max())
-        #move in x-y
-        movex = nearest_geoms_xy[1].x - nearest_geoms_xy[0].x
-        movey = nearest_geoms_xy[1].y - nearest_geoms_xy[0].y
-        #if movex != 0.0 or movey != 0.0:
-        #    print('moving x-y', movex, movey)
-            
-        cluster2.move([-movex, -movey, 0])
+            return (None, None)
+
+#         self.add_crystal(cluster2)
+#         self.plot_ellipsoid_aggs([self], nearest_geoms_xz=nearest_geoms_xz, nearest_geoms_yz=nearest_geoms_yz,\
+#                                  nearest_geoms_xy=nearest_geoms_xy, view='x', circle=None)
+#         self.plot_ellipsoid_aggs([self], nearest_geoms_xz=nearest_geoms_xz, nearest_geoms_yz=nearest_geoms_yz,\
+#                                  nearest_geoms_xy=nearest_geoms_xy, view='y', circle=None)
+
+#         self.remove_crystal(cluster2)
+
+        agg_yz = np.array([nearest_geoms_yz[0].x, nearest_geoms_yz[0].y]) #agg
+        xtal_yz = np.array([nearest_geoms_yz[1].x, nearest_geoms_yz[1].y]) #crystal2
+
+        stacked = np.array([self.points['y'].ravel(), self.points['z'].ravel()]).T
+        tree = spatial.cKDTree(stacked)  
+        distance, index = tree.query([xtal_yz], n_jobs=-1)
+        agg_xyz_closest = self.points.ravel()[index]
+
+        move_y = xtal_yz[0]-agg_yz[0]
+        movez_yz = xtal_yz[1]-agg_yz[1]    
+
+        nearpt_xz = nearest_points(Point(agg_xyz_closest['x'],agg_xyz_closest['z']), cluster2.projectxz())
+#         cluster.add_crystal(cluster2)
+#         cluster.plot_ellipsoid_aggs([cluster], nearest_geoms_xz=nearest_geoms_xz, nearest_geoms_yz=nearest_geoms_yz,\
+#                                      nearest_geoms_xy=nearest_geoms_xy, view='x', circle=None)
+
+#         cluster.remove_crystal(cluster2)
+
+        move_x = nearpt_xz[1].x-nearpt_xz[0].x
+        movez_xz = nearpt_xz[1].y-nearpt_xz[0].y
+        cluster2.move([-move_x, -move_y, -(max(abs(movez_xz), abs(movez_yz)))])
 
         return (nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy)
     

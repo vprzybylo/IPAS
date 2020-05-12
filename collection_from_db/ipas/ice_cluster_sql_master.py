@@ -20,20 +20,23 @@ import time
 from shapely.ops import nearest_points
 from matplotlib.patches import Ellipse
 import operator
+from scipy import spatial
         
 #Master Class
 class Ice_Cluster():
     
     def __init__(self, cluster):
 
-        self.ncrystals = cluster.ncrystals-1  #crystal 1 is not appended to db
+        self.ncrystals = cluster.ncrystals 
         self.rotation = Quaternion()
         self.points = cluster.points
+        self.add_points = None
+        self.orient_points = None
         self.a = cluster.a
         self.b = cluster.b
         self.c = cluster.c
-        self.monor = cluster.r
-        self.monophi = cluster.phi
+        self.monor = cluster.mono_r
+        self.monophi = cluster.mono_phi
         self.r = cluster.agg_r
         self.phi = cluster.agg_phi
         self.plates = None
@@ -53,6 +56,15 @@ class Ice_Cluster():
     def remove_cluster(self, cluster):
         self.points = self.points[:-cluster.ncrystals]
         self.ncrystals -= cluster.ncrystals
+        
+    def add_crystal(self, crystal):
+        self.points = np.vstack((self.points, crystal.points))
+        self.ncrystals += crystal.ncrystals
+        return self  #to make clus 3 instance
+    
+    def remove_crystal(self, crystal):
+        self.points = self.points[:-crystal.ncrystals]
+        self.ncrystals -= crystal.ncrystals
 
     def move(self, xyz):
         # move the entire cluster 
@@ -90,8 +102,6 @@ class Ice_Cluster():
 
         # save the new rotation
         self.rotation = desired_rot
-        # self.saverot = euler_angles
-        return self  # return self to chain calls
 
     # def rotate_to(self, angles):
     #     # rotate the entire cluster
@@ -165,41 +175,46 @@ class Ice_Cluster():
 
         if minclus2 < maxclus1:
             diffmins = maxclus1 - minclus2
-            # self.plot_ellipse([['x','z']])
-            # cluster2.plot_ellipse([['x','z']])
-            # self.plot_ellipsoid_agg_agg(cluster2)
-            # print('moving cluster2 up')
-
             cluster2.move([0, 0, diffmins])
 
         try:
             nearest_geoms_xz = nearest_points(self.projectxz(), cluster2.projectxz())
             nearest_geoms_yz = nearest_points(self.projectyz(), cluster2.projectyz())
             nearest_geoms_xy = nearest_points(self.projectxy(), cluster2.projectxy())
-            
+            #print('z from yz', nearest_geoms_yz[0].x, nearest_geoms_yz[0].y)
 
         except ValueError:
             return (None, None)
 
-        #print('before moving')
-        #self.add_cluster(cluster2)
-        #self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='x')
-        #self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='y')
-        #self.plot_ellipsoid_agg_agg(cluster2, nearest_geoms, nearest_geoms_y, view='z')
-        #self.remove_cluster(cluster2)
+#         self.add_crystal(cluster2)
+#         self.plot_ellipsoid_aggs([self], nearest_geoms_xz=nearest_geoms_xz, nearest_geoms_yz=nearest_geoms_yz,\
+#                                  nearest_geoms_xy=nearest_geoms_xy, view='x', circle=None)
+#         self.plot_ellipsoid_aggs([self], nearest_geoms_xz=nearest_geoms_xz, nearest_geoms_yz=nearest_geoms_yz,\
+#                                  nearest_geoms_xy=nearest_geoms_xy, view='y', circle=None)
 
-        movex = nearest_geoms_xz[1].x - nearest_geoms_xz[0].x
-        movey = nearest_geoms_yz[1].x - nearest_geoms_yz[0].x
-        movez_xz = nearest_geoms_xz[1].y - nearest_geoms_xz[0].y
-        movez_yz = nearest_geoms_yz[1].y - nearest_geoms_yz[0].y
-        # print(movez_xz, movez_yz)
-        # print(-movex, -movey, -(max(abs(movez_xz), abs(movez_yz))))
-        cluster2.move([-movex, -movey, -(max(abs(movez_xz), abs(movez_yz)))])
-        
-        #move in x-y
-        movex = nearest_geoms_xy[1].x - nearest_geoms_xy[0].x
-        movey = nearest_geoms_xy[1].y - nearest_geoms_xy[0].y
-        cluster2.move([-movex, -movey, 0])
+#         self.remove_crystal(cluster2)
+
+        agg_yz = np.array([nearest_geoms_yz[0].x, nearest_geoms_yz[0].y]) #agg
+        xtal_yz = np.array([nearest_geoms_yz[1].x, nearest_geoms_yz[1].y]) #crystal2
+
+        stacked = np.array([self.points['y'].ravel(), self.points['z'].ravel()]).T
+        tree = spatial.cKDTree(stacked)  
+        distance, index = tree.query([xtal_yz], n_jobs=-1)
+        agg_xyz_closest = self.points.ravel()[index]
+
+        move_y = xtal_yz[0]-agg_yz[0]
+        movez_yz = xtal_yz[1]-agg_yz[1]    
+
+        nearpt_xz = nearest_points(Point(agg_xyz_closest['x'],agg_xyz_closest['z']), cluster2.projectxz())
+#         cluster.add_crystal(cluster2)
+#         cluster.plot_ellipsoid_aggs([cluster], nearest_geoms_xz=nearest_geoms_xz, nearest_geoms_yz=nearest_geoms_yz,\
+#                                      nearest_geoms_xy=nearest_geoms_xy, view='x', circle=None)
+
+#         cluster.remove_crystal(cluster2)
+
+        move_x = nearpt_xz[1].x-nearpt_xz[0].x
+        movez_xz = nearpt_xz[1].y-nearpt_xz[0].y
+        cluster2.move([-move_x, -move_y, -(max(abs(movez_xz), abs(movez_yz)))])
 
         return (nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy)
 
@@ -256,17 +271,42 @@ class Ice_Cluster():
     def orient_cluster(self, rand_orient=False):
         # orient a cluster either randomly or to the rotation that maximizes the area
         if rand_orient:
-            self._reorient()
-
+            #self._reorient()
+            xrot, yrot, zrot=random.uniform(0, 2 * np.pi),random.uniform(0, 2 * np.pi),random.uniform(0, 2 * np.pi)
+            self.rotate_to([xrot, yrot, 0])   
+    
         else:
-            
-            f = lambda x: self.rotate_to([x, 0, 0]).projectxy().area
-            xrot = opt.minimize_scalar(f, bounds=(0, np.pi / 2), method='Bounded', tol=1e-7).x
+#             f = lambda x: self.rotate_to([x, 0, 0], self.points).projectxy().area
+#             xrot = opt.minimize_scalar(f, bounds=(0, np.pi / 2), method='Bounded', tol=1e-7).x
 
-            f = lambda x: self.rotate_to([0, x, 0]).projectxy().area
-            yrot = opt.minimize_scalar(f, bounds=(0, np.pi / 2), method='Bounded', tol=1e-7).x
-            best_rotation = [xrot, yrot, 0]
-            self.rotate_to(best_rotation)
+#             f = lambda x: self.rotate_to([0, x, 0], self.points).projectxy().area
+#             yrot = opt.minimize_scalar(f, bounds=(0, np.pi / 2), method='Bounded', tol=1e-7).x
+#            best_rotation = [xrot, yrot, 0]
+            #print(self.points)
+            
+            area_og = 0
+            for i in np.arange(0., np.pi/2, 0.01):
+                self.rotate_to([i,0,0])
+                area = self.projectxy().area
+                if area > area_og:
+                    xrot = i
+                    area_og=area
+                #self.points = self.add_points
+            
+            area_og = 0
+            for i in np.arange(0.,np.pi/2, 0.01):
+                self.rotate_to([0,i,0])
+                area = self.projectxy().area
+                
+                if area > area_og:
+                    yrot = i
+                    area_og=area
+                #self.points = self.add_points
+            
+            zrot=random.uniform(0,np.pi/2)
+
+            best_rot = [xrot,yrot,zrot]
+            self.rotate_to(best_rot)   
       
 
    

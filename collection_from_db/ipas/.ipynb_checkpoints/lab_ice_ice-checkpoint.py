@@ -19,8 +19,8 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
     agg_cs = []
     phi2Ds = []    
     dds = []
-    
-    start1 = time.time()
+    depths = []
+    major_ax_zs = []
     
     list_of_clusters = []
     a = (r ** 3 / phio) ** (1. / 3.)
@@ -39,7 +39,8 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
         crystal1.hold_clus = crystal1.points
         crystal1.orient_crystal(rand_orient)
         crystal1.recenter()
-        cluster = ipas.Cluster_Calculations(crystal1)  #cluster will start with a random orientation if crystal was reoriented
+        #cluster will start with a random orientation if crystal was reoriented
+        cluster = ipas.Cluster_Calculations(crystal1)  
         
         while cluster.ncrystals < ncrystals: 
             
@@ -56,17 +57,12 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
 
             cluster.closest_points(crystal2)
             
+            #starting volume ratio between monomer and fit ellipsoid
             a1=np.power((np.power(crystal1.r,3)/crystal1.phi),(1./3.))
             c1= crystal1.phi*a1
             Va = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 
-          
             a_crys_ell,b_crys_ell,c_crys_ell= crystal1.spheroid_axes()
-            #cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None)
             Ve = 4./3.*np.pi*a_crys_ell*b_crys_ell*c_crys_ell 
-            #print('a b c', a_crys_ell,b_crys_ell,c_crys_ell )
-
-            #print('Va, Ve before :', Va, Ve)
-
             d1 = Va/Ve 
 
             cluster.add_crystal(crystal2)
@@ -80,6 +76,9 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             cluster.orient_points = cp.deepcopy(cluster.points)
             
             cluster.spheroid_axes()  # radii lengths - 3 axes
+            
+            depths.append(cluster.depth())
+            major_ax_zs.append(cluster.major_ax('z'))
             agg_a, agg_b, agg_c = cluster.spheroid_axes()  
             agg_as.append(agg_a)
             agg_bs.append(agg_b)
@@ -90,14 +89,11 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             a1=np.power((np.power(crystal1.r,3)/crystal1.phi),(1./3.))
             c1= crystal1.phi*a1
             Va = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 *cluster.ncrystals
-            #print('a c', a1, c1 )
-            #print('a b c', cluster.agg_a,cluster.agg_b,cluster.agg_c )
             Ve = 4./3.*np.pi*cluster.agg_a*cluster.agg_b*cluster.agg_c 
-            #print('Va, Ve after collection :', Va, Ve)
             d2 = Va/Ve 
             dd=d2-d1
             dds.append(dd) #change in density
-            print(d1, d2, dd)
+            #print(d1, d2, dd)
             d1=d2 
       
             #-------------------------------------
@@ -107,6 +103,7 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             
             cplxs.append(cplx)
             phi2Ds.append(cluster.phi_2D())
+            cluster.points = cluster.orient_points
             
 #             print('w')
 #             cluster.plot_ellipsoid_aggs([cluster], view='w', circle=None)
@@ -122,4 +119,4 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
 
 
     print('made it to the end of collect_clusters loops')
-    return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds
+    return agg_as, agg_bs, agg_cs, major_ax_zs, depths, phi2Ds, cplxs, dds
