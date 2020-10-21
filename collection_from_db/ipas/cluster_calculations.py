@@ -455,7 +455,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
 
             
             self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
-            #print('Ap, Ac, P cplx= ', Ap, Ac, P, self.cplx)
+            print('Ap, Ac, P cplx= ', Ap, Ac, P, self.cplx)
             return (self.cplx, circle)
         else:
             return -999, None

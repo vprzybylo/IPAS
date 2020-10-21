@@ -63,7 +63,7 @@ def collect_clusters(a, c, clusters, rand_orient=False):
         if a[n]>c[n] and rand_orient== False:
             cluster.orient_cluster() 
         else:
-                cluster.orient_cluster(rand_orient) 
+            cluster.orient_cluster(rand_orient) 
         cluster.recenter()
         cluster.orient_points = cp.deepcopy(cluster.points)
 
@@ -77,8 +77,8 @@ def collect_clusters(a, c, clusters, rand_orient=False):
         Ve3 = 4./3.*np.pi*agg_a*agg_b*agg_c  #volume of ellipsoid for new agg
         d2 = (Va_clus+Va_mono)/Ve3
         
-        #print(d2-d1)
-        dds.append(d2-d1)
+        #print((d2-d1)/d1)
+        dds.append((d2-d1)/d1)
 
         #-------------------------------------
 
@@ -88,13 +88,11 @@ def collect_clusters(a, c, clusters, rand_orient=False):
         cluster.points = cluster.orient_points
  
 #         print('w')   
-#         cluster.plot_ellipsoid_aggs([cluster, monomer], view='w', circle=None)
-#        print('x')
-#        cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=None)
-#         print('y')
-#         cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None)
-#        print('z')
-#        cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None)
+#        cluster.plot_ellipsoid_aggs([cluster, monomer], view='w', circle=None)
+        cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=None)
+        cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None)
+#         print('z')
+#         cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None)
     #characteristic values determined in postprocessing
     return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds
   

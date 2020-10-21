@@ -59,7 +59,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         U, D, V = la.svd(A)  # singular-value decomposition
         rx, ry, rz = 1. / np.sqrt(D)  # D is a diagonal matrix
         self.agg_a, self.agg_b, self.agg_c = sorted([rx, ry, rz], reverse=True)
-        return self.agg_a, self.agg_b, self.agg_c
+        return self.agg_a, self.agg_b, self.agg_c #radii
 
     def ellipse(self, u, v, rx, ry, rz):
         x = rx * np.cos(u) * np.cos(v)

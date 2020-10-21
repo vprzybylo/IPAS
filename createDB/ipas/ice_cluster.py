@@ -37,7 +37,6 @@ class Ice_Cluster():
         self.orient_points = None
         self.mono_phi = crystal.phi
         self.mono_r = crystal.r
-        self.tol_ellipse = 10 ** -3
         
     def to_dict(self):
         return {
