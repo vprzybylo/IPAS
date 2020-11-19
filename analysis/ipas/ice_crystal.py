@@ -15,7 +15,7 @@ import numpy.linalg as la
 class Ice_Crystal():
 
     """A hexagonal prism representing a single ice crystal."""     
-    def __init__(self, a, c , center=[0, 0, 0], rotation=[0, 0, 0]):
+    def __init__(self, a, c, center=[0, 0, 0], rotation=[0, 0, 0]):
         """Create an ice crystal."""
         
         self.a = a
@@ -344,7 +344,7 @@ class Ice_Crystal():
         self.agg_a, self.agg_b, self.agg_c = sorted([rx, ry, rz], reverse=True)
         return self.agg_a, self.agg_b, self.agg_c
 
-    def plot_ellipsoid(self, cluster, nearest_geoms_xz=None, nearest_geoms_yz=None, nearest_geoms_xy=None, view='y', circle=None):
+    def plot_ellipsoid(self, cluster, nearest_geoms_xz=None, nearest_geoms_yz=None, nearest_geoms_xy=None, view='x', circle=None):
         
         fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111, projection='3d')

@@ -10,52 +10,29 @@ from pyquaternion import Quaternion
 import pickle
 from shapely.geometry import Point
 from shapely.ops import nearest_points
-import numpy.linalg as la
 
-class Ice_Crystal():
+class IceCrystal():
 
-    """A hexagonal prism representing a single ice crystal."""     
-    def __init__(self, a, c , center=[0, 0, 0], rotation=[0, 0, 0]):
+    """A hexagonal prism representing a single ice crystal.""" 
+    
+    def __init__(self, monomer):
         """Create an ice crystal."""
-        
-        self.a = a
-        self.c = c
-        self.phi = self.c/self.a
-        self.r = int(np.round(np.power((np.power(self.a,2)*self.c),(1./3.))))
+    
+        self.phi = monomer.phi
+        self.r = monomer.r
+        self.points = np.array(pickle.loads(monomer.points), dtype=[('x', float), ('y', float), ('z', float)]) 
+        self.og_points = None
+        self.a = (self.r*2)**3./(self.phi**(1./3.))
+        self.b = 2*(((self.r*2)**3./(self.phi**(1./3.))/2.)*np.sin(60))
+        self.c = self.phi*((self.r*2)**3./(self.phi**(1./3.)))
         self.center = [0, 0, 0] # start the crystal at the origin
-        self.rotation = Quaternion()
+        self.rotation = Quaternion()  
+        self.og_rot = None
+        #self.move(self.center) # move the crystal
+        self.tol = 10 ** -11 # used for some calculations
         self.ncrystals = 1
-        self.hold_clus = None
-        
-        # put together the hexagonal prism
-        ca = c*2  #diameter
-        mf = a*2  #diameter
-        f = np.sqrt(3) / 4 # convenient number for hexagons
-        x1 = ca / 2
-
-        #creates 12 point arrays for hexagonal prisms
-
-        if c < a:  #initialize plates so that the basal face is falling down
-            self.points = np.array([(mf*f, -mf / 4, x1), (mf * f, mf / 4, x1),
-                        (0, mf / 2, x1), (-mf * f, mf / 4, x1),
-                        (-mf * f, -mf / 4, x1), (0, -mf/2, x1),
-                        (mf * f, -mf / 4, -x1), (mf * f, mf / 4, -x1),
-                        (0, mf / 2, -x1), (-mf * f, mf / 4, -x1),
-                        (-mf * f, -mf / 4, -x1), (0, -mf/2, -x1)],
-                       dtype=[('x', float), ('y', float), ('z', float)])
-            
-
-        else:  #initialize points so that columns fall prism face down
-            self.points = np.array([(x1, -mf / 4, mf * f), (x1, mf / 4, mf * f),
-                        (x1, mf / 2, 0), (x1, mf / 4, -mf * f),
-                        (x1, -mf / 4, -mf * f), (x1, -mf/2, 0),
-                        (-x1, -mf / 4, mf * f), (-x1, mf / 4, mf * f),
-                        (-x1, mf / 2, 0), (-x1, mf / 4, -mf * f),
-                        (-x1, -mf / 4, -mf * f), (-x1, -mf/2, 0)],
-                       dtype=[('x', float), ('y', float), ('z', float)])
-
-        self.rotate_to(rotation) # rotate the crystal
-        self.move(center) # move the crystal to center
+        self.agg_r = None
+        self.agg_phi = None
 
     def move(self, xyz):  #moves the falling crystal anywhere over the seed crystal/aggregate within the max bounds
         self.points['x'] += xyz[0]
@@ -79,19 +56,21 @@ class Ice_Crystal():
         self.ncrystals += crystal.ncrystals
         return self  #to make clus 3 instance
     
-    def remove_crystal(self, crystal):
-        self.points = self.points[:-crystal.ncrystals]
-        self.ncrystals -= crystal.ncrystals
-    
     def remove_cluster(self, crystal):
         self.points = self.points[:-crystal.ncrystals]
         self.ncrystals -= crystal.ncrystals
 
     def _rotate_mat(self, mat):  #when a crystal is rotated, rotate the matrix with it
-        points=cp.deepcopy(self.points)
+        points = cp.deepcopy(self.points)
+        points1 = self.points['x']
+        print(mat[0, 0],mat[0, 1], mat[0, 2])
         self.points['x'] = points['x'] * mat[0, 0] + points['y'] * mat[0, 1] + points['z'] * mat[0, 2]
         self.points['y'] = points['x'] * mat[1, 0] + points['y'] * mat[1, 1] + points['z'] * mat[1, 2]
         self.points['z'] = points['x'] * mat[2, 0] + points['y'] * mat[2, 1] + points['z'] * mat[2, 2]
+        points2 = self.points['z']
+        if points1.any() != points2.any():
+            print('changed')
+        print('------------')
         
     def _euler_to_mat(self, xyz):
         #Euler's rotation theorem, any rotation may be described using three angles.
@@ -119,14 +98,13 @@ class Ice_Crystal():
             self.center[n] = self.points[xyz[n]].mean()
         self.rotation = desired_rot
         return self
-        
 
     def _reorient(self, method='random', rotations=1):
         #reorient a crystal x random rotations to mimic IPAS in IDL instead of automatically
         #using the xrot and yrot from max area function in lap module
         #This function was only used for old runs
         #computation time is diminished using 'speedy' and bypassing this
-        
+
         if method == 'IDL':
             # based on max_area2.pro from IPAS
             max_area = 0
@@ -152,7 +130,6 @@ class Ice_Crystal():
             self._rotate_mat(rot_mat)
 
         elif method == 'random':
-            
             # same as IDL but only rotating one time, with a real
             # random rotation
             max_area = 0
@@ -160,7 +137,7 @@ class Ice_Crystal():
             for i in range(rotations):
                 desired_rot = Quaternion.random()
                 rot_mat = (desired_rot * current_rot.inverse).rotation_matrix
-                self._rotate_mat(rot_mat)
+                self.points = self._rotate_mat(rot_mat)
                 new_area = self.projectxy().area
                 if new_area > max_area:
                     max_area = new_area
@@ -174,41 +151,44 @@ class Ice_Crystal():
         self.rotation = Quaternion() # set this new rotation as the default
     
     def orient_crystal(self, rand_orient=False):
-        
         #orient a crystal either randomly or to the rotation that maximizes the area
+  
         if rand_orient:
-            #self._reorient()
-            xrot, yrot, zrot=random.uniform(0, 2 * np.pi),random.uniform(0, 2 * np.pi),random.uniform(0, 2 * np.pi)
-            self.rotate_to([xrot, yrot, zrot])   
+            self._reorient()
 
         else:
+            
 #             f = lambda x: -(self.rotate_to([x,0,0]).projectxy().area)
 #             xrot = opt.minimize_scalar(f, bounds=(0, np.pi/2), method='Bounded').x
          
 #             f = lambda x: -(self.rotate_to([0,x,0]).projectxy().area)
 #             yrot = opt.minimize_scalar(f, bounds=(0, np.pi/2), method='Bounded').x
 #             zrot=random.uniform(0, 2 * np.pi)    
-#             self.points = self.hold_clus
             
             area_og = 0
-            for i in np.arange(0.,np.pi/2, 0.1):
-                self.rotate_to([i,0,0])
-                area = self.projectxy().area
+            for i in np.arange(0.,np.pi/180, 0.0001):
+                area = self.rotate_to([i,0,0]).projectxy().area
                 if area > area_og:
                     xrot = i
                     area_og=area
-                self.points = self.hold_clus
-            
+                
+                self.rotation=self.og_rot
+                self.points = self.og_points
+#                 print('in loop og_pts', i, self.points)
+#                 print('in loop og_pts2', i,self.og_points)
+                
             area_og = 0
-            for i in np.arange(0.,np.pi/2, 0.1):
-                self.rotate_to([0,i,0])
-                area = self.projectxy().area
+            for i in np.arange(0.,np.pi/180, 0.0001):
+                area = self.rotate_to([0,i,0]).projectxy().area
                 if area > area_og:
                     yrot = i
                     area_og=area
-                self.points = self.hold_clus
-            zrot=random.uniform(0, 2 * np.pi)
-            best_rot = [xrot,yrot,zrot]             
+                    
+                self.rotation=self.og_rot
+                self.points = self.og_points
+            
+            best_rot = [xrot,yrot, 0]
+            print('best rot x,y', xrot, yrot)
            
             self.rotate_to(best_rot)            
 
@@ -276,32 +256,6 @@ class Ice_Crystal():
 
         return (nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy)
     
-    def plot(self):
-        # return a multiline object representing the edges of the prism
-        lines = []
-        hex1 = self.points[0:6]  #one basal face of a crystal
-        hex2 = self.points[6:12]  #the other basal face
-
-        # make the lines representing each hexagon
-        for hex0 in [hex1, hex2]:
-            lines.append(geom.LinearRing(list(hex0)))
-
-        # make the lines connecting the two hexagons
-        for n in range(6):
-            lines.append(geom.LineString([hex1[n], hex2[n]]))
-
-        return geom.MultiLineString(lines)
-        #shapely automatically plots in jupyter notebook, no figure initialization needed
-
-    def projectxy(self):
-        return geom.MultiPoint(self.points[['x', 'y']]).convex_hull
-
-    def projectxz(self):
-        return geom.MultiPoint(self.points[['x', 'z']]).convex_hull
-
-    def projectyz(self):
-        return geom.MultiPoint(self.points[['y', 'z']]).convex_hull
-    
     def _mvee(self, tol=0.01):  # mve = minimum volume ellipse
         # Based on work by Nima Moshtagh
         # http://www.mathworks.com/matlabcentral/fileexchange/9542
@@ -313,8 +267,9 @@ class Ice_Crystal():
         pi = np.pi
         sin = np.sin
         cos = np.cos
+        points_arr = np.concatenate(self.points)[:self.ncrystals * 12]
         # print('points_Arr', points_arr)
-        points_arr = np.array([list(i) for i in self.points])
+        points_arr = np.array([list(i) for i in points_arr])
         N, d = points_arr.shape
         Q = np.column_stack((points_arr, np.ones(N))).T
 
@@ -343,8 +298,34 @@ class Ice_Crystal():
         rx, ry, rz = 1. / np.sqrt(D)  # D is a diagonal matrix
         self.agg_a, self.agg_b, self.agg_c = sorted([rx, ry, rz], reverse=True)
         return self.agg_a, self.agg_b, self.agg_c
+    
+    def plot(self):
+        # return a multiline object representing the edges of the prism
+        lines = []
+        hex1 = self.points[0:6]  #one basal face of a crystal
+        hex2 = self.points[6:12]  #the other basal face
 
-    def plot_ellipsoid(self, cluster, nearest_geoms_xz=None, nearest_geoms_yz=None, nearest_geoms_xy=None, view='y', circle=None):
+        # make the lines representing each hexagon
+        for hex0 in [hex1, hex2]:
+            lines.append(geom.LinearRing(list(hex0)))
+
+        # make the lines connecting the two hexagons
+        for n in range(6):
+            lines.append(geom.LineString([hex1[n], hex2[n]]))
+
+        return geom.MultiLineString(lines)
+        #shapely automatically plots in jupyter notebook, no figure initialization needed
+
+    def projectxy(self):
+        return geom.MultiPoint(self.points[['x', 'y']]).convex_hull
+
+    def projectxz(self):
+        return geom.MultiPoint(self.points[['x', 'z']]).convex_hull
+
+    def projectyz(self):
+        return geom.MultiPoint(self.points[['y', 'z']]).convex_hull
+
+    def plot_ellipsoid(self, cluster, nearest_geoms_xz=None, nearest_geoms_yz=None, nearest_geoms_xy=None, view='x', circle=None):
         
         fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111, projection='3d')
