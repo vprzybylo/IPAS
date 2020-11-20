@@ -4,7 +4,7 @@
 # Ignore these folders
 instance_files
 db_files*
-IPAS_verification/db_files*
+CPI_verification/final_databases*
 profile_stats
 *.pyc
 slurm-*

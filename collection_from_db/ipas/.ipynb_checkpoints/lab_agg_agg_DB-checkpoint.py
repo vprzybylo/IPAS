@@ -75,26 +75,27 @@ def collect_clusters(clusters1, clusters2, rand_orient=False):
         Vr_avg = np.average([Vr1,Vr2])
         Vr3 = Va3/Ve3  #volumetric ratio after adding an agg, not a monomer
         #print('Vr1, Vr2, Vr3, Vravg', Vr1, Vr2, Vr3, Vr_avg)
-        if Vr3-Vr_avg > 1.0:
-            cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='w', circle=None)
-        dds.append(Vr3-Vr_avg)
-        #print('dd', Vr3-Vr_avg)
+        
+        dds.append((Vr3-Vr_avg)/Vr_avg)
+        #print('dd', (Vr3-Vr_avg)/Vr_avg)
         #-------------------------------------
 
         cplx, circle= cluster3.complexity()
+        #print('cplx', cplx)
         cplxs.append(cplx)
         phi2Ds.append(cluster3.phi_2D_rotate())
         cluster3.points = cluster3.orient_points
-
         
         #print('cluster3 ncrystals', cluster1.ncrystals, cluster2.ncrystals, cluster3.ncrystals)
 
 #         print('w')   
-#         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='w', circle=None)
+        if cplx < 0.3:
+            cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='w', circle=None)
 #         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='y', circle=None)
 #         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='z', circle=None)
-#         cluster2.plot_ellipsoid_aggs([cluster2], view='z', circle=None)
-#         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='z', circle=None)
+        cplx, circle= cluster2.complexity()
+        cluster2.plot_ellipsoid_aggs([cluster2], view='z', circle=None)
+        cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='z', circle=None)
         
     print('made it to the end of collect_clusters loops')
     

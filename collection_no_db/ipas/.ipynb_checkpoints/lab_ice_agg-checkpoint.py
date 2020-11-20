@@ -30,8 +30,8 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
         plates = False
 
     for n in range(nclusters):
-        if n % 20 == 0.:
-            print('nclus',int(np.round(r)), phio, n)
+        #if n % 20 == 0.:
+            #print('nclus',int(np.round(r)), phio, n)
         
         crystal1 = ipas.Ice_Crystal(a, c)
         crystal1.hold_clus = crystal1.points
@@ -62,6 +62,7 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             a_clus=np.power((np.power(cluster.mono_r,3)/cluster.mono_phi),(1./3.))
             c_clus = cluster.mono_phi*a_clus
             Va_clus = 3*(np.sqrt(3)/2) * np.power(a_clus,2) * c_clus * cluster.ncrystals
+            
 
             d1 = Va_clus/Ve_clus
 
@@ -74,9 +75,7 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
                 cluster.orient_cluster(rand_orient) 
             cluster.recenter()
             cluster.orient_points = cp.deepcopy(cluster.points)
-            
-            cluster.spheroid_axes()  # radii lengths - 3 axes
-            
+                        
             depths[n,l] = cluster.depth()
             major_ax_zs[n,l] = cluster.major_ax('z')
             agg_a, agg_b, agg_c = cluster.spheroid_axes()  
@@ -87,19 +86,20 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             #DENSITY CHANGE formed agg ------------------
             a_mono = np.power((np.power(crystal2.r,3)/crystal2.phi),(1./3.))
             c_mono = crystal2.phi*a_mono
-            Va_mono = 3*(np.sqrt(3)/2) * np.power(a_mono,2) * c_mono * crystal2.ncrystals
-
+            Va_mono = 3*(np.sqrt(3)/2) * np.power(a_mono,2) * c_mono
             Ve3 = 4./3.*np.pi*agg_a*agg_b*agg_c  #volume of ellipsoid for new agg
             d2 = (Va_clus+Va_mono)/Ve3
+        
             #print(cluster.ncrystals)
             #print((d2-d1)*100)
-            dds[n,l] = d2-d1
+            dds[n,l] = (d2-d1)/d1
             #-------------------------------------
 
             cluster.complexity()
             cplx, circle= cluster.complexity()
             
             cplxs[n,l] = cplx
+#            print(cplxs[n,l])
             phi2Ds[n,l] = cluster.phi_2D()
             cluster.points = cluster.orient_points
             
@@ -115,5 +115,5 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             cluster_cp = cp.deepcopy(cluster)
             l+=1
 
-    print('made it to the end of collect_clusters loops')
-    return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds, major_ax_zs, depths
+    #print('made it to the end of collect_clusters loops')
+    return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds

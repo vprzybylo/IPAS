@@ -31,8 +31,8 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
 
     count = 0
     for n in range(nclusters):
-        if n % 20 == 0.:
-            print('nclus',int(np.round(r)), phio, n)
+        #if n % 20 == 0.:
+            #print('nclus',int(np.round(r)), phio, n)
 
         crystal1 = ipas.Ice_Crystal(a, c)
         crystal1.hold_clus = crystal1.points
@@ -73,9 +73,7 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
                 cluster.orient_cluster(rand_orient) 
             cluster.recenter()
             cluster.orient_points = cp.deepcopy(cluster.points)
-            
-            cluster.spheroid_axes()  # radii lengths - 3 axes
-            
+                        
             depths.append(cluster.depth())
             major_ax_zs.append(cluster.major_ax('z'))
             agg_a, agg_b, agg_c = cluster.spheroid_axes()  
@@ -84,19 +82,15 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             agg_cs.append(agg_c)
             
             #FOR DENSITY CHANGE ------------------
-            #monomer a and c
-            a1=np.power((np.power(crystal1.r,3)/crystal1.phi),(1./3.))
-            c1= crystal1.phi*a1
-            Va = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 *cluster.ncrystals
+            Va = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 *cluster.ncrystals #2
             Ve = 4./3.*np.pi*cluster.agg_a*cluster.agg_b*cluster.agg_c 
             d2 = Va/Ve 
             dd=d2-d1
+            print(d2, d1, (d2-d1)/d1)
             dds.append(dd) #change in density
             #print(d1, d2, dd)
-            d1=d2 
       
             #-------------------------------------
-
             cluster.complexity()
             cplx, circle= cluster.complexity()
             
@@ -116,5 +110,5 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             cluster_cp = cp.deepcopy(cluster)
 
 
-    print('made it to the end of collect_clusters loops')
+    #print('made it to the end of collect_clusters loops')
     return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds, major_ax_zs, depths
