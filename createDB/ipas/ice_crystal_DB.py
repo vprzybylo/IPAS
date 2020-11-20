@@ -229,7 +229,7 @@ class Ice_Crystal():
         new_pt = list_of_points[1]
         return (agg_pt, new_pt)
     
-     def closest_points(self, cluster2):
+    def closest_points(self, cluster2):
 
         minclus2 = np.amin(cluster2.points['z'])
         maxclus1 = np.amax(self.points['z'])

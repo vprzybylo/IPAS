@@ -1,0 +1,14 @@
+/network/rit/lab/sulialab/share/bin/miniconda3/envs/pangeo/lib/python3.6/site-packages/distributed/dashboard/core.py:72: UserWarning: 
+Port 8787 is already in use. 
+Perhaps you already have a cluster running?
+Hosting the diagnostics dashboard on a random port instead.
+  warnings.warn("\n" + msg)
+dashboard link:  http://169.226.65.82:37779/status
+<Client: 'tcp://169.226.65.82:34045' processes=0 threads=0, memory=0 B>
+scheduler info:  {'type': 'Scheduler', 'id': 'Scheduler-a5e5b965-368e-4a58-af81-506f283a1a23', 'address': 'tcp://169.226.65.82:34045', 'services': {'dashboard': 37779}, 'workers': {}}
+(2, 1, 300, 6, 99)
+DONE!
+Traceback (most recent call last):
+  File "./Ice_Agg.py", line 82, in <module>
+    filehandler.close()
+NameError: name 'filehandler' is not defined
