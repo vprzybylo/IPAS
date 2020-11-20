@@ -1,6 +1,5 @@
-Ice-Ice collection for the random orientation. 
-Volume ratio of monomer (not 1.0) subtracted from volume ratio of agg (Vagg/Vellipse)..
-then normalized by the volume ratio of monomer. 
+Ice-Ice collection for the flat orientation. 
+Volume ratio of monomer (not 1.0) subtracted from volume ratio of agg (Vagg/Vellipse)
 Mode from 300 aggregates. 
 Order: phi, r, value 
 0.010 1.00 -0.9796 
