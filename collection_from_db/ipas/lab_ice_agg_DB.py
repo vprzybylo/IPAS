@@ -68,10 +68,7 @@ def collect_clusters(a, c, clusters, rand_orient=False):
         cluster.orient_points = cp.deepcopy(cluster.points)
 
         agg_a, agg_b, agg_c = cluster.spheroid_axes()  
-        agg_as.append(agg_a)
-        agg_bs.append(agg_b)
-        agg_cs.append(agg_c)
-
+ 
         #DENSITY CHANGE ------------------
         
         Ve3 = 4./3.*np.pi*agg_a*agg_b*agg_c  #volume of ellipsoid for new agg
@@ -86,13 +83,12 @@ def collect_clusters(a, c, clusters, rand_orient=False):
         cplxs.append(cplx)
         phi2Ds.append(cluster.phi_2D_rotate())
         cluster.points = cluster.orient_points
- 
-#         print('w')   
-#        cluster.plot_ellipsoid_aggs([cluster, monomer], view='w', circle=None)
-        cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=None)
-        cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None)
-#         print('z')
-#         cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None)
+        if monomer.phi < 1.0:
+            cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=circle, agg_agg=False)
+            cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=circle, agg_agg=False)
+
+#        cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None, agg_agg=False)
+#        cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None, agg_agg=False)
     #characteristic values determined in postprocessing
     return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds
   

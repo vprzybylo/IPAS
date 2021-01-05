@@ -137,13 +137,13 @@ class Ice_Cluster():
         return center_move
     
     def _crystal_projectxy(self, n):
-        return geom.MultiPoint(self.points[n][['x', 'y']]).convex_hull
+        return geom.MultiPoint(self.points[n][['x', 'y']])
 
     def _crystal_projectxz(self, n):
-        return geom.MultiPoint(self.points[n][['x', 'z']]).convex_hull
+        return geom.MultiPoint(self.points[n][['x', 'z']])
 
     def _crystal_projectyz(self, n):
-        return geom.MultiPoint(self.points[n][['y', 'z']]).convex_hull
+        return geom.MultiPoint(self.points[n][['y', 'z']])
 
     def projectxy(self):
         polygons = [self._crystal_projectxy(n) for n in range(self.ncrystals)]

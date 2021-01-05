@@ -55,6 +55,12 @@ def collect_clusters(clusters1, clusters2, rand_orient=False):
         agg_bs.append(agg_b)
         agg_cs.append(agg_c)
         
+        #if agg_b/agg_a < 0.4:
+#         print('agg mono_phi', cluster1.monophi)
+#         print('agg mono r', cluster1.monor)
+#         print('agg_b', agg_b)
+#         print('agg_a', agg_a)
+#         print('b/a ', agg_b/agg_a)
 
         #DENSITY CHANGE ------------------
         #monomer a and c
@@ -81,7 +87,6 @@ def collect_clusters(clusters1, clusters2, rand_orient=False):
         #-------------------------------------
 
         cplx, circle= cluster3.complexity()
-        #print('cplx', cplx)
         cplxs.append(cplx)
         phi2Ds.append(cluster3.phi_2D_rotate())
         cluster3.points = cluster3.orient_points
@@ -89,13 +94,13 @@ def collect_clusters(clusters1, clusters2, rand_orient=False):
         #print('cluster3 ncrystals', cluster1.ncrystals, cluster2.ncrystals, cluster3.ncrystals)
 
 #         print('w')   
-        if cplx < 0.3:
-            cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='w', circle=None)
+        #if agg_b/agg_a < 0.4:
+        #cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='w', circle=None)
 #         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='y', circle=None)
-#         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='z', circle=None)
-        cplx, circle= cluster2.complexity()
-        cluster2.plot_ellipsoid_aggs([cluster2], view='z', circle=None)
         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='z', circle=None)
+        #cplx, circle= cluster2.complexity()
+#         cluster2.plot_ellipsoid_aggs([cluster2], view='z', circle=None)
+#         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='z', circle=None)
         
     print('made it to the end of collect_clusters loops')
     

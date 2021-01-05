@@ -104,13 +104,13 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             cluster.points = cluster.orient_points
             
 #             print('w')
-#             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None)
+#             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
 #             print('x')
-#             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None)
+#             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
 #             print('y')
-#             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='y', circle=None)
+#             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='y', circle=None, agg_agg=False)
 #             print('z')
-#             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='z', circle=None)
+#             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='z', circle=None, agg_agg=False)
 
             cluster_cp = cp.deepcopy(cluster)
             l+=1

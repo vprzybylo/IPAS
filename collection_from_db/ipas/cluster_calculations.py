@@ -326,7 +326,8 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         # print(pctovrlp)
         return (pctovrlp)
 
-    def _make_circle(self, points):
+    def make_circle(self, points):
+        #https://www.nayuki.io/res/smallest-enclosing-circle/smallestenclosingcircle.py
         # Convert to float and randomize order
         shuffled = [(float(x), float(y)) for (x, y) in points]
         random.shuffle(shuffled)
@@ -424,38 +425,27 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         # Returns twice the signed area of the triangle defined by (x0, y0), (x1, y1), (x2, y2).
         return (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0)
 
-
     def complexity(self):
-        poly3 = self.projectxy()
+        poly3 = self.projectxz()
         Ap = poly3.area
         P = poly3.length
-    
-        #Ap = poly1.area+poly2.area
-        
-        #in the case that the clusters don't perfectly touch, we are still summing both cluster perims
-        #since there is such minimal overlap between clusters
-        #P = poly1.length +poly2.length # perim
-        
-        #next line is for a convex hull around both clusters (even if they are not touching)
-        
+                
         try:
-            multipt = [geom.MultiPoint(self.points[n][['x','y']]) for n in range(self.ncrystals)]
+            multipt = [geom.MultiPoint(self.points[n][['x','z']]) for n in range(self.ncrystals)]
         except IndexError:
-            print('in index error in cplx')
             multipt = None
             
         if multipt is not None:
             poly = shops.cascaded_union(multipt).convex_hull
             x, y = poly.exterior.xy
 
-            circ = self._make_circle([x[i], y[i]] for i in range(len(x)))
+            circ = self.make_circle([x[i], y[i]] for i in range(len(x)))
             circle = Point(circ[0], circ[1]).buffer(circ[2])
-            x, y = circle.exterior.xy
             Ac = circle.area
-
+            print('ar', Ap/Ac, 'Ap', Ap, 'Ac', Ac)
             
             self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
-            #print('Ap, Ac, P cplx= ', Ap, Ac, P, self.cplx)
+            #print('Ap, Ac, P cplx, c', Ap, Ac, P, self.cplx, (np.sqrt(Ac * Ap) / P ** 2))
             return (self.cplx, circle)
         else:
             return -999, None
