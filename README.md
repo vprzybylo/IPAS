@@ -20,7 +20,7 @@
 
 <p align="center">
   <a>
-    <img src="https://github.com/vprzybylo/IPAS/blob/master/logo.png" alt="Logo" width="150" height="150">
+    <img src="https://github.com/vprzybylo/IPAS/blob/master/rotateplot.gif" alt="Logo" width="150" height="150">
   </a>
 
   <h1 align="center">IPAS</h1>
