@@ -9,7 +9,7 @@
 [download-url]: https://github.com/vprzybylo/IPAS/downloads
 [release-shield]: https://img.shields.io/github/v/release/vprzybylo/IPAS?style=plastic
 [release-url]:https://github.com/vprzybylo/IPAS/releases/
-[forks-shield]: https://img.shields.io/github/forks/IPAS/cocpit?label=Fork&style=plastic
+[forks-shield]: https://img.shields.io/github/forks/vprzybylo/IPAS?label=Fork&style=plastic
 [forks-url]: https://github.com/vprzybylo/IPAS/network/members
 [stars-shield]: https://img.shields.io/github/stars/vprzybylo/IPAS?style=plastic
 [stars-url]: https://github.com/vprzybylo/IPAS/stargazers
