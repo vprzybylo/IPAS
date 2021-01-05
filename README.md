@@ -8,8 +8,18 @@ The requirements.txt file lists all Python libraries required to run IPAS in a v
 
     pip install -r requirements.txt
 
+<!---
 ## Folder Structure
 
+1. CPI_verification
+
+- agg_properties.py
+    calculates geometric parameters for IPAS aggregates 
+- compare_agg_properties.ipynb
+    compare IPAS and CPI aggregate properties in the random orientation after combining IPAS and CPI dataframes
+- verify_IPAS.ipynb
+    plots for comparisons between IPAS and CPI complexity, aspect ratio, area ratio, and bulk stats
+-->
 
 ## Deployment
 
