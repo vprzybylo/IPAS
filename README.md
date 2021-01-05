@@ -5,22 +5,22 @@
 [![PyPI download month][download-shield]][download-url]
 [![GitHub release][release-shield]][release-url]
 
-[download-shield]:https://img.shields.io/github/downloads/vprzybylo/cocpit/total?style=plastic
-[download-url]: https://github.com/vprzybylo/cocpit/downloads
-[release-shield]: https://img.shields.io/github/v/release/vprzybylo/cocpit?style=plastic
-[release-url]:https://github.com/vprzybylo/cocpit/releases/
-[forks-shield]: https://img.shields.io/github/forks/vprzybylo/cocpit?label=Fork&style=plastic
-[forks-url]: https://github.com/vprzybylo/cocpit/network/members
-[stars-shield]: https://img.shields.io/github/stars/vprzybylo/cocpit?style=plastic
-[stars-url]: https://github.com/vprzybylo/cocpit/stargazers
-[issues-shield]: https://img.shields.io/github/issues/vprzybylo/cocpit?style=plastic
-[issues-url]: https://github.com/vprzybylo/cocpit/issues
-[license-shield]: https://img.shields.io/github/license/vprzybylo/COCPIT?style=plastic
-[license-url]: https://github.com/vprzybylo/cocpit/blob/master/LICENSE.md
+[download-shield]:https://img.shields.io/github/downloads/vprzybylo/IPAS/total?style=plastic
+[download-url]: https://github.com/vprzybylo/IPAS/downloads
+[release-shield]: https://img.shields.io/github/v/release/vprzybylo/IPAS?style=plastic
+[release-url]:https://github.com/vprzybylo/IPAS/releases/
+[forks-shield]: https://img.shields.io/github/forks/IPAS/cocpit?label=Fork&style=plastic
+[forks-url]: https://github.com/vprzybylo/IPAS/network/members
+[stars-shield]: https://img.shields.io/github/stars/vprzybylo/IPAS?style=plastic
+[stars-url]: https://github.com/vprzybylo/IPAS/stargazers
+[issues-shield]: https://img.shields.io/github/issues/vprzybylo/IPAS?style=plastic
+[issues-url]: https://github.com/vprzybylo/IPAS/issues
+[license-shield]: https://img.shields.io/github/license/vprzybylo/IPAS?style=plastic
+[license-url]: https://github.com/vprzybylo/IPAS/blob/master/LICENSE.md
 
 <p align="center">
   <a>
-    <img src="https://github.com/vprzybylo/cocpit/blob/master/logo.png" alt="Logo" width="150" height="150">
+    <img src="https://github.com/vprzybylo/IPAS/blob/master/logo.png" alt="Logo" width="150" height="150">
   </a>
 
   <h1 align="center">IPAS</h1>
