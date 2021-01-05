@@ -1,4 +1,29 @@
-# IPAS
+[![Forks][forks-shield]][forks-url]
+[![GitHub stars][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
+[![PyPI download month][download-shield]][download-url]
+[![GitHub release][release-shield]][release-url]
+
+[download-shield]:https://img.shields.io/github/downloads/vprzybylo/cocpit/total?style=plastic
+[download-url]: https://github.com/vprzybylo/cocpit/downloads
+[release-shield]: https://img.shields.io/github/v/release/vprzybylo/cocpit?style=plastic
+[release-url]:https://github.com/vprzybylo/cocpit/releases/
+[forks-shield]: https://img.shields.io/github/forks/vprzybylo/cocpit?label=Fork&style=plastic
+[forks-url]: https://github.com/vprzybylo/cocpit/network/members
+[stars-shield]: https://img.shields.io/github/stars/vprzybylo/cocpit?style=plastic
+[stars-url]: https://github.com/vprzybylo/cocpit/stargazers
+[issues-shield]: https://img.shields.io/github/issues/vprzybylo/cocpit?style=plastic
+[issues-url]: https://github.com/vprzybylo/cocpit/issues
+[license-shield]: https://img.shields.io/github/license/vprzybylo/COCPIT?style=plastic
+[license-url]: https://github.com/vprzybylo/cocpit/blob/master/LICENSE.md
+
+<p align="center">
+  <a>
+    <img src="https://github.com/vprzybylo/cocpit/blob/master/logo.png" alt="Logo" width="150" height="150">
+  </a>
+
+  <h1 align="center">IPAS</h1>
 
 The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Microphysics.html) is a theoretical framework that mimics simplified laboratory investigations to perform sensitivity tests, visualize, and better understand growth via collection.  IPAS collects any number of solid hexagonal prisms that are modified to represent plates and columns.  A detailed background description on monomer-monomer collection in IPAS can be found in [Przybylo (2019)](https://journals.ametsoc.org/view/journals/atsc/76/6/jas-d-18-0187.1.xml?tab_body=abstract-display), bulk testing of which can be found in [Sulia (2020)](https://journals.ametsoc.org/view/journals/atsc/aop/JAS-D-20-0020.1/JAS-D-20-0020.1.xml?rskey=9V3BQD&result=6).
 
