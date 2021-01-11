@@ -63,7 +63,7 @@ IPAS is typically scaled on a cluster using [dask](https://dask.org/).
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
 ## Acknowledgments
-V. Przybylo, K. Sulia, C. Schmitt, and Z. Lebo would like to thank the Department of Energy for support under DOE Grant Number DE-SC0016354. K. Sulia is additionally supported through an appointment under the SUNY 2020 Initiative.  The authors would also like to thank the ASRC ExTreme Collaboration, Innovation, and TEchnology (xCITE) Laboratory for IPAS development support.
+V. Przybylo, K. Sulia, C. Schmitt, and Z. Lebo would like to thank the Department of Energy for support under DOE Grant Number DE-SC0016354. The authors would also like to thank the ASRC ExTreme Collaboration, Innovation, and TEchnology (xCITE) Laboratory for IPAS development support.
 
 ## Contact
 vprzybylo@albany.edu
