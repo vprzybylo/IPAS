@@ -17,6 +17,8 @@
 [issues-url]: https://github.com/vprzybylo/IPAS/issues
 [license-shield]: https://img.shields.io/github/license/vprzybylo/IPAS?style=plastic
 [license-url]: https://github.com/vprzybylo/IPAS/blob/master/LICENSE.md
+[![DOI](https://zenodo.org/badge/232696476.svg)](https://zenodo.org/badge/latestdoi/232696476)
+
 
 <p align="center">
   <a>
