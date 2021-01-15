@@ -9,6 +9,7 @@ profile_stats
 *.pyc
 slurm-*
 worker
+.ipynb_checkpoints
 *checkpoint*
 dask-worker-space
 plot*

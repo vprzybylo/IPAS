@@ -10,7 +10,7 @@ import pandas as pd
 import pickle
 
        
-def collect_clusters(phio, a, ncrystals, rand_orient):
+def collect_clusters(phio, r, ncrystals, rand_orient):
     
     cplxs = np.empty(ncrystals-1)
     agg_as = np.empty(ncrystals-1)
@@ -22,15 +22,15 @@ def collect_clusters(phio, a, ncrystals, rand_orient):
     perims = np.empty(ncrystals-1)
     
     #a = (r ** 3 / phio) ** (1. / 3.)
+    #c = phio * a
     
-    #if c < a:
     if phio < 1.0:
-        c = phio * a
-        plates = True
+        a=r
+        c=phio*a
+
     else:
-        c=a
+        c=r
         a=c/phio
-        plates = False
     
     crystal1 = ipas.Ice_Crystal(a, c)
     crystal1.hold_clus = crystal1.points
@@ -61,9 +61,10 @@ def collect_clusters(phio, a, ncrystals, rand_orient):
         Ve_clus = 4./3.*np.pi*rx*ry*rz 
         a_clus=np.power((np.power(cluster.mono_r,3)/cluster.mono_phi),(1./3.))
         c_clus = cluster.mono_phi*a_clus
+       
         Va_clus = 3*(np.sqrt(3)/2) * np.power(a_clus,2) * c_clus * cluster.ncrystals
 
-
+        
         d1 = Va_clus/Ve_clus
 
         cluster.add_crystal(crystal2)
@@ -89,7 +90,7 @@ def collect_clusters(phio, a, ncrystals, rand_orient):
         Va_mono = 3*(np.sqrt(3)/2) * np.power(a_mono,2) * c_mono
         Ve3 = 4./3.*np.pi*agg_a*agg_b*agg_c  #volume of ellipsoid for new agg
         d2 = (Va_clus+Va_mono)/Ve3
-
+  
         dds[l] = (d2-d1)/d1
         #-------------------------------------
 
@@ -104,14 +105,14 @@ def collect_clusters(phio, a, ncrystals, rand_orient):
 #        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
 #             print('x')
         
-#        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
-        print('y')
-        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
-        print('z')
-        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='z', circle=None, agg_agg=False)
+#         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
+#         print('y')
+#         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
+#         print('z')
+#         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='z', circle=None, agg_agg=False)
 
         cluster_cp = cp.deepcopy(cluster)
         l+=1
 
     #print('made it to the end of collect_clusters loops')
-    return agg_as, agg_bs, agg_cs, phi2Ds, phi2D, cplxs, dds, perims
+    return agg_as, agg_bs, agg_cs, phi2D, dds
