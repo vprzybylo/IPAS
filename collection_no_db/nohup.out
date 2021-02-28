@@ -1,0 +1,6 @@
+dashboard link:  http://169.226.65.82:8787/status
+<Client: 'tcp://169.226.65.82:36603' processes=0 threads=0, memory=0 B>
+scheduler info:  {'type': 'Scheduler', 'id': 'Scheduler-f89d3399-423e-433a-8e0f-1d53ebce1830', 'address': 'tcp://169.226.65.82:36603', 'services': {'dashboard': 8787}, 'workers': {}}
+(5, 1, 100, 5, 149)
+DONE!
+finished!

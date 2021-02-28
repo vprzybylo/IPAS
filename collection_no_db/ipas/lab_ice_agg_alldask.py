@@ -63,7 +63,6 @@ def collect_clusters(phio, r, ncrystals, rand_orient):
         c_clus = cluster.mono_phi*a_clus
        
         Va_clus = 3*(np.sqrt(3)/2) * np.power(a_clus,2) * c_clus * cluster.ncrystals
-
         
         d1 = Va_clus/Ve_clus
 
@@ -92,6 +91,7 @@ def collect_clusters(phio, r, ncrystals, rand_orient):
         d2 = (Va_clus+Va_mono)/Ve3
   
         dds[l] = (d2-d1)/d1
+
         #-------------------------------------
 
         #cplxs[l], perims[l] = cluster.complexity()

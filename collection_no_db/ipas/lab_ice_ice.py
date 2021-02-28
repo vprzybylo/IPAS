@@ -17,13 +17,16 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
     agg_as = []
     agg_bs = []
     agg_cs = []
-    phi2Ds = []    
-    dds = []
+    overlap = []
+#    phi2Ds = []    
+#     dds = []
     depths = []
     major_ax_zs = []
     
     a = (r ** 3 / phio) ** (1. / 3.)
     c = phio * a
+    #print('mono a', a)
+    #print('mono c', c)
     if c < a:
         plates = True
     else:
@@ -74,31 +77,48 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
             cluster.recenter()
             cluster.orient_points = cp.deepcopy(cluster.points)
                         
-            depths.append(cluster.depth())
-            major_ax_zs.append(cluster.major_ax('z'))
-            agg_a, agg_b, agg_c = cluster.spheroid_axes()  
+            #depths.append(cluster.depth())
+            #major_ax_zs.append(cluster.major_ax('z'))
+            agg_a, agg_b, agg_c = cluster.spheroid_axes() #actually ellipsoid 
             agg_as.append(agg_a)
             agg_bs.append(agg_b)
             agg_cs.append(agg_c)
+            #print('agg a', agg_a)
+            #print('agg c', agg_c)
             
+            if plates:
+                change_p=(agg_a-a)/a
+                print(agg_a, a, change_p)
+                print('agg phi', agg_c/agg_a, phio, agg_c/agg_a-phio)
+            else:
+                change_c=(agg_a-c)/c
+                print(agg_a, c, a, change_c)
+                
             #FOR DENSITY CHANGE ------------------
-            Va = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 *cluster.ncrystals #2
-            Ve = 4./3.*np.pi*cluster.agg_a*cluster.agg_b*cluster.agg_c 
-            d2 = Va/Ve 
-            dd=(d2-d1)/d1
-            dds.append(dd) #change in density
+#             Va = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 *cluster.ncrystals #2
+#             Ve = 4./3.*np.pi*cluster.agg_a*cluster.agg_b*cluster.agg_c 
+#             d2 = Va/Ve 
+#             dd=(d2-d1)/d1
+#             dds.append(dd) #change in density
             #print(d1, d2, dd)
       
             #-------------------------------------
-            cluster.complexity()
+            #cluster.complexity()
             cplx, circle= cluster.complexity()
             
-            cplxs.append(cplx)
-            phi2Ds.append(cluster.phi_2D())
+            #cplxs.append(cplx)
+            #phi2Ds.append(cluster.phi_2D())
             cluster.points = cluster.orient_points
             
 #             print('w')
-#             cluster.plot_ellipsoid_aggs([cluster], view='w', circle=None)
+            if plates:
+                #if change_p > 1.0: 
+                cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None)
+                #cluster.plot_ellipse([['x', 'z']])
+            else:
+                #if change_c > 1.0:
+                cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None)
+                #cluster.plot_ellipse([['x', 'z']])
 #             print('x')
 #             cluster.plot_ellipsoid_aggs([cluster], view='x', circle=None)
 #             print('y')
@@ -108,6 +128,5 @@ def collect_clusters(phio, r, nclusters, ncrystals, rand_orient):
 
             cluster_cp = cp.deepcopy(cluster)
 
-
     #print('made it to the end of collect_clusters loops')
-    return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds, major_ax_zs, depths
+    return agg_as, agg_bs, agg_cs

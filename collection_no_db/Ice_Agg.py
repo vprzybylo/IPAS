@@ -13,14 +13,13 @@ from dask import dataframe as dd
 import pickle
 
 cluster = SLURMCluster(
-constraint='mpi_ib',
 queue='batch',
 walltime='04-23:00:00',
 cores=1,
-memory='4000MiB', #1 GiB = 1,024 MiB
+memory='10000MiB', #1 GiB = 1,024 MiB
 processes=1)
 print('dashboard link: ', cluster.dashboard_link)
-cluster.scale(50)
+cluster.scale(28*2)
 client = Client(cluster)
 print(client)
 print('scheduler info: ',client.scheduler_info())
@@ -46,40 +45,37 @@ def compute():
     cplxs = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
     dds = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
     perims = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
-    
+
     gather = client.compute([*output.tolist()])  #only parallelizing agg r bins
     gather = client.gather(gather)
 
     gather = np.array(gather)
-    #print(np.shape(gather))
+    print(np.shape(gather))
     agg_as = gather[:,:,:,0]
     agg_bs = gather[:,:,:,1]
     agg_cs = gather[:,:,:,2]
-    phi2Ds = gather[:,:,:,3]
-    phi2D = gather[:,:,:,4]
-    cplxs = gather[:,:,:,5] 
-    dds = gather[:,:,:,6]
-    perims = gather[:,:,:,7]
+    phi2D = gather[:,:,:,3]
+    dds = gather[:,:,:,4] 
+
     print('DONE!')
-    return agg_as, agg_bs, agg_cs, phi2Ds, phi2D, cplxs, dds, perims
+    return agg_as, agg_bs, agg_cs, phi2D, dds
 
 if __name__ == '__main__':
-    #phioarr=np.logspace(-2, 2, num=20, dtype=None)#just columns (0,2); plates (-2,0)
-    phioarr = [0.01, 0.1, 1.0, 10., 100.0]#[0.01, 0.10, 0.50, 1.0]
 
-    #reqarr = [1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400,500,600,700,800,900,1000]
-    reqarr = [1000]
-    nclusters = 300         #changes how many aggregates per aspect ratio to consider
-    ncrystals = 100
-    rand_orient = False   #randomly orient the seed crystal and new crystal: uses first random orientation
+    phioarr = [0.1, 0.5, 1.0, 2.0, 10.0]
+    reqarr = [10]
+    nclusters = 100        
+    ncrystals = 150
+    rand_orient = False   
     
     output = main()
-    agg_as, agg_bs, agg_cs, phi2Ds, phi2D, cplxs, dds, perims = compute()
-    results = {'agg_as': agg_as, 'agg_bs':agg_bs, 'agg_cs':agg_cs, 'phi2Ds':phi2Ds, \
-               'phi2D':phi2D, 'cplxs':cplxs, 'dds':dds, 'perims':perims}
+    agg_as, agg_bs, agg_cs, phi2D, dds = compute()
+    
+    results = {'agg_as': agg_as, 'agg_bs':agg_bs, 'agg_cs':agg_cs, \
+               'phi2D':phi2D, 'dds':dds}
 
-with open('../instance_files/instance_iceagg_flat_n100_a1000_allphi_eqmajorax', "wb") as f:
-    pickle.dump(results, f)
-    f.close()
-    print('finished!')
+    with open('../instance_files/instance_iceagg_flat_n150_a10_phi5_eqmajorax', "wb") as f:
+        pickle.dump(results, f)
+        f.close()
+        print('finished!') 
 

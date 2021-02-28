@@ -14,4 +14,6 @@ worker
 dask-worker-space
 plot*
 .idea*
-CPI_verification/df_IPAS_ellipse_aggs_allcampaigns.csv
+*.csv
+*.h5
+*.db
