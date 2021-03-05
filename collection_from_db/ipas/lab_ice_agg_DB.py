@@ -83,9 +83,10 @@ def collect_clusters(a, c, clusters, rand_orient=False):
         cplxs.append(cplx)
         phi2Ds.append(cluster.phi_2D_rotate())
         cluster.points = cluster.orient_points
-        if monomer.phi < 1.0:
-            cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=circle, agg_agg=False)
-            cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=circle, agg_agg=False)
+        #if monomer.phi < 1.0:
+        print('C', cplx)
+        #cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=None, agg_agg=False)
+        cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None, agg_agg=False)
 
 #        cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None, agg_agg=False)
 #        cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None, agg_agg=False)

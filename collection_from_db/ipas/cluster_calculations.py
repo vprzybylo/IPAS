@@ -426,7 +426,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         return (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0)
 
     def complexity(self):
-        poly3 = self.projectxz()
+        poly3 = self.projectxy()
         Ap = poly3.area
         P = poly3.length
                 
@@ -442,7 +442,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
             circ = self.make_circle([x[i], y[i]] for i in range(len(x)))
             circle = Point(circ[0], circ[1]).buffer(circ[2])
             Ac = circle.area
-            print('ar', Ap/Ac, 'Ap', Ap, 'Ac', Ac)
+            print('ar', Ap/Ac, 'Ap', Ap, 'Ac', Ac, 'P', P)
             
             self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
             #print('Ap, Ac, P cplx, c', Ap, Ac, P, self.cplx, (np.sqrt(Ac * Ap) / P ** 2))

@@ -12,7 +12,8 @@ worker
 .ipynb_checkpoints
 *checkpoint*
 dask-worker-space
-plot*
+plots
+plot_clusters
 .idea*
 *.csv
 *.h5

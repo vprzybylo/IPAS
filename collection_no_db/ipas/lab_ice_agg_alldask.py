@@ -94,8 +94,8 @@ def collect_clusters(phio, r, ncrystals, rand_orient):
 
         #-------------------------------------
 
-        #cplxs[l], perims[l] = cluster.complexity()
-
+        cplxs[l], perims[l] = cluster.complexity()
+        print(cplxs[l])
         #phi2Ds[l] = cluster.phi_2D_rotate()
         #phi2D[l] = cluster.phi_2D()
         cluster.points = cluster.orient_points
@@ -105,10 +105,10 @@ def collect_clusters(phio, r, ncrystals, rand_orient):
 #        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
 #             print('x')
         
-#         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
-#         print('y')
-#         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
-#         print('z')
+        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
+        print('y')
+        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
+        print('z')
 #         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='z', circle=None, agg_agg=False)
 
         cluster_cp = cp.deepcopy(cluster)
