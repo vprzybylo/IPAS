@@ -75,7 +75,7 @@ psutil==5.7.3
 ptyprocess==0.6.0
 pyarrow==2.0.0
 pycparser==2.20
-Pygments==2.7.3
+Pygments==2.7.4
 pyOpenSSL==20.0.0
 pyparsing==2.4.7
 pyquaternion==0.9.9
