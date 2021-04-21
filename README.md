@@ -2,7 +2,6 @@
 [![GitHub stars][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
-[![PyPI download month][download-shield]][download-url]
 [![GitHub release][release-shield]][release-url]
 
 [download-shield]:https://img.shields.io/github/downloads/vprzybylo/IPAS/total?style=plastic
@@ -27,7 +26,7 @@
 
   <h1 align="center">IPAS</h1>
 
-The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Microphysics.html) is a theoretical framework that mimics simplified laboratory investigations to perform sensitivity tests, visualize, and better understand growth via collection.  IPAS collects any number of solid hexagonal prisms that are modified to represent plates and columns.  A detailed background description on monomer-monomer collection in IPAS can be found in [Przybylo (2019)](https://journals.ametsoc.org/view/journals/atsc/76/6/jas-d-18-0187.1.xml?tab_body=abstract-display), bulk testing of which can be found in [Sulia (2020)](https://journals.ametsoc.org/view/journals/atsc/aop/JAS-D-20-0020.1/JAS-D-20-0020.1.xml?rskey=9V3BQD&result=6).
+The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Microphysics.html) is a statistical model in a theoretical framework that mimics simplified laboratory investigations to perform sensitivity tests, visualize, and better understand ice crystal growth via collection.  IPAS collects any number of solid hexagonal prisms that represent primary habits of plates and columns.  A detailed background description on monomer-monomer collection in IPAS can be found in [Przybylo (2019)](https://journals.ametsoc.org/view/journals/atsc/76/6/jas-d-18-0187.1.xml?tab_body=abstract-display), bulk testing of which can be found in [Sulia (2020)](https://journals.ametsoc.org/view/journals/atsc/aop/JAS-D-20-0020.1/JAS-D-20-0020.1.xml?rskey=9V3BQD&result=6).
 
 ##  Prerequisites
 
@@ -35,22 +34,17 @@ The requirements.txt file lists all Python libraries required to run IPAS in a v
 
     pip install -r requirements.txt
 
-<!---
-## Folder Structure
-
-1. CPI_verification
-
-- agg_properties.py
-    calculates geometric parameters for IPAS aggregates 
-- compare_agg_properties.ipynb
-    compare IPAS and CPI aggregate properties in the random orientation after combining IPAS and CPI dataframes
-- verify_IPAS.ipynb
-    plots for comparisons between IPAS and CPI complexity, aspect ratio, area ratio, and bulk stats
--->
-
 ## Deployment
 
-IPAS is typically scaled on a cluster using [dask](https://dask.org/).
+- IPAS is typically scaled on a cluster using [dask](https://dask.org/) but can be run without a cluster.
+- The collection_no_db and collection_from_db folders hold jupyter notebooks that act as main executables to run IPAS with or without starting a cluster.
+
+## Folder Structure
+- collection_no_db: creates aggregates from 'scratch' instead of the pre-made database of aggregates.  Can be run after cloning repo.
+- collection_from_db: creates aggregates pulling from the predined aggregate database (~50Gb). Please contact for acquisition.
+- 'ipas' subdirectories hold IPAS functionality
+- analysis: holds plotting scripts and notebooks for publication figures and visualizations.
+- CPI_verification: 'verify_IPAS.ipynb' shows comparisons between the Cloud Particle Imager (CPI) aggregates and IPAS aggregates.
 
 ## Authors
 
