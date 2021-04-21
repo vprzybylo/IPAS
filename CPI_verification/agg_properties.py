@@ -80,7 +80,7 @@ class Agg():
         '''similar to circularity but divided by the perimeter
         that surrounds the largest contour squared instead of the
         actual convoluted perimeter'''
-        
+
         self.roundness = (4.*np.pi*self.area)/self.convex_perim**2
 
     def perim_area_ratio(self):
