@@ -9,26 +9,51 @@ from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import random
 import shapely.ops as shops
-        
+
 #subclass
 class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
-    
+
     def __init__(self, cluster):
         # call parent constructor 
         super().__init__(cluster) 
-    
+
 
     def _mvee(self, tol=0.01):  # mve = minimum volume ellipse
         # Based on work by Nima Moshtagh
         # http://www.mathworks.com/matlabcentral/fileexchange/9542
 
         """
-        Finds the ellipse equation in "center form"
+        Finds the minimum volume enclosing ellipsoid (MVEE)
+        of a set of data in "center form"
         (x-c).T * A * (x-c) = 1
+
+        Outputs:
+        -------
+        c : D-dimensional vector containing the center of the ellipsoid.
+        A : This matrix contains all the information
+            regarding the shape of the ellipsoid.
+
+        To get the radii and orientation of the ellipsoid,
+        take the Singular Value Decomposition
+        (svd function in matlab) of the output matrix A:
+
+        [U Q V] = svd(A);
+
+        the radii are given by:
+        r1 = 1/sqrt(Q(1,1));
+        r2 = 1/sqrt(Q(2,2));
+        ...
+        rD = 1/sqrt(Q(D,D));
+
+        and matrix V is the rotation matrix that gives
+        the orientation of the ellipsoid.
         """
+
         pi = np.pi
         sin = np.sin
         cos = np.cos
+
+        # only run on vertices of hexagonal prisms
         points_arr = np.concatenate(self.points)[:self.ncrystals * 12]
         # print('points_Arr', points_arr)
         points_arr = np.array([list(i) for i in points_arr])

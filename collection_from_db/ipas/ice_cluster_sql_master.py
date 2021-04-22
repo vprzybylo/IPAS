@@ -24,7 +24,6 @@ from scipy import spatial
         
 #Master Class
 class Ice_Cluster():
-    
     def __init__(self, cluster):
 
         self.ncrystals = cluster.ncrystals 
@@ -56,12 +55,12 @@ class Ice_Cluster():
     def remove_cluster(self, cluster):
         self.points = self.points[:-cluster.ncrystals]
         self.ncrystals -= cluster.ncrystals
-        
+
     def add_crystal(self, crystal):
         self.points = np.vstack((self.points, crystal.points))
         self.ncrystals += crystal.ncrystals
-        return self  #to make clus 3 instance
-    
+        return self  # to make clus 3 instance
+
     def remove_crystal(self, crystal):
         self.points = self.points[:-crystal.ncrystals]
         self.ncrystals -= crystal.ncrystals
@@ -126,7 +125,7 @@ class Ice_Cluster():
         center_move = self.center_of_mass()
         self.move([-x for x in center_move])
         return center_move
-    
+
     def _crystal_projectxy(self, n):
         return geom.MultiPoint(self.points[n][['x', 'y']])
 
@@ -198,12 +197,12 @@ class Ice_Cluster():
         xtal_yz = np.array([nearest_geoms_yz[1].x, nearest_geoms_yz[1].y]) #crystal2
 
         stacked = np.array([self.points['y'].ravel(), self.points['z'].ravel()]).T
-        tree = spatial.cKDTree(stacked)  
+        tree = spatial.cKDTree(stacked)
         distance, index = tree.query([xtal_yz], n_jobs=-1)
         agg_xyz_closest = self.points.ravel()[index]
 
         move_y = xtal_yz[0]-agg_yz[0]
-        movez_yz = xtal_yz[1]-agg_yz[1]    
+        movez_yz = xtal_yz[1]-agg_yz[1]
 
         nearpt_xz = nearest_points(Point(agg_xyz_closest['x'],agg_xyz_closest['z']), cluster2.projectxz())
 #         cluster.add_crystal(cluster2)
@@ -273,8 +272,7 @@ class Ice_Cluster():
         if rand_orient:
             #self._reorient()
             xrot, yrot, zrot=random.uniform(0, 2 * np.pi),random.uniform(0, 2 * np.pi),random.uniform(0, 2 * np.pi)
-            self.rotate_to([xrot, yrot, 0])   
-    
+            self.rotate_to([xrot, yrot, 0])
         else:
 #             f = lambda x: self.rotate_to([x, 0, 0], self.points).projectxy().area
 #             xrot = opt.minimize_scalar(f, bounds=(0, np.pi / 2), method='Bounded', tol=1e-7).x
@@ -283,7 +281,7 @@ class Ice_Cluster():
 #             yrot = opt.minimize_scalar(f, bounds=(0, np.pi / 2), method='Bounded', tol=1e-7).x
 #            best_rotation = [xrot, yrot, 0]
             #print(self.points)
-            
+
             area_og = 0
             for i in np.arange(0., np.pi/2, 0.01):
                 self.rotate_to([i,0,0])
@@ -292,21 +290,20 @@ class Ice_Cluster():
                     xrot = i
                     area_og=area
                 #self.points = self.add_points
-            
+
             area_og = 0
             for i in np.arange(0.,np.pi/2, 0.01):
                 self.rotate_to([0,i,0])
                 area = self.projectxy().area
-                
+
                 if area > area_og:
                     yrot = i
                     area_og=area
                 #self.points = self.add_points
-            
+
             zrot=random.uniform(0,np.pi/2)
 
             best_rot = [xrot,yrot,zrot]
-            self.rotate_to(best_rot)   
-      
+            self.rotate_to(best_rot)
 
-   
+

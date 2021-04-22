@@ -61,7 +61,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
         return x, y, z
 
 
-    def _get_ellipsoid_points(self):
+    def get_ellipsoid_points(self):
         A, centroid = self._mvee()
         # print('centroid', centroid)
         U, D, V = la.svd(A)
@@ -142,7 +142,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
     def plot_ellipsoid_aggs(self, clusters, nearest_geoms_xz=None, nearest_geoms_yz=None, \
                             nearest_geoms_xy=None, view='x', circle=None, agg_agg=True):
         #plot multiple aggregates, each a different color
-        xell, yell, zell = self._get_ellipsoid_points()
+        xell, yell, zell = self.get_ellipsoid_points()
 
         fig = plt.figure(figsize=(7, 7), dpi=300)
         ax = fig.add_subplot(111, projection='3d')
