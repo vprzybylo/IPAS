@@ -30,10 +30,13 @@ def main():
     for phi in range(len(phioarr)):
         for r in range(len(reqarr)):
             for n in range(nclusters):
-                output[phi,r, n] = dask.delayed(ipas.collect_clusters)(phioarr[phi], reqarr[r], ncrystals, rand_orient)
-            #ipas.collect_clusters(phioarr[phi], reqarr[r], nclusters, ncrystals,rand_orient)
-#     delayeds = client.compute(delayeds)
-#     output = client.gather(delayeds)
+                output[phi,r, n] = dask.delayed(ipas.collect_clusters_alldask)(phioarr[phi],
+                                                                               reqarr[r],
+                                                                               ncrystals,
+                                                                               rand_orient)
+            #ipas.collect_clusters_alldask(phioarr[phi], reqarr[r], nclusters, ncrystals,rand_orient)
+    delayeds = client.compute(delayeds)
+    output = client.gather(delayeds)
     return output
 
 def compute():
@@ -62,15 +65,20 @@ def compute():
 
 if __name__ == '__main__':
 
+    # monomer aspect ratios (all the same in agg)
     phioarr = [0.1, 0.5, 1.0, 2.0, 10.0]
+    # monomer radii 
     reqarr = [10]
-    nclusters = 100        
+    # how many aggregates to produce
+    nclusters = 100
+    # how many monomers per aggregate
     ncrystals = 150
-    rand_orient = False   
-    
+    # orientation of the monomers
+    rand_orient = False
+
     output = main()
     agg_as, agg_bs, agg_cs, phi2D, dds = compute()
-    
+
     results = {'agg_as': agg_as, 'agg_bs':agg_bs, 'agg_cs':agg_cs, \
                'phi2D':phi2D, 'dds':dds}
 

@@ -138,12 +138,12 @@ class Plot_Cluster(ipas.Ice_Cluster):
                             nearest_geoms_xy=None, view='x', circle=None, agg_agg=True):
         #plot multiple aggregates, each a different color
         xell, yell, zell = self._get_ellipsoid_points()
-        
+
         fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111, projection='3d')
         # 90, 0 for z orientation, 0, 90 for y orientation, 0, 0 for x orientation
         # ax.view_init(elev=90, azim=270)
-        
+
         if view == 'x':
             ax.view_init(elev=0, azim=90)
         elif view == 'y':
@@ -211,8 +211,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
             ax.set_xlim(minxyz, maxxyz)
             ax.set_ylim(minxyz, maxxyz)
             ax.set_zlim(minxyz, maxxyz)
-            
-                
+
         if nearest_geoms_xz != None:
             if view == 'x':
                 ax.scatter(nearest_geoms_xz[0].x, nearest_geoms_yz[0].y, nearest_geoms_xz[0].y, c='red', s=100, zorder=10)
@@ -228,7 +227,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
 #         ax.set_xlabel('X')
 #         ax.set_ylabel('Y')
 #         ax.set_zlabel('Z')
-            
+
         ax.set_zticklabels([])
         ax.set_yticklabels([])
         ax.set_xticklabels([])
