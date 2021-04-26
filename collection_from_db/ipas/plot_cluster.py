@@ -212,7 +212,7 @@ class PlotCluster(ipas.IceCluster):
             start_list = [clus.ncrystals for clus in clusters]
             start = [0]+start_list
             end= [(np.sum([start[i], start[i+1]])+1) for i in range(len(start_list))] 
-            colors=['k', 'r', 'b', 'darkgreen']
+            colors=['k', 'k', 'b', 'darkgreen']
             for clus in range(len(clusters)): 
                 #lowered color range so that darker colors are generated
                 #color = list(np.random.choice(range(10), size=3)/10)
@@ -224,7 +224,7 @@ class PlotCluster(ipas.IceCluster):
             start_list = [i+1 if i == 0 else i for i in start_list]
             start = [0]+start_list
             end= [np.sum([start[i], start[i+1]]) for i in range(len(start_list))] 
-            colors=['k', 'r', 'b', 'darkgreen']
+            colors=['k', 'k', 'b', 'darkgreen']
             for clus in range(len(clusters)): 
                 #lowered color range so that darker colors are generated
                 #color = list(np.random.choice(range(10), size=3)/10)

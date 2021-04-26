@@ -472,7 +472,7 @@ class ClusterCalculations(ipas.PlotCluster, ipas.IceCluster):
             circ = self.make_circle([x[i], y[i]] for i in range(len(x)))
             circle = Point(circ[0], circ[1]).buffer(circ[2])
             Ac = circle.area
-            print('ar', Ap/Ac, 'Ap', Ap, 'Ac', Ac, 'P', P)
+            #print('ar', Ap/Ac, 'Ap', Ap, 'Ac', Ac, 'P', P)
             
             self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
             #print('Ap, Ac, P cplx, c', Ap, Ac, P, self.cplx, (np.sqrt(Ac * Ap) / P ** 2))

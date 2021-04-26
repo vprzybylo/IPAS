@@ -44,10 +44,11 @@ def collect_clusters_agg_agg(clusters1, clusters2, rand_orient=False):
         cluster3.recenter()
         cluster3.orient_points = copy.deepcopy(cluster3.points)
 
-        agg_a,agg_b,agg_c = cluster3.spheroid_axes()    
-        agg_as.append(agg_a)
-        agg_bs.append(agg_b)
-        agg_cs.append(agg_c)
+        A = cluster3.fit_ellipsoid()
+        cluster3.ellipsoid_axes_lengths(A)    
+        agg_as.append(cluster3.a)
+        agg_bs.append(cluster3.b)
+        agg_cs.append(cluster3.c)
 
 
         #DENSITY CHANGE ------------------
@@ -58,11 +59,11 @@ def collect_clusters_agg_agg(clusters1, clusters2, rand_orient=False):
         c2= cluster2.monophi*a2
         Va1 = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 * cluster1.ncrystals
         Va2 = 3*(np.sqrt(3)/2) * np.power(a2,2) * c2 * cluster2.ncrystals
-        Va3 = np.sum(Va1+Va2) #new volume of agg 
+        Va3 = np.sum(Va1+Va2) #new volume of agg
 
         Ve1 = 4./3.*np.pi*cluster1.a*cluster1.b*cluster1.c #volume of ellipsoid for clus1
         Ve2 = 4./3.*np.pi*cluster2.a*cluster2.b*cluster2.c #volume of ellipsoid for clus2
-        Ve3 = 4./3.*np.pi*agg_a*agg_b*agg_c  #volume of ellipsoid for new agg
+        Ve3 = 4./3.*np.pi*cluster3.a*cluster3.b*cluster3.c  #volume of ellipsoid for new agg
         #print('Va1, Ve1, Va2, Ve2', Va1, Ve1, Va2, Ve2)
         Vr1 = Va1/Ve1 
         Vr2 = Va2/Ve2

@@ -6,6 +6,7 @@ import numpy as np
 import random
 import copy as cp
 
+
 def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
 
 
@@ -18,7 +19,7 @@ def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
     dds = []
 
     for n in range(len(clusters)):
-        monomer = ipas.Ice_Crystal(a[n], c[n])
+        monomer = ipas.IceCrystal(a[n], c[n])
         monomer.hold_clus = monomer.points
         monomer.orient_crystal(rand_orient)
         monomer.recenter() 
@@ -38,9 +39,14 @@ def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
 
         cluster.closest_points(monomer)
 
+        A = cluster.fit_ellipsoid()
+        cluster.ellipsoid_axes_lengths(A)    
+        agg_as.append(cluster.a)
+        agg_bs.append(cluster.b)
+        agg_cs.append(cluster.c)
+        
         #for density change
-        rx,ry,rz = cluster.spheroid_axes()
-        Ve_clus = 4./3.*np.pi*rx*ry*rz
+        Ve_clus = 4./3.*np.pi*cluster.a*cluster.b*cluster.c  #volume of ellipsoid for new agg
         a_clus=np.power((np.power(cluster.monor,3)/cluster.monophi),(1./3.))
         c_clus= cluster.monophi*a_clus
         Va_clus = 3*(np.sqrt(3)/2) * np.power(a_clus,2) * c_clus * cluster.ncrystals
@@ -62,12 +68,8 @@ def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
         cluster.recenter()
         cluster.orient_points = cp.deepcopy(cluster.points)
 
-        agg_a, agg_b, agg_c = cluster.spheroid_axes()
-
         #DENSITY CHANGE ------------------
-
-        Ve3 = 4./3.*np.pi*agg_a*agg_b*agg_c  #volume of ellipsoid for new agg
-        d2 = (Va_clus+Va_mono)/Ve3
+        d2 = (Va_clus+Va_mono)/Ve_clus
 
         #print((d2-d1)/d1)
         dds.append((d2-d1)/d1)
@@ -81,7 +83,7 @@ def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
 
         #PLOTTING
         #cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=None, agg_agg=False)
-        cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None, agg_agg=False)
+        #cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None, agg_agg=False)
 
 #        cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None, agg_agg=False)
 #        cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None, agg_agg=False)
