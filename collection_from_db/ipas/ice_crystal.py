@@ -12,7 +12,7 @@ from shapely.geometry import Point
 from shapely.ops import nearest_points
 import numpy.linalg as la
 
-class Ice_Crystal():
+class IceCrystal():
 
     """A hexagonal prism representing a single ice crystal."""     
     def __init__(self, a, c, center=[0, 0, 0], rotation=[0, 0, 0]):

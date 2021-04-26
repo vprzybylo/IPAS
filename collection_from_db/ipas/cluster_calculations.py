@@ -9,33 +9,35 @@ from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import random
 import shapely.ops as shops
+from scipy.spatial.transform import Rotation as R
 
 #subclass
-class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
+class ClusterCalculations(ipas.PlotCluster, ipas.IceCluster):
 
     def __init__(self, cluster):
         # call parent constructor 
         super().__init__(cluster) 
 
 
-    def _mvee(self, tol=0.01):  # mve = minimum volume ellipse
+    def fit_ellipsoid(self, tol=0.01):  # mve = minimum volume ellipse
         # Based on work by Nima Moshtagh
         # http://www.mathworks.com/matlabcentral/fileexchange/9542
 
         """
-        Finds the minimum volume enclosing ellipsoid (MVEE)
+        Finds the minimum volume enclosing ellipsoid (3D)
         of a set of data in "center form"
         (x-c).T * A * (x-c) = 1
 
         Outputs:
         -------
-        c : D-dimensional vector containing the center of the ellipsoid.
+        centroid (c) : D-dimensional vector containing
+                        the center of the ellipsoid.
         A : This matrix contains all the information
             regarding the shape of the ellipsoid.
 
         To get the radii and orientation of the ellipsoid,
         take the Singular Value Decomposition
-        (svd function in matlab) of the output matrix A:
+        of the output matrix A:
 
         [U Q V] = svd(A);
 
@@ -49,13 +51,8 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         the orientation of the ellipsoid.
         """
 
-        pi = np.pi
-        sin = np.sin
-        cos = np.cos
-
         # only run on vertices of hexagonal prisms
         points_arr = np.concatenate(self.points)[:self.ncrystals * 12]
-        # print('points_Arr', points_arr)
         points_arr = np.array([list(i) for i in points_arr])
         N, d = points_arr.shape
         Q = np.column_stack((points_arr, np.ones(N))).T
@@ -73,29 +70,49 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
             err = la.norm(new_u - u)
             u = new_u
 
-        c = np.dot(u, points_arr)
+        self.centroid = np.dot(u, points_arr)
 
-        A = la.inv(np.dot(np.dot(points_arr.T, np.diag(u)), points_arr)
-                   - np.multiply.outer(c, c)) / d
+        A = la.inv(np.dot(np.dot(points_arr.T, np.diag(u)), points_arr) -
+                   np.multiply.outer(self.centroid, self.centroid)) / d
 
-        return A, c
+        return A
 
-    def spheroid_axes(self):
-        A, c = self._mvee()
+
+    def ellipsoid_axes_lengths(self, A):
+
         U, D, V = la.svd(A)  # singular-value decomposition
-        rx, ry, rz = 1. / np.sqrt(D)  # D is a diagonal matrix
-        self.agg_a, self.agg_b, self.agg_c = sorted([rx, ry, rz], reverse=True)
+        # D is a diagonal matrix
+        rx, ry, rz = 1. / np.sqrt(D)  
+        self.a, self.b, self.c = \
+                sorted([rx, ry, rz], reverse=True)
+        return rx, ry, rz
 
-        return self.agg_a, self.agg_b, self.agg_c
 
-    def ellipse(self, u, v, rx, ry, rz):
+    def ellipsoid_axes_coords(self, rx, ry, rz):
+        
+        # Cartesian coordinates that correspond
+        # to the spherical angles:
+        u, v = np.mgrid[0:2 * np.pi:40j, -np.pi / 2:np.pi / 2:40j]
         x = rx * np.cos(u) * np.cos(v)
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
-
         return x, y, z
 
+
+    def ellipsoid_surface(self, A, x, y, z):
+
+        # singular-value decomposition
+        _, _, V = la.svd(A)
+        E = np.dstack([x, y, z])
+        self.E = np.dot(E, V) + self.centroid
+        
+        xell, yell, zell = np.rollaxis(self.E, axis=-1)
+
+        return xell, yell, zell
+
+
     def fit_ellipse(self, dims):
+        # 2D ellipse
         # Emulating this function, but for polygons in continuous
         # space rather than blobs in discrete space:
         # http://www.idlcoyote.com/ip_tips/fit_ellipse.html
@@ -155,10 +172,13 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         # print('crystals',self.ncrystals)
         # print('ell',ellipse['height'])
         return ellipse
-    
+
+
     def _get_moments(self, poly):
+
         # get 'mass moments' for this cluster's 2D polygon using a
         # variation of the shoelace algorithm
+
         xys = poly.exterior.coords.xy
         npoints = len(xys[0])
         # values for the three points-- point[n], point[n+1], and
@@ -166,6 +186,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         # edges of the polygon
         xmat = np.array([xys[0][0:-1], xys[0][1:], np.zeros(npoints - 1)]).transpose()
         ymat = np.array([xys[1][0:-1], xys[1][1:], np.zeros(npoints - 1)]).transpose()
+        
         # arrange the points in left-center-right order
         x_order = np.argsort(xmat, axis=1)
         ordered_xmat = xmat[np.array([range(npoints - 1)]).transpose(), x_order]
@@ -176,27 +197,34 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         yl = ordered_ymat[:, 0]
         ym = ordered_ymat[:, 1]
         yr = ordered_ymat[:, 2]
+        
         # which slices have areas on the left and right sides of the
         # middle point? Ignore values smaller than 'tol' so we don't
         # run into terrible problems with division.
         left = xm - xl > self.tol_ellipse
         right = xr - xm > self.tol_ellipse
+        
         # slope and intercept of line connecting left and right points
         has_area = xr != xl
         m3 = np.zeros(npoints - 1)
         m3[has_area] = (yr[has_area] - yl[has_area]) / (xr[has_area] - xl[has_area])
         b3 = -xl * m3 + yl
+        
         # the y coordinate of the line connecting the left and right
         # points at the x position of the middle point
         m3_mid = yl + m3 * (xm - xl)
+        
         # is the midpoint above or below that line?
         mid_below = ym < m3_mid
+        
         # line connecting left and middle point (where applicable)
         m1 = (ym[left] - yl[left]) / (xm[left] - xl[left])
         b1 = -xl[left] * m1 + yl[left]
+        
         # line connecting middle and right point (where applicable)
         m2 = (yr[right] - ym[right]) / (xr[right] - xm[right])
         b2 = -xr[right] * m2 + yr[right]
+        
         # now that we have the points in a nice format + helpful
         # information we can calculate the integrals of the slices
         xx = np.zeros(npoints - 1)
@@ -231,11 +259,13 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
                      dx3r * (b2 * m2 ** 2 - b3[right] * m3[right] ** 2) / 3 + \
                      dx2r * (b2 ** 2 * m2 - b3[right] ** 2 * m3[right]) / 2 + \
                      dxr * (b2 ** 3 - b3[right] ** 3) / 3
+        
         # if the middle point was below the other points, multiply by
         # minus 1
         xx[mid_below] *= -1
         xy[mid_below] *= -1
         yy[mid_below] *= -1
+        
         # find out which slices were going clockwise, and make those
         # negative
         points = np.array([xys[0], xys[1]]).transpose()
@@ -244,15 +274,18 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         xx[clockwise] *= -1
         xy[clockwise] *= -1
         yy[clockwise] *= -1
+        
         # add up the totals across the entire polygon
         xxtotal = np.sum(xx)
         yytotal = np.sum(yy)
         xytotal = np.sum(xy)
+        
         # and if the points were in clockwise order, flip the sign
         if np.sum(cross_prods) < 0:
             xxtotal *= -1
             yytotal *= -1
             xytotal *= -1
+        
         # also need to account for the holes, if they exist
         for linestring in list(poly.interiors):
             hole = geom.Polygon(linestring)
@@ -262,29 +295,6 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
             xytotal -= hole_moments[2]
         return [xxtotal, yytotal, xytotal]
 
-
-    def depth(self):
-        maxz = self.points['z'].max()
-        minz = self.points['z'].min()
-        return maxz - minz
-
-    def major_ax(self, dim):
-        major_axis = {}
-        minor_axis = {}
-        # getting ellipse axes from 3 perspectives
-        ellipse = {}
-        dims = [['x', 'y']]
-        ellipse['z'] = self.fit_ellipse(dims)
-        dims = [['x', 'z']]
-        ellipse['y'] = self.fit_ellipse(dims)
-        dims = [['y', 'z']]
-        ellipse['x'] = self.fit_ellipse(dims)
-
-        for dim in ellipse.keys():
-            major_axis[dim] = max(ellipse[dim]['height'], ellipse[dim]['width'])
-            minor_axis[dim] = min(ellipse[dim]['height'], ellipse[dim]['width'])
-        
-        return major_axis[dim]
 
     def phi_2D(self):
 
@@ -300,6 +310,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
 
         return (minor_axis / major_axis)
 
+
     def phi_2D_rotate(self):
         # As in Jiang 2017, KOROLEV AND ISSAC 2003, and Garret 2015
 
@@ -314,7 +325,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
             major_axis['y'] = max(ellipse['height'], ellipse['width'])
             minor_axis['y'] = min(ellipse['height'], ellipse['width'])
             phi.append((minor_axis['y']) / (major_axis['y']))
-            # print(self.ncrystals, sum(phi)/len(phi), sum(phi), phi, ellipse, ellipse['height'], ellipse['width'], (minor_axis['y']) / (major_axis['y']), type(sum(phi)/len(phi)))
+
         if np.isnan(phi).any():
             self.plot_ellipse(dims=[['y', 'z']])
             self.plot_ellipse(dims=[['x', 'z']])
@@ -322,34 +333,20 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
 
         self.phi2D = sum(phi) / len(phi)
 
-        # if np.isnan(phi).any():
-
-        #    print(self.ncrystals, sum(phi)/len(phi), sum(phi), phi, ellipse, ellipse['height'], ellipse['width'], (minor_axis['x']) / (major_axis['x']))
-
         return self.phi2D
         # return reduce(lambda x, y: x + y, phi) / len(phi)
 
-    def depth_horizontal_phi(self):
-        # "A Statistical and Physical Description
-        # of Hydrometeor Distributions in Colorado Snowstorms
-        # Using a Video Disdrometer” by Brandes
-        maxx = np.nanmax(self.points['x'])
-        minx = np.nanmin(self.points['x'])
-        return (self.depth / (maxx - minx))
 
     def overlap(self, new_crystal, seedcrystal):
 
         agg_nonew = self.projectxy().buffer(0)
 
         rel_area = self.projectxy().buffer(0).intersection(new_crystal.projectxy().buffer(0))
-        # rel_area = self.projectxy().buffer(0).intersection(new_crystal.projectxy().buffer(0))
+        pctovrlp = (rel_area.area / (self.projectxy().area + \
+                                     new_crystal.projectxy().area)) * 100
 
-        # pctovrlp1 = (rel_area.area/(seedcrystal.projectxy().area+new_crystal.projectxy().area-rel_area.area))*100
-        pctovrlp = (rel_area.area / (self.projectxy().area + new_crystal.projectxy().area)) * 100
-        # pctovrlp = (rel_area.area/(new_crystal.projectxy().area+self.projectxy().area))*100
-        # print('rel',rel_area.area)
-        # print(pctovrlp)
         return (pctovrlp)
+
 
     def make_circle(self, points):
         #https://www.nayuki.io/res/smallest-enclosing-circle/smallestenclosingcircle.py
@@ -364,6 +361,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
                 c = self._make_circle_one_point(shuffled[: i + 1], p)
         return c
 
+
     def _make_circle_one_point(self, points, p):
         # One boundary point known
         c = (p[0], p[1], 0.0)
@@ -374,6 +372,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
                 else:
                     c = self._make_circle_two_points(points[: i + 1], p, q)
         return c
+
 
     def _make_circle_two_points(self, points, p, q):
         # Two boundary points known
@@ -410,6 +409,7 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         else:
             return left if (left[2] <= right[2]) else right
 
+
     def _make_circumcircle(self, p0, p1, p2):
         # Mathematical algorithm from Wikipedia: Circumscribed circle
         ax, ay = p0
@@ -426,14 +426,16 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         d = (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by)) * 2.0
         if d == 0.0:
             return None
-        x = ox + ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (
+        x = ox + ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) *
+                  (cy - ay) + (cx * cx + cy * cy) * (
                     ay - by)) / d
-        y = oy + ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (
-                    bx - ax)) / d
+        y = oy + ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) *
+                  (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d
         ra = math.hypot(x - p0[0], y - p0[1])
         rb = math.hypot(x - p1[0], y - p1[1])
         rc = math.hypot(x - p2[0], y - p2[1])
         return (x, y, max(ra, rb, rc))
+
 
     def _make_diameter(self, p0, p1):
         cx = (p0[0] + p1[0]) / 2.0
@@ -442,13 +444,16 @@ class Cluster_Calculations(ipas.Plot_Cluster, ipas.Ice_Cluster):
         r1 = math.hypot(cx - p1[0], cy - p1[1])
         return (cx, cy, max(r0, r1))
 
+
     def is_in_circle(self, c, p):
         _MULTIPLICATIVE_EPSILON = 1 + 1e-14
-        return c is not None and math.hypot(p[0] - c[0], p[1] - c[1]) <= c[2] * _MULTIPLICATIVE_EPSILON
+        return c is not None and math.hypot(p[0] - c[0],
+                                            p[1] - c[1]) <= c[2] * _MULTIPLICATIVE_EPSILON
 
     def _cross_product(self, x0, y0, x1, y1, x2, y2):
         # Returns twice the signed area of the triangle defined by (x0, y0), (x1, y1), (x2, y2).
         return (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0)
+
 
     def complexity(self):
         poly3 = self.projectxy()

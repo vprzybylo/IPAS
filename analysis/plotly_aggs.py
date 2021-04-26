@@ -4,7 +4,7 @@ plots aggregates from database using plotly
 
 import sys
 sys.path.append('../collection_from_db')
-import ipas
+import ipas.cluster_calculations as clus
 
 import plotly.graph_objs as go
 import numpy as np
@@ -67,7 +67,7 @@ class PlotAgg:
         self.basal_points_bottom = basal_points_bottom
 
 
-    def get_scatter_plot_data(self, line_width=8):
+    def get_scatter_plot_data(self, line_width=6):
         '''
         since x y and z are all appended to the same
         array, get each coordinate separately indexing
@@ -82,7 +82,7 @@ class PlotAgg:
         self.trace_prism = go.Scatter3d(x=x, y=y, z=z,
                                         mode='lines',
                                         line=dict(width = line_width,
-                                                    color='#29569F'),
+                                                    color='black'),
                                         showlegend=False
                                        )
 
@@ -95,7 +95,7 @@ class PlotAgg:
                                             z=z_basal_top,
                                             mode='lines',
                                             line=dict(width=line_width,
-                                                        color='#52AAFC'),
+                                                        color='black'),
                                             showlegend=False
                                            )
 
@@ -108,27 +108,73 @@ class PlotAgg:
                                                z=z_basal_bottom,
                                                mode='lines',
                                                line=dict(width=line_width,
-                                                           color='#4B0089'),
+                                                           color='black'),
                                                showlegend=False
                                               )
 
 
-    def ellipsoid_points(self):
-        agg_calc = ipas.cluster_calculations.Cluster_Calculations(self.agg)
-        self.xell, self.yell, self.zell = agg_calc.get_ellipsoid_points()
+    def ellipsoid_surface(self):
+
+        clus1 = clus.ClusterCalculations(self.agg)
+        A = clus1.fit_ellipsoid()
+        rx, ry, rz = clus1.ellipsoid_axes_lengths(A)
+        x, y, z = clus1.ellipsoid_axes_coords(rx, ry, rz)
+        xell, yell, zell = clus1.ellipsoid_surface(A, x, y, z)
+        return xell, yell, zell, x, y, z
 
 
-    def scatter_ellipsoid(self, line_width=2):
-        self.ellipsoid = go.Scatter3d(x=self.xell.flatten(),
-                                      y=self.yell.flatten(),
-                                      z=self.zell.flatten(),
-                                      mode='lines',
-                                      line=dict(width=line_width,
-                                                  color='black'),
-                                      showlegend=False
-                                     )
+    def scatter_ellipsoid(self, xell, yell, zell, x, y, z, line_width=2):
 
-    def set_up_camera(self):
+        self.ellipsoid_surface = go.Scatter3d(x=xell[0::4].flatten(),
+                                              y=yell[0::4].flatten(),
+                                              z=zell[0::4].flatten(),
+                                              mode='lines',
+                                              line=dict(width=line_width,
+                                                          color='black'),
+                                              showlegend=False
+                                             )
+        self.ellipsoid_radius_b1 = go.Scatter3d(x=xell[0,:].flatten(),
+                                              y=yell[0,:].flatten(),
+                                              z=zell[0,:].flatten(),
+                                              mode='lines',
+                                              line=dict(width=6,
+                                                        color='blue'),
+                                              showlegend=False
+                                             )
+        self.ellipsoid_radius_b2 = go.Scatter3d(x=xell[20,:].flatten(),
+                                              y=yell[20,:].flatten(),
+                                              z=zell[20,:].flatten(),
+                                              mode='lines',
+                                              line=dict(width=6,
+                                                        color='blue'),
+                                              showlegend=False
+                                             )
+        self.ellipsoid_radius_r1 = go.Scatter3d(x=xell[10,:].flatten(),
+                                              y=yell[10,:].flatten(),
+                                              z=zell[10,:].flatten(),
+                                              mode='lines',
+                                              line=dict(width=6,
+                                                        color='red'),
+                                              showlegend=False
+                                             )
+        self.ellipsoid_radius_r2 = go.Scatter3d(x=xell[30,:].flatten(),
+                                              y=yell[30,:].flatten(),
+                                              z=zell[30,:].flatten(),
+                                              mode='lines',
+                                              line=dict(width=6,
+                                                        color='red'),
+                                              showlegend=False
+                                             )
+        self.ellipsoid_radius_g1 = go.Scatter3d(x=xell[:,20].flatten(),
+                                              y=yell[:,20].flatten(),
+                                              z=zell[:,20].flatten(),
+                                              mode='lines',
+                                              line=dict(width=6,
+                                                        color='green'),
+                                              showlegend=False
+                                             )
+
+    def camera(self):
 
         self.camerax = dict(up=dict(x=0, y=0, z=1),
                             center=dict(x=0, y=0, z=0),
@@ -144,7 +190,7 @@ class PlotAgg:
                            )
 
 
-    def set_up_layout(self, tick_angle=20, width=800, height=800,
+    def layout(self, tick_angle=20, width=800, height=800,
                       showticklabels=True, tick_size=14,
                       tick_fontfamily='Times New Roman', showgrid=False):
 
