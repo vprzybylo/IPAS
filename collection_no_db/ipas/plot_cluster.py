@@ -244,18 +244,64 @@ class Plot_Cluster(ipas.Ice_Cluster):
         #fig.clear()
         
 
-    def plot_ellipse(self, dims):
+    def ellipse_vertices_rotated(self, params, angle, leftverticex, rightverticex):
+        # 2D
+        # rotate axis points and reposition if off center
 
-        # Only (x,z), (y,z), and (x,y) needed/allowed for dimensions
-        # Depth works for both side views (x,z) and (y,z)
+        leftverticey = params['xy'][1]
+        rightverticey = params['xy'][1]
 
+        xleft = ((leftverticex - params['xy'][0]) * np.cos(angle) - \
+                    (leftverticey - params['xy'][1]) * np.sin(angle)) + params['xy'][0]
+
+        xright = ((rightverticex - params['xy'][0]) * np.cos(angle) - \
+                     (rightverticey - params['xy'][1]) * np.sin(angle)) + params['xy'][0]
+
+        yleft = ((leftverticex - params['xy'][0]) * np.sin(angle) + \
+                    (leftverticey - params['xy'][1]) * np.cos(angle)) + params['xy'][1]
+
+        yright = ((rightverticex - params['xy'][0]) * np.sin(angle) + \
+                     (rightverticey - params['xy'][1]) * np.cos(angle)) + params['xy'][1]
+
+        x = [xleft, xright]
+        y = [yleft, yright]
+
+        return x, y
+
+
+    def plot_axes_ellipse(self, params, ax):
+        # 2D
+        # major axis
+        # orientation angle of ellipse in radians
+        angle = params['angle'] * np.pi / 180
+        leftverticex = params['xy'][0] - params['width'] / 2
+        rightverticex = params['xy'][0] + params['width'] / 2
+        x, y = self.ellipse_vertices_rotated(params,
+                                             angle,
+                                             leftverticex,
+                                             rightverticex)
+        ax.plot(x, y, color='k', linewidth=3)  # major/minor axis lines
+        # minor axis
+        leftverticex = params['xy'][0] - params['height'] / 2
+        rightverticex = params['xy'][0] + params['height'] / 2
+        angle = params['angle'] * np.pi / 180 + np.pi / 2
+        x, y = self.ellipse_vertices_rotated(params,
+                                             angle,
+                                             leftverticex,
+                                             rightverticex)
+        ax.plot(x, y, color='k', linewidth=3)  # major/minor axis lines
+
+
+    def plot_ellipse(self, dims, add_axes=True):
+
+        # Only (x,z), (y,z), and (x,y) allowed for dimensions
         if dims == [['x', 'z']]:
             # self.rotate_to([np.pi / 2, 0, 0])
             poly = self.projectxz()
         elif dims == [['y', 'z']]:
             # self.rotate_to([np.pi / 2, np.pi / 2, 0])
             poly = self.projectyz()
-        elif dims == [['x', 'y']]:  # this is the only projection used in the aggregate aspect ratio calculation
+        elif dims == [['x', 'y']]:
             # self.rotate_to([0, 0, 0])
             poly = self.projectxy()
         else:
@@ -264,24 +310,10 @@ class Plot_Cluster(ipas.Ice_Cluster):
         params = self.fit_ellipse(dims)
         ellipse = Ellipse(**params)
 
-        #fig = plt.figure(0)
-        #ax = fig.add_subplot(111)
         fig, ax = plt.subplots(1,1)
-      
         ax.add_artist(ellipse)
-        ellipse.set_alpha(.5)  # opacity
+        ellipse.set_alpha(.2)  # opacity
         ellipse.set_facecolor('darkorange')
-        # if isinstance(poly, geom.multipolygon.MultiPolygon):
-        #    for poly2 in poly:
-        #        x, y = poly2.exterior.xy
-        # ax.plot(x, y, color = 'green', linewidth = 3)
-        # else:
-        #    x, y = poly.exterior.xy
-        # ax.plot(x, y, color = 'green', linewidth = 3)
-
-        # maxdim = max([params['width'], params['height']]) / 2
-        # ax.set_xlim([-maxdim + params['xy'][0], maxdim + params['xy'][0]])
-        # ax.set_ylim([-maxdim + params['xy'][1], maxdim + params['xy'][1]])
 
         for l in range(len(dims)):
 
@@ -291,7 +323,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
             minzinds = []
             for i in range(self.ncrystals):
                 hex1pts = self.points[dims[l]][i][0:6]  # first basal face
-                poly1 = geom.Polygon([[p[0], p[1]] for p in hex1pts])  # make it into a polygon to plot
+                poly1 = geom.Polygon([[p[0], p[1]] for p in hex1pts])  
                 hex2pts = self.points[dims[l]][i][6:12]  # second basal face
                 poly2 = geom.Polygon([[p[0], p[1]] for p in hex2pts])
                 x1, y1 = poly1.exterior.xy  # array of xy points
@@ -308,93 +340,13 @@ class Plot_Cluster(ipas.Ice_Cluster):
                     y = [y1[n], y2[n]]
                     ax.plot(x, y, color=color, zorder=zorder, linewidth='2')
 
-                # polypatch1 = PolygonPatch(poly1, fill=True, zorder = 1)
-                # polypatch2 = PolygonPatch(poly2, fill=True, zorder = 1)
                 ax.plot(x1, y1, color=color, zorder=2, linewidth='2')  # edges of polygons
                 ax.plot(x2, y2, color=color, zorder=4, linewidth='2')
-                # ax.add_patch(polypatch1)
-                # ax.add_patch(polypatch2)
 
-                # for plotting depth line segment:
-                crysminz.append(self.points['z'][i].min())
-                crysmaxz.append(self.points['z'][i].max())
-                minzinds.append(np.argmin(self.points['z'][i]))  # index of min pt for every xtal
-                maxzinds.append(np.argmax(self.points['z'][i]))  # index of max pt
+        if add_axes:
+            self.plot_axes_ellipse(params, ax)
 
-            maxcrysind, self.maxz = max(enumerate(crysmaxz), key=operator.itemgetter(1))  # overall max btwn xtals
-            mincrysind, self.minz = min(enumerate(crysminz), key=operator.itemgetter(1))
-            xdepthmin = self.points[dims[l]][mincrysind][minzinds[mincrysind]]
-            xdepthmax = self.points[dims[l]][maxcrysind][maxzinds[maxcrysind]]
+        ax.set_aspect('equal', 'datalim')    
+        plt.show()
 
-            # ax.plot(xdepthmin, self.minz, 'ko', linewidth = '4')
-            # ax.plot(xdepthmax, self.maxz, 'ko', linewidth = '4')
-            depthlinex = [0, 0]
-            depthliney = [self.minz, self.maxz]
-            # ax.plot(depthlinex,depthliney, 'k', linewidth = '4')
 
-            ######## plot major and minor axes ############
-
-            maxdim = max([params['width'], params['height']]) / 2  # major axis
-
-            # ax.set_xlim([-maxdim + params['xy'][0], maxdim + params['xy'][0]])
-            # ax.set_ylim([-maxdim + params['xy'][1], maxdim + params['xy'][1]])
-
-            leftverticex = params['xy'][0] - params['width'] / 2
-            leftverticey = params['xy'][1]
-            rightverticex = params['xy'][0] + params['width'] / 2
-            rightverticey = params['xy'][1]
-            # plt.plot(leftverticex, leftverticey, 'ro', markersize = 5)  #original vertices if no angle
-            # plt.plot(rightverticex, rightverticey, 'ro', markersize = 5)
-            # plt.plot(params['xy'][0], params['xy'][1], 'wo', markersize = 7)
-
-            radangle = params['angle'] * np.pi / 180
-            # orientation angle of ellipse
-
-            # rotate axis points and reposition if off center
-            newxleft = ((leftverticex - params['xy'][0]) * np.cos(radangle) - \
-                        (leftverticey - params['xy'][1]) * np.sin(radangle)) + params['xy'][0]
-
-            newxright = ((rightverticex - params['xy'][0]) * np.cos(radangle) - \
-                         (rightverticey - params['xy'][1]) * np.sin(radangle)) + params['xy'][0]
-
-            newyleft = ((leftverticex - params['xy'][0]) * np.sin(radangle) + \
-                        (leftverticey - params['xy'][1]) * np.cos(radangle)) + params['xy'][1]
-
-            newyright = ((rightverticex - params['xy'][0]) * np.sin(radangle) + \
-                         (rightverticey - params['xy'][1]) * np.cos(radangle)) + params['xy'][1]
-
-            newx = [newxleft, newxright]
-            newy = [newyleft, newyright]
-            ax.plot(newx, newy, color='white', linewidth=3)  # major/minor axis lines
-            ax.plot(newx, newy, 'wo', markersize=7)
-
-            radangle1 = params['angle'] * np.pi / 180 + np.pi / 2
-            radangle = radangle1
-            leftverticex = params['xy'][0] - params['height'] / 2
-            rightverticex = params['xy'][0] + params['height'] / 2
-
-            newxleft = ((leftverticex - params['xy'][0]) * np.cos(radangle) - \
-                        (leftverticey - params['xy'][1]) * np.sin(radangle)) + params['xy'][0]
-
-            newxright = ((rightverticex - params['xy'][0]) * np.cos(radangle) - \
-                         (rightverticey - params['xy'][1]) * np.sin(radangle)) + params['xy'][0]
-
-            newyleft = ((leftverticex - params['xy'][0]) * np.sin(radangle) + \
-                        (leftverticey - params['xy'][1]) * np.cos(radangle)) + params['xy'][1]
-
-            newyright = ((rightverticex - params['xy'][0]) * np.sin(radangle) + \
-                         (rightverticey - params['xy'][1]) * np.cos(radangle)) + params['xy'][1]
-
-            newx = [newxleft, newxright]
-            newy = [newyleft, newyright]
-            ax.plot(newx, newy, color='white', linewidth=3)
-            ax.plot(newx, newy, 'wo', markersize=2)
-            #ax.set_xlim(-5,5)
-            #ax.set_ylim(-5,5)
-
-            ax.set_aspect('equal', 'datalim')
-            plt.show()
-            
-        return params
-
-    

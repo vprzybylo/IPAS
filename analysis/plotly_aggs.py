@@ -108,7 +108,7 @@ class PlotAgg:
                                                z=z_basal_bottom,
                                                mode='lines',
                                                line=dict(width=line_width,
-                                                           color='black'),
+                                                         color='black'),
                                                showlegend=False
                                               )
 
@@ -120,6 +120,17 @@ class PlotAgg:
         rx, ry, rz = clus1.ellipsoid_axes_lengths(A)
         x, y, z = clus1.ellipsoid_axes_coords(rx, ry, rz)
         xell, yell, zell = clus1.ellipsoid_surface(A, x, y, z)
+        
+        maxXe = np.max(xell)
+        minXe = np.min(xell)
+        maxYe = np.max(yell)
+        minYe = np.min(yell)
+        maxZe = np.max(zell)
+        minZe = np.min(zell)
+
+        self.maxxyz = max(maxXe, maxYe, maxZe)
+        self.minxyz = min(minXe, minYe, minZe)
+
         return xell, yell, zell, x, y, z
 
 
@@ -173,6 +184,7 @@ class PlotAgg:
                                                         color='green'),
                                               showlegend=False
                                              )
+        go.scatter3d.Textfont(size=30)
 
     def camera(self):
 
@@ -190,34 +202,32 @@ class PlotAgg:
                            )
 
 
-    def layout(self, tick_angle=20, width=800, height=800,
-                      showticklabels=True, tick_size=14,
-                      tick_fontfamily='Times New Roman', showgrid=False):
+    def layout(self, tick_angle=20, showticklabels=True, tick_size=14,
+                      tick_fontfamily='Times New Roman', showgrid=True):
 
         self.layout = go.Layout(scene = dict(camera=self.camerax,
-                                        xaxis=dict(title='X',
-                                                   showgrid=showgrid,
-                                                   tickangle=tick_angle,
-                                                   showticklabels=showticklabels,
-                                                   tickfont=dict(family=tick_fontfamily,
-                                                                 size=14)),
-                                        yaxis=dict(title='Y',
-                                                   showgrid=showgrid,
-                                                   tickangle=tick_angle,
-                                                   showticklabels=showticklabels,
-                                                   tickfont=dict(size=14,
-                                                                 family=tick_fontfamily)),
-                                        zaxis=dict(title='Z',
-                                                   showgrid=showgrid,
-                                                   tickangle=tick_angle,
-                                                   nticks=5,
-                                                   showticklabels=showticklabels,
-                                                   tickwidth=1,
-                                                   tickfont=dict(size=14,
-                                                                 family=tick_fontfamily))),
-                                font=dict(family='Courier New',
-                                          size=24),
-                                autosize=False,
-                                width=width,
-                                height=height
-                                )
+                                            xaxis=dict(
+                                                       title='X',
+                                                       showgrid=showgrid,
+                                                       tickangle=tick_angle,
+                                                       showticklabels=showticklabels,
+                                                       tickfont=dict(family=tick_fontfamily,
+                                                                     size=tick_size)),
+                                            yaxis=dict(
+                                                       title='Y',
+                                                       showgrid=showgrid,
+                                                       tickangle=tick_angle,
+                                                       showticklabels=showticklabels,
+                                                       tickfont=dict(size=tick_size,
+                                                                     family=tick_fontfamily)),
+                                            zaxis=dict(
+                                                       title='Z',
+                                                       showgrid=showgrid,
+                                                       tickangle=tick_angle,
+                                                       showticklabels=showticklabels,
+                                                       tickfont=dict(size=tick_size,
+                                                                     family=tick_fontfamily))
+                                            ),
+                                font=dict(family='Sans',
+                                          size=16)
+                               )

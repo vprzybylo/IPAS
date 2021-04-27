@@ -100,12 +100,13 @@ def collect_clusters_ice_ice(phio, r, nclusters, ncrystals, rand_orient):
             #phi2Ds.append(cluster.phi_2D())
             cluster.points = cluster.orient_points
 
-            print('x')
-            cluster.plot_ellipsoid_aggs([cluster], view='x', circle=None)
-            print('y')
-            cluster.plot_ellipsoid_aggs([cluster], view='y', circle=None)
-            print('z')
-            cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None)
+#             print('x')
+#             cluster.plot_ellipse([['x','y']])
+#             cluster.plot_ellipsoid_aggs([cluster], view='x', circle=None)
+#             print('y')
+#             cluster.plot_ellipsoid_aggs([cluster], view='y', circle=None)
+#             print('z')
+#             cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None)
 
             cluster_cp = cp.deepcopy(cluster)
 
