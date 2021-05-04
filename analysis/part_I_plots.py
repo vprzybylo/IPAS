@@ -153,7 +153,7 @@ def axislengths_aspectratios(phio_p, phio_c, mono_as_p, mono_cs_p, mono_as_c, mo
     ax1.plot(phio_c, agg_phi_flat_columns, 'g')
   
     ax1.set_xlim([0.01,100.0])
-    #ax1.set_ylim([0.00,170])
+    ax1.set_ylim([0.005,350.00])
     ax1.grid()
     ax1.set_ylabel('Axis Lengths and Aspect Ratio')
     ax1.set_title('Quasi-Horizontal Orientation')
@@ -174,7 +174,7 @@ def axislengths_aspectratios(phio_p, phio_c, mono_as_p, mono_cs_p, mono_as_c, mo
     ax2.plot(phio_c, agg_phi_rand_columns, 'g')
     ax2.grid()
     ax2.set_xlim([0.01,100.0])
-    #ax2.set_ylim([0.00,170])
+    ax2.set_ylim([0.005,350.00])
     ax2.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
     ax2.set_title('Random Orientation')
     ax2.set_xscale('log')

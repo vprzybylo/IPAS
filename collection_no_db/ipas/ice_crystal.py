@@ -197,7 +197,7 @@ class Ice_Crystal():
                 if area > area_og:
                     xrot = i
                     area_og=area
-                self.points = self.hold_clus
+                #self.points = self.hold_clus
             
             area_og = 0
             for i in np.arange(0.,np.pi/2, 0.1):
@@ -206,11 +206,11 @@ class Ice_Crystal():
                 if area > area_og:
                     yrot = i
                     area_og=area
-                self.points = self.hold_clus
+                #self.points = self.hold_clus
+            
             zrot=random.uniform(0, 2 * np.pi)
-            best_rot = [xrot,yrot,zrot]             
-           
-            self.rotate_to(best_rot)            
+            best_rot = [xrot,yrot,zrot]
+            self.rotate_to(best_rot)
 
             
     def generate_random_point_fast(self, new_crystal, number=1):

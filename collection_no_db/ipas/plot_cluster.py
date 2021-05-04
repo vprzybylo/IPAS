@@ -224,15 +224,15 @@ class Plot_Cluster(ipas.Ice_Cluster):
                 ax.scatter(nearest_geoms_xy[1].x, nearest_geoms_xy[1].y, nearest_geoms_yz[1].y, c='k', s=100, zorder=10)
 
 
-#         ax.set_xlabel('X')
-#         ax.set_ylabel('Y')
-#         ax.set_zlabel('Z')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
 
-        ax.set_zticklabels([])
-        ax.set_yticklabels([])
-        ax.set_xticklabels([])
-        ax.grid(False)
-        plt.axis("off")
+#         ax.set_zticklabels([])
+#         ax.set_yticklabels([])
+#         ax.set_xticklabels([])
+#         ax.grid(False)
+#         plt.axis("off")
 
         # ax.view_init(30, i)
         # plt.pause(.001)

@@ -19,18 +19,22 @@ def collect_clusters_alldask(phio, r, ncrystals, rand_orient):
     phi2Ds = np.empty(ncrystals-1) 
     phi2D = np.empty(ncrystals-1) 
     dds = np.empty(ncrystals-1)
-    perims = np.empty(ncrystals-1)
 
-    #a = (r ** 3 / phio) ** (1. / 3.)
-    #c = phio * a
-
-    if phio < 1.0:
-        a=r
-        c=phio*a
-
+    a = (r ** 3 / phio) ** (1. / 3.)
+    c = phio * a
+    if c < a:
+        plates = True
     else:
-        c=r
-        a=c/phio
+        plates = False
+
+
+#     if phio < 1.0:
+#         a=r
+#         c=phio*a
+
+#     else:
+#         c=r
+#         a=c/phio
 
     crystal1 = ipas.Ice_Crystal(a, c)
     crystal1.hold_clus = crystal1.points
@@ -57,7 +61,7 @@ def collect_clusters_alldask(phio, r, ncrystals, rand_orient):
         cluster.closest_points(crystal2)
 
         #for density change of cluster before aggregating
-        rx,ry,rz = cluster.spheroid_axes()  
+        rx,ry,rz = cluster.spheroid_axes()
         Ve_clus = 4./3.*np.pi*rx*ry*rz 
         a_clus=np.power((np.power(cluster.mono_r,3)/cluster.mono_phi),(1./3.))
         c_clus = cluster.mono_phi*a_clus
@@ -68,17 +72,19 @@ def collect_clusters_alldask(phio, r, ncrystals, rand_orient):
 
         cluster.add_crystal(crystal2)
         cluster.add_points = cp.deepcopy(cluster.points)
-
-        if a>c and rand_orient== False:
-            cluster.orient_cluster() 
+        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
+        if a>c and rand_orient == False:
+            cluster.orient_cluster()
         else:
-            cluster.orient_cluster(rand_orient) 
+            cluster.orient_cluster(rand_orient)
         cluster.recenter()
         cluster.orient_points = cp.deepcopy(cluster.points)
 
 #         depths[l] = cluster.depth()
 #         major_ax_zs[l] = cluster.major_ax('z')
-        agg_a, agg_b, agg_c = cluster.spheroid_axes()  
+        agg_a, agg_b, agg_c = cluster.spheroid_axes()
+        print(a, c, agg_a, agg_c)
+        print((agg_a-a)/a*100)
         agg_as[l] = agg_a
         agg_bs[l] = agg_b
         agg_cs[l] = agg_c
@@ -93,22 +99,14 @@ def collect_clusters_alldask(phio, r, ncrystals, rand_orient):
         dds[l] = (d2-d1)/d1
 
         #-------------------------------------
+        cplxs[l], circle = cluster.complexity()
 
-        cplxs[l], perims[l] = cluster.complexity()
-        print(cplxs[l])
         #phi2Ds[l] = cluster.phi_2D_rotate()
         #phi2D[l] = cluster.phi_2D()
-        cluster.points = cluster.orient_points
-
-        #print(agg_c/agg_a)
-#             print('w')
-#        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
-#             print('x')
 
         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
-        print('y')
-        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
-        print('z')
+#         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
+#         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='y', circle=None, agg_agg=False)
 #         cluster.plot_ellipsoid_aggs([cluster, crystal2], view='z', circle=None, agg_agg=False)
 
         cluster_cp = cp.deepcopy(cluster)

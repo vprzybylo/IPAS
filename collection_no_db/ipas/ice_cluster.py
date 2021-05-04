@@ -302,7 +302,7 @@ class Ice_Cluster():
                 if area > area_og:
                     xrot = i
                     area_og=area
-                self.points = self.add_points
+                #self.points = self.add_points
             
             area_og = 0
             for i in np.arange(0.,np.pi/2, 0.01):
@@ -312,7 +312,7 @@ class Ice_Cluster():
                 if area > area_og:
                     yrot = i
                     area_og=area
-                self.points = self.add_points
+                #self.points = self.add_points
             
             zrot=random.uniform(0,np.pi/2)
 
