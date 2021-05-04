@@ -14,6 +14,14 @@ import ipas.cluster_calculations as cc
 class Agg():
 
     def __init__(self, cluster, dims=['x', 'z']):
+        """
+        Initialize the clustering object
+
+        Args:
+            self: write your description
+            cluster: write your description
+            dims: write your description
+        """
         self.ncrystals = cluster.ncrystals 
         self.points = cluster.points
         self.a = cluster.a
@@ -41,6 +49,12 @@ class Agg():
         self.equiv_d()
         
     def get_list(self):
+        """
+        Returns a list of the basis functions as a dictionary.
+
+        Args:
+            self: write your description
+        """
         return {'ncrystals': self.ncrystals,\
                 'monor': self.monor,\
                 'monophi': self.monophi,\
@@ -74,6 +88,12 @@ class Agg():
         self.filled_circ_area_ratio = self.area/Ac
 
     def circularity(self):
+        """
+        Estimate of circularity in nms
+
+        Args:
+            self: write your description
+        """
         self.circularity = (4.*np.pi*self.area)/(self.perim**2)
 
     def roundness(self):
@@ -84,6 +104,12 @@ class Agg():
         self.roundness = (4.*np.pi*self.area)/self.convex_perim**2
 
     def perim_area_ratio(self):
+        """
+        Calculates the perimation area ratio
+
+        Args:
+            self: write your description
+        """
         self.perim_area_ratio = self.perim/self.area
 
     def convex_perim(self):
@@ -93,6 +119,12 @@ class Agg():
         self.convex_perim = self.agg.convex_hull.length
 
     def convexity(self):
+        """
+        The convexity value
+
+        Args:
+            self: write your description
+        """
         self.convexity = self.convex_perim/self.perim
 
     def complexity(self, cluster):
@@ -113,6 +145,12 @@ class Agg():
         self.hull_area = self.agg.convex_hull.area
         
     def solidity(self):
+        """
+        The solidity of the mesh.
+
+        Args:
+            self: write your description
+        """
         self.solidity = self.area/self.hull_area
 
     def equiv_d(self):

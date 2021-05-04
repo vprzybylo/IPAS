@@ -11,6 +11,15 @@ import pickle
 
 
 def collect_clusters_alldask(phio, r, ncrystals, rand_orient):
+    """
+    Collect crystal clusters using alldask.
+
+    Args:
+        phio: write your description
+        r: write your description
+        ncrystals: write your description
+        rand_orient: write your description
+    """
 
     cplxs = np.empty(ncrystals-1)
     agg_as = np.empty(ncrystals-1)

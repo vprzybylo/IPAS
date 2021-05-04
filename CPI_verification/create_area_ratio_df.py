@@ -27,6 +27,14 @@ dfs = [pd.DataFrame(i) for i in dfs]
 df = pd.concat(dfs, axis=0, ignore_index=True)
 
 def shape(a,b,c):
+    """
+    Return the shape of a triangle.
+
+    Args:
+        a: write your description
+        b: write your description
+        c: write your description
+    """
     if (b-c) <= (a-b):
         return 'prolate'
     else:

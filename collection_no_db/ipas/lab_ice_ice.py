@@ -11,6 +11,16 @@ import pickle
 
 
 def collect_clusters_ice_ice(phio, r, nclusters, ncrystals, rand_orient):
+    """
+    Collect crystals in ice cluster using the ICRF method.
+
+    Args:
+        phio: write your description
+        r: write your description
+        nclusters: write your description
+        ncrystals: write your description
+        rand_orient: write your description
+    """
 
     #NEW AGGREGATE PROPERTIES
     cplxs = []

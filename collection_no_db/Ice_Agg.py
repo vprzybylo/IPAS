@@ -26,6 +26,11 @@ print('scheduler info: ',client.scheduler_info())
 time.sleep(30)
 
 def main():
+    """
+    Compute and gather clustering.
+
+    Args:
+    """
     output = np.empty((len(phioarr),len(reqarr), nclusters),dtype=object)
     for phi in range(len(phioarr)):
         for r in range(len(reqarr)):
@@ -40,6 +45,11 @@ def main():
     return output
 
 def compute():
+    """
+    Run the compute function on the cluster.
+
+    Args:
+    """
     agg_as = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
     agg_bs = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
     agg_cs = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))

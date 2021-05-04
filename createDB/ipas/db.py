@@ -9,6 +9,13 @@ f = 'sqlite:///IPAS_'+moment+'.sqlite'
 
 @event.listens_for(Engine, "connect")
 def _set_sqlite_pragma(dbapi_connection, connection_record):
+    """
+    Set SQLite pragma on the connection record.
+
+    Args:
+        dbapi_connection: write your description
+        connection_record: write your description
+    """
     if isinstance(dbapi_connection, SQLite3Connection):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON;")

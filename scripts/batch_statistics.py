@@ -15,6 +15,13 @@ import matplotlib.pyplot as plt
 class Batch():
     
     def __init__(self, data):   
+        """
+        Initialize the error statistics.
+
+        Args:
+            self: write your description
+            data: write your description
+        """
         
         self.data = data[(data<np.quantile(data, .99)) & (data>np.quantile(data, .01))]
         self.mean = np.mean(self.data)
@@ -27,6 +34,13 @@ class Batch():
         self.gamma_ch = None
 
     def mode_of_hist(self, plot=False):
+        """
+        Compute mode of histogram
+
+        Args:
+            self: write your description
+            plot: write your description
+        """
 
         bins = (self.max - self.min)/0.01
         values, bin_edges = np.histogram(self.data, bins=int(bins), density=True)
@@ -37,6 +51,13 @@ class Batch():
         self.mode = bin_edges[int(np.argwhere(values == np.max(values))[0])]
 
     def fit_distribution(self, plot=False, **kwargs):
+        """
+        Fits the gamma distribution to the data.
+
+        Args:
+            self: write your description
+            plot: write your description
+        """
 
         # Get histogram of original data
         values, bin_edges = np.histogram(self.data, density=True)
