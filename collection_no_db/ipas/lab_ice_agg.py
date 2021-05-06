@@ -33,17 +33,17 @@ def collect_clusters_ice_agg(phio, r, nclusters, ncrystals, rand_orient):
         #if n % 20 == 0.:
             #print('nclus',int(np.round(r)), phio, n)
 
-        crystal1 = ipas.Ice_Crystal(a, c)
+        crystal1 = ipas.IceCrystal(a, c)
         crystal1.hold_clus = crystal1.points
         crystal1.orient_crystal(rand_orient)
         crystal1.recenter()
         #cluster will start with a random orientation if crystal was reoriented
-        cluster = ipas.Cluster_Calculations(crystal1)  
+        cluster = ipas.ClusterCalculations(crystal1)  
 
         l=0
         while cluster.ncrystals < ncrystals: 
 
-            crystal2 = ipas.Ice_Crystal(a,c)
+            crystal2 = ipas.IceCrystal(a,c)
             crystal2.hold_clus = crystal2.points
             crystal2.orient_crystal(rand_orient)
             crystal2.recenter()

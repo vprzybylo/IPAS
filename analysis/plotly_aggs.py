@@ -206,21 +206,21 @@ class PlotAgg:
                       tick_fontfamily='Times New Roman', showgrid=True):
 
         self.layout = go.Layout(scene = dict(camera=self.camerax,
-                                            xaxis=dict(
+                                            xaxis=dict(range=[self.minxyz, self.maxxyz],
                                                        title='X',
                                                        showgrid=showgrid,
                                                        tickangle=tick_angle,
                                                        showticklabels=showticklabels,
                                                        tickfont=dict(family=tick_fontfamily,
                                                                      size=tick_size)),
-                                            yaxis=dict(
+                                            yaxis=dict(range=[self.minxyz, self.maxxyz],
                                                        title='Y',
                                                        showgrid=showgrid,
                                                        tickangle=tick_angle,
                                                        showticklabels=showticklabels,
                                                        tickfont=dict(size=tick_size,
                                                                      family=tick_fontfamily)),
-                                            zaxis=dict(
+                                            zaxis=dict(range=[self.minxyz, self.maxxyz],
                                                        title='Z',
                                                        showgrid=showgrid,
                                                        tickangle=tick_angle,

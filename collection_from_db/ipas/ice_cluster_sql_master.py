@@ -177,18 +177,24 @@ class IceCluster():
             cluster2.move([0, 0, diffmins])
 
         try:
-            nearest_geoms_xz = nearest_points(self.projectxz(), cluster2.projectxz())
-            nearest_geoms_yz = nearest_points(self.projectyz(), cluster2.projectyz())
-            nearest_geoms_xy = nearest_points(self.projectxy(), cluster2.projectxy())
+            nearest_geoms_xz = nearest_points(self.projectxz(),
+                                              cluster2.projectxz())
+            nearest_geoms_yz = nearest_points(self.projectyz(),
+                                              cluster2.projectyz())
+            nearest_geoms_xy = nearest_points(self.projectxy(),
+                                              cluster2.projectxy())
             #print('z from yz', nearest_geoms_yz[0].x, nearest_geoms_yz[0].y)
 
         except ValueError:
             return (None, None)
 
-        agg_yz = np.array([nearest_geoms_yz[0].x, nearest_geoms_yz[0].y]) #agg
-        xtal_yz = np.array([nearest_geoms_yz[1].x, nearest_geoms_yz[1].y]) #crystal2
+        agg_yz = np.array([nearest_geoms_yz[0].x,
+                           nearest_geoms_yz[0].y]) #agg
+        xtal_yz = np.array([nearest_geoms_yz[1].x,
+                            nearest_geoms_yz[1].y]) #crystal2
 
-        stacked = np.array([self.points['y'].ravel(), self.points['z'].ravel()]).T
+        stacked = np.array([self.points['y'].ravel(),
+                            self.points['z'].ravel()]).T
         tree = spatial.cKDTree(stacked)
         distance, index = tree.query([xtal_yz], n_jobs=-1)
         agg_xyz_closest = self.points.ravel()[index]
@@ -198,13 +204,17 @@ class IceCluster():
 
         nearpt_xz = nearest_points(Point(agg_xyz_closest['x'],
                                          agg_xyz_closest['z']),
-        cluster2.projectxz())
+                                   cluster2.projectxz())
 
         move_x = nearpt_xz[1].x-nearpt_xz[0].x
         movez_xz = nearpt_xz[1].y-nearpt_xz[0].y
-        cluster2.move([-move_x, -move_y, -(max(abs(movez_xz), abs(movez_yz)))])
+        cluster2.move([-move_x,
+                       -move_y,
+                       -(max(abs(movez_xz), abs(movez_yz)))
+                      ])
 
         return (nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy)
+
 
     def _reorient(self, method='random', rotations=1):
 
@@ -271,7 +281,9 @@ class IceCluster():
                 if area > area_og:
                     xrot = i
                     area_og=area
-                #self.points = self.add_points
+                # reset points back to before reorienting
+                # that way the initial orientation is consistent
+                self.points = self.add_points
 
             area_og = 0
             for i in np.arange(0.,np.pi/2, 0.01):
@@ -281,7 +293,7 @@ class IceCluster():
                 if area > area_og:
                     yrot = i
                     area_og=area
-                #self.points = self.add_points
+                self.points = self.add_points
 
             zrot=random.uniform(0,np.pi/2)
 

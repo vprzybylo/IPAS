@@ -36,7 +36,7 @@ def aspect_ratios_Na(neg_error_flat, pos_error_flat, chs_flat,
     phio = np.logspace(-2, 2, num=20, dtype=None)
     phio_p = phio[:10]
     phio_c = phio[10:]
-    
+
     alpha=0.03
 
     fig, (ax1, ax2) = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(12,5))
@@ -121,37 +121,46 @@ def aspect_ratios_Na(neg_error_flat, pos_error_flat, chs_flat,
 
     if save_fig:
         plt.savefig('../plots/partI_aspectratios_Na.pdf', bbox_inches = 'tight')
-        
+
 
 def axislengths_aspectratios(phio_p, phio_c, mono_as_p, mono_cs_p, mono_as_c, mono_cs_c,
-                             agg_as_flat_plates, agg_as_flat_columns, agg_as_rand_plates,
-                             agg_as_rand_columns, agg_cs_flat_plates, agg_cs_flat_columns,
-                             agg_cs_rand_plates, agg_cs_rand_columns, agg_phi_flat_plates,
-                             agg_phi_flat_columns, agg_phi_rand_plates, agg_phi_rand_columns,
+                             avg_phi_flat, neg_error_flat_phis, pos_error_flat_phis,
+                             avg_as_flat, neg_error_flat_as, pos_error_flat_as,
+                             avg_cs_flat, neg_error_flat_cs, pos_error_flat_cs,
+                             avg_phi_rand, neg_error_rand_phis, pos_error_rand_phis,
+                             avg_as_rand, neg_error_rand_as, pos_error_rand_as,
+                             avg_cs_rand, neg_error_rand_cs, pos_error_rand_cs,
                              delta_flat_plates_major, delta_flat_plates_minor,
                              delta_flat_columns_major, delta_flat_columns_minor,
                              delta_rand_plates_major, delta_rand_plates_minor,
                              delta_rand_columns_major, delta_rand_columns_minor,
-                             save_fig):
+                             save_fig=True, alpha=0.3):
     '''
     plot axis lengths and aspect ratio for each orientation with respect to monomer aspect ratio
+    averaged over 4 simulations with Na=300
     '''
-    #averaged over 5 simulations with Na=300
+    
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True, sharey=False, figsize=(16,10))
     plt.subplots_adjust(wspace=0.25, hspace=0.1)
-
-    ax1.plot(phio_p, agg_as_flat_plates, 'b')
+    
+    # Flat
+    ax1.plot(phio_p, avg_as_flat[:10], 'b')
+    ax1.fill_between(phio_p, neg_error_flat_as[:10], pos_error_flat_as[:10], color='b', alpha=alpha)
     ax1.plot(phio_p, mono_as_p, 'b', linestyle='dotted')
-    ax1.plot(phio_p, agg_cs_flat_plates, 'orange')
+    ax1.plot(phio_p, avg_cs_flat[:10], 'orange')
+    ax1.fill_between(phio_p, neg_error_flat_cs[:10], pos_error_flat_cs[:10], color='orange', alpha=alpha)
     ax1.plot(phio_p, mono_cs_p, 'darkorange', linestyle='dotted')
-    ax1.plot(phio_p, agg_phi_flat_plates, 'g')
-
-    ax1.plot(phio_c, agg_as_flat_columns, 'b')
+    ax1.plot(phio_p, avg_phi_flat[:10], 'g')
+    ax1.fill_between(phio_p, neg_error_flat_phis[:10], pos_error_flat_phis[:10], color='g', alpha=alpha)
+    ax1.plot(phio_c, avg_as_flat[10:], 'b')
+    ax1.fill_between(phio_c, neg_error_flat_as[10:], pos_error_flat_as[10:], color='b', alpha=alpha)
     ax1.plot(phio_c, mono_cs_c, 'b', linestyle='dotted')
-    ax1.plot(phio_c, agg_cs_flat_columns, 'orange')
+    ax1.plot(phio_c, avg_cs_flat[10:], 'orange')
+    ax1.fill_between(phio_c, neg_error_flat_cs[10:], pos_error_flat_cs[10:], color='orange', alpha=alpha)
     ax1.plot(phio_c, mono_as_c, 'darkorange', linestyle='dotted')
-    ax1.plot(phio_c, agg_phi_flat_columns, 'g')
-  
+    ax1.plot(phio_c, avg_phi_flat[10:], 'g')
+    ax1.fill_between(phio_c, neg_error_flat_phis[10:], pos_error_flat_phis[10:], color='g', alpha=alpha)
+
     ax1.set_xlim([0.01,100.0])
     ax1.set_ylim([0.005,350.00])
     ax1.grid()
@@ -161,17 +170,23 @@ def axislengths_aspectratios(phio_p, phio_c, mono_as_p, mono_cs_p, mono_as_c, mo
     ax1.set_yscale('log')
 
     ###############################################################
-    ax2.plot(phio_p, agg_as_rand_plates, 'b', label='aggregate major axis')
+    # Random
+    ax2.plot(phio_p, avg_as_rand[:10], 'b', label='aggregate major axis')
+    ax2.fill_between(phio_p, neg_error_rand_as[:10], pos_error_rand_as[:10], color='b', alpha=alpha)
     ax2.plot(phio_p, mono_as_p, 'b', linestyle='dotted', label='monomer major axis')
-    ax2.plot(phio_p, agg_cs_rand_plates, 'orange',label='aggregate minor axis')
+    ax2.plot(phio_p, avg_cs_rand[:10], 'orange',label='aggregate minor axis')
+    ax2.fill_between(phio_p, neg_error_rand_cs[:10], pos_error_rand_cs[:10], color='orange', alpha=alpha)
     ax2.plot(phio_p, mono_cs_p, 'darkorange', linestyle='dotted', label='monomer minor axis')
-    ax2.plot(phio_p, agg_phi_rand_plates, 'g', label='aggregate aspect ratio')
-
-    ax2.plot(phio_c, agg_as_rand_columns, 'b')
+    ax2.plot(phio_p, avg_phi_rand[:10], 'g', label='aggregate aspect ratio')
+    ax2.fill_between(phio_p, neg_error_rand_phis[:10], pos_error_rand_phis[:10], color='g', alpha=alpha)
+    ax2.plot(phio_c, avg_as_rand[10:], 'b')
+    ax2.fill_between(phio_c, neg_error_rand_as[10:], pos_error_rand_as[10:], color='b', alpha=alpha)
     ax2.plot(phio_c, mono_cs_c, 'b', linestyle='dotted')
-    ax2.plot(phio_c, agg_cs_rand_columns, 'orange')
+    ax2.plot(phio_c, avg_cs_rand[10:], 'orange')
+    ax2.fill_between(phio_c, neg_error_rand_cs[10:], pos_error_rand_cs[10:], color='orange', alpha=alpha)
     ax2.plot(phio_c, mono_as_c, 'darkorange', linestyle='dotted')
-    ax2.plot(phio_c, agg_phi_rand_columns, 'g')
+    ax2.plot(phio_c, avg_phi_rand[10:], 'g')
+    ax2.fill_between(phio_c, neg_error_rand_phis[10:], pos_error_rand_phis[10:], color='g', alpha=alpha)
     ax2.grid()
     ax2.set_xlim([0.01,100.0])
     ax2.set_ylim([0.005,350.00])
@@ -210,7 +225,7 @@ def axislengths_aspectratios(phio_p, phio_c, mono_as_p, mono_cs_p, mono_as_c, mo
     ax4.set_xlim([0.01,100.0])
     ax4.set_ylim([10.0,7000])
     ax4.set_xlabel('Monomer Aspect Ratio')
-    
+
 
     for ax in [ax1, ax2, ax3, ax4]:
         if ax == ax1 or ax == ax2:

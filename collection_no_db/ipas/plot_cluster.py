@@ -18,11 +18,12 @@ import datetime
 import operator
 
 #Sub Class
-class Plot_Cluster(ipas.Ice_Cluster):
+class PlotCluster(ipas.IceCluster):
 
     def __init__(self, cluster):
         # call parent constructor IceCluster
         super().__init__(cluster)
+
 
     def _crystal_projectxy(self, n):
         try:
@@ -30,11 +31,13 @@ class Plot_Cluster(ipas.Ice_Cluster):
         except IndexError:
             return None
 
+
     def _crystal_projectxz(self, n):
         try:
             return geom.MultiPoint(self.points[n][['x', 'z']]).convex_hull
         except IndexError:
             return None
+
 
     def _crystal_projectyz(self, n):
         try:
@@ -42,18 +45,22 @@ class Plot_Cluster(ipas.Ice_Cluster):
         except IndexError:
             return None
         
+
     def projectxy(self):
         polygons = [self._crystal_projectxy(n) for n in range(self.ncrystals) if self._crystal_projectxy(n) is not None]
         return shops.cascaded_union(polygons)
+
 
     def projectxz(self):
         polygons = [self._crystal_projectxz(n) for n in range(self.ncrystals) if self._crystal_projectxz(n) is not None]
         return shops.cascaded_union(polygons)
 
+
     def projectyz(self):
         polygons = [self._crystal_projectyz(n) for n in range(self.ncrystals) if self._crystal_projectyz(n) is not None]
         return shops.cascaded_union(polygons)
    
+
     def ellipse(self, u, v, rx, ry, rz):
         x = rx * np.cos(u) * np.cos(v)
         y = ry * np.sin(u) * np.cos(v)
@@ -80,6 +87,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
         xell, yell, zell = np.rollaxis(E, axis=-1)
         return xell, yell, zell
     
+
     def _plot_crystal(self, ncrys, ax, color):  
         #plots individual monomers
         
@@ -133,6 +141,7 @@ class Plot_Cluster(ipas.Ice_Cluster):
 #         ax.set_yticklabels([])
 #         ax.set_xticklabels([])
 #         ax.grid(False)
+
 
     def plot_ellipsoid_aggs(self, clusters, nearest_geoms_xz=None, nearest_geoms_yz=None, \
                             nearest_geoms_xy=None, view='x', circle=None, agg_agg=True):
@@ -270,9 +279,10 @@ class Plot_Cluster(ipas.Ice_Cluster):
 
 
     def plot_axes_ellipse(self, params, ax):
-        # 2D
-        # major axis
+        # 2D ellipse axes
+        
         # orientation angle of ellipse in radians
+        # major axis
         angle = params['angle'] * np.pi / 180
         leftverticex = params['xy'][0] - params['width'] / 2
         rightverticex = params['xy'][0] + params['width'] / 2

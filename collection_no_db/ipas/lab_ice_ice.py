@@ -37,16 +37,16 @@ def collect_clusters_ice_ice(phio, r, nclusters, ncrystals, rand_orient):
         #if n % 20 == 0.:
             #print('nclus',int(np.round(r)), phio, n)
 
-        crystal1 = ipas.Ice_Crystal(a, c)
+        crystal1 = ipas.IceCrystal(a, c)
         crystal1.hold_clus = crystal1.points
         crystal1.orient_crystal(rand_orient)
         crystal1.recenter()
         #cluster will start with a random orientation if crystal was reoriented
-        cluster = ipas.Cluster_Calculations(crystal1)  
+        cluster = ipas.ClusterCalculations(crystal1)  
 
         while cluster.ncrystals < ncrystals: 
 
-            crystal2 = ipas.Ice_Crystal(a, c)
+            crystal2 = ipas.IceCrystal(a, c)
             crystal2.hold_clus = crystal2.points
             crystal2.orient_crystal(rand_orient)
             crystal2.recenter()
@@ -63,7 +63,7 @@ def collect_clusters_ice_ice(phio, r, nclusters, ncrystals, rand_orient):
             a1=np.power((np.power(crystal1.r,3)/crystal1.phi),(1./3.))
             c1= crystal1.phi*a1
             Va = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 
-            a_crys_ell,b_crys_ell,c_crys_ell= crystal1.spheroid_axes()
+            a_crys_ell,b_crys_ell,c_crys_ell= crystal1.ellipsoid_axes()
             Ve = 4./3.*np.pi*a_crys_ell*b_crys_ell*c_crys_ell 
             d1 = Va/Ve 
 
@@ -79,7 +79,7 @@ def collect_clusters_ice_ice(phio, r, nclusters, ncrystals, rand_orient):
 
             #depths.append(cluster.depth())
             #major_ax_zs.append(cluster.major_ax('z'))
-            agg_a, agg_b, agg_c = cluster.spheroid_axes() #actually ellipsoid 
+            agg_a, agg_b, agg_c = cluster.ellipsoid_axes() 
             agg_as.append(agg_a)
             agg_bs.append(agg_b)
             agg_cs.append(agg_c)
