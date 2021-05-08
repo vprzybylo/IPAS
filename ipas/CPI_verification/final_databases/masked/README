@@ -1,0 +1,6 @@
+these databases were created with:
+10% cutoff
+model: bs128_e50_13classes_clean_vgg19
+datadir for ML: cpi_data/training_datasets/hand_labeled_resized_multcampaigns_clean/
+classes: class_names=['agg','blank','blurry','budding','bullet','column','compact irregular',\
+                       'fragment','needle','plate','rimed agg','rimed column','sphere']
