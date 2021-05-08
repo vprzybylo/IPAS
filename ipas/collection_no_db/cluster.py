@@ -4,7 +4,6 @@ crystals within the cluster,
 and methods to move and reorient the arrays
 """
 
-
 import numpy.linalg as la
 import shapely.ops as shops
 import copy as cp
@@ -20,7 +19,7 @@ import matplotlib.pyplot as plt
 
 
 class Cluster():
-
+    """An aggregate"""
     def __init__(self, crystal, size=1):
 
         self.ncrystals = 1
@@ -64,13 +63,13 @@ class Cluster():
     def remove_cluster(self, cluster):
         self.points = self.points[:-cluster.ncrystals]
         self.ncrystals -= cluster.ncrystals
-        
+
 
     def add_crystal(self, crystal):
         self.points = np.vstack((self.points, crystal.points))
         self.ncrystals += crystal.ncrystals
         return self  #to make clus 3 instance
-    
+
 
     def remove_crystal(self, crystal):
         self.points = self.points[:-crystal.ncrystals]
@@ -137,13 +136,13 @@ class Cluster():
         y = np.mean(self.points[:self.ncrystals]['y'])
         z = np.mean(self.points[:self.ncrystals]['z'])
         return [x, y, z]
-    
+
 
     def recenter(self):
         center_move = self.center_of_mass()
         self.move([-x for x in center_move])
         return center_move
-    
+
 
     def _crystal_projectxy(self, n):
         return geom.MultiPoint(self.points[n][['x', 'y']])
@@ -282,9 +281,8 @@ class Cluster():
         ax.scatter(x_closest_particle, y_closest_particle, z_closest_particle, color='r',s=100)
         ax.scatter(0, particle_yz[0], particle_yz[1], color='g',s=100)
 
-        particle._plot_crystal(ax, 'k')
-        print(self.__dict__)
-        self._plot_crystal(0, ax, 'k')
+        particle.plot_crystal(ax, 'k')
+        self.plot_crystal(0, ax, 'k')
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -365,8 +363,8 @@ class Cluster():
                     yrot = i
                     area_og=area
                 self.points = self.add_points
-            
+
             zrot=random.uniform(0,np.pi/2)
 
             best_rot = [xrot,yrot,zrot]
-            self.rotate_to(best_rot)   
+            self.rotate_to(best_rot)

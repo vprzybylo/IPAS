@@ -1,9 +1,11 @@
 """
-Utilities for running ice particle simulations.
+Main function for running ice particle simulations
+ICE-AGG collection
+includes looping over ncrystals instead of doing that outside in a dask computation
 """
 
 from ipas.collection_no_db.crystal import Crystal
-from ipas.collection_no_db.cluster import Cluster
+from ipas.collection_no_db.calculations import ClusterCalculations
 import copy as cp
 import numpy as np
 
@@ -17,7 +19,7 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
     agg_cs = np.empty((nclusters, ncrystals-1))
     phi2Ds = np.empty((nclusters, ncrystals-1)) 
     dds = np.empty((nclusters, ncrystals-1))
-    
+
     # get a and c axes of monomer using phi and r
     a = (r ** 3 / phio) ** (1. / 3.)
     c = phio * a
@@ -33,10 +35,10 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
         crystal1.hold_clus = crystal1.points
         crystal1.orient_crystal(rand_orient)
         crystal1.recenter()
-        
+
         # create cluster from initialized crystal
         # same orientation if crystal was reoriented
-        cluster = Cluster(crystal1)
+        cluster = ClusterCalculations(crystal1)
 
         l=0
         # number of monomers/crystals per aggregate/cluster
@@ -61,7 +63,7 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
             rx,ry,rz = cluster.ellipsoid_axes()  
             # volume of ellipsoid around cluster before aggregation
             Ve_clus = 4./3.*np.pi*rx*ry*rz 
-            
+
             # a and c of monomers in cluster (all identical)
             a_clus=np.power((np.power(cluster.mono_r,3)/cluster.mono_phi),(1./3.))
             c_clus = cluster.mono_phi*a_clus
@@ -69,7 +71,7 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
             Va_clus = 3*(np.sqrt(3)/2) * np.power(a_clus,2) * c_clus * cluster.ncrystals
             # density ratio of aggregate and ellipsoid
             d1 = Va_clus/Ve_clus
-            
+
             # -------------------
             # add monomer points to original cluster (i.e., aggregate)
             cluster.add_crystal(crystal2)
@@ -82,7 +84,7 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
             c_mono = crystal2.phi*a_mono
             # volume of monomer to collect
             Va_mono = 3*(np.sqrt(3)/2) * np.power(a_mono,2) * c_mono
-            
+
             # get fit-ellipsoid radii (a-major, c-minor) after aggregation
             agg_a, agg_b, agg_c = cluster.ellipsoid_axes()  
             agg_as[n,l] = agg_a
@@ -94,7 +96,7 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
             d2 = (Va_clus+Va_mono)/Ve3
             # append relative change in density (after - before adding monomer)
             dds[n,l] = (d2-d1)/d1
-            
+
             # ----------------------------
             # orient cluster after adding monomer
             if a>c and rand_orient== False:
@@ -102,7 +104,7 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
             else:
                 cluster.orient_cluster(rand_orient) 
             cluster.recenter()
-            
+
             # ------other calculations------
             # save points before reorienting to calculate phi_2D_rotate
             cluster.orient_points = cp.deepcopy(cluster.points)
@@ -111,7 +113,7 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
             phi2Ds[n,l] = cluster.phi_2D()
             # reset points back to how they were before phi_2D_rotate
             cluster.points = cluster.orient_points
-            
+
             # -------- PLOTTING --------
 #             print('w')
 #             cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)

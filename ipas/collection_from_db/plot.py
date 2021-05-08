@@ -4,7 +4,7 @@ holds methods to plot the aggregate(s)
 no interactive plots
 """
 
-from ipas.collection_from_db.cluster import Cluster
+import ipas.collection_from_db.cluster as clus
 import math
 import numpy as np
 import shapely.geometry as geom
@@ -12,19 +12,14 @@ import shapely.affinity as sha
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import random
-from descartes.patch import PolygonPatch
 import descartes
 from matplotlib.patches import Ellipse
 import shapely.ops as shops
 import numpy.linalg as la
-from mpl_toolkits.mplot3d import Axes3D
-import datetime
-import operator
-from pyquaternion import Quaternion
 
 
 #Sub Class
-class PlotCluster(Cluster):
+class PlotCluster(clus.Cluster):
 
     def __init__(self, cluster):
         # call parent constructor IceCluster
@@ -152,9 +147,9 @@ class PlotCluster(Cluster):
         ax.set_xlim(minxyz, maxxyz)
         ax.set_ylim(minxyz, maxxyz)
         ax.set_zlim(minxyz, maxxyz)
-            
+
         return xell, yell, zell
-    
+
 
     def plot_ellipsoid_axes(self, ax, xell, yell, zell):
 
@@ -171,11 +166,10 @@ class PlotCluster(Cluster):
         ax.plot(xell[30,:],
                  yell[30,:],
                  zell[30,:], color='r', marker='o')
-        
+
         ax.plot(xell[:,20],
                 yell[:,20],
                 zell[:,20], color='g', marker='o')
-
 
 
     def init_plot_view(self, ax, view):

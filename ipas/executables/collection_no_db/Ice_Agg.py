@@ -1,15 +1,9 @@
 import ipas
-import matplotlib.pyplot as plt
 import numpy as np
 import time
 from dask_jobqueue import SLURMCluster
-from dask.distributed import Client, progress
+from dask.distributed import Client
 import dask
-from scipy import spatial 
-from shapely.geometry import Point
-from shapely.ops import nearest_points
-import pandas as pd
-from dask import dataframe as dd
 import pickle
 
 cluster = SLURMCluster(
@@ -82,8 +76,8 @@ if __name__ == '__main__':
     results = {'agg_as': agg_as, 'agg_bs':agg_bs, 'agg_cs':agg_cs, \
                'phi2D':phi2D, 'dds':dds}
 
-    with open('../instance_files/instance_iceagg_flat_n150_a10_phi5_eqmajorax', "wb") as f:
+    with open('../instance_files/test', "wb") as f:
         pickle.dump(results, f)
         f.close()
-        print('finished!') 
+        print('finished!')
 

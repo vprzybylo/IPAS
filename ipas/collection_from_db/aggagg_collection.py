@@ -47,7 +47,7 @@ def collect_clusters_agg_agg(clusters1, clusters2, rand_orient=False):
         cluster3.orient_points = copy.deepcopy(cluster3.points)
 
         A = cluster3.fit_ellipsoid()
-        cluster3.ellipsoid_axes_lengths(A)    
+        cluster3.ellipsoid_axes_lengths(A)
         agg_as.append(cluster3.a)
         agg_bs.append(cluster3.b)
         agg_cs.append(cluster3.c)
@@ -63,14 +63,16 @@ def collect_clusters_agg_agg(clusters1, clusters2, rand_orient=False):
         Va2 = 3*(np.sqrt(3)/2) * np.power(a2,2) * c2 * cluster2.ncrystals
         Va3 = np.sum(Va1+Va2) #new volume of agg
 
-        Ve1 = 4./3.*np.pi*cluster1.a*cluster1.b*cluster1.c #volume of ellipsoid for clus1
-        Ve2 = 4./3.*np.pi*cluster2.a*cluster2.b*cluster2.c #volume of ellipsoid for clus2
-        Ve3 = 4./3.*np.pi*cluster3.a*cluster3.b*cluster3.c  #volume of ellipsoid for new agg
-        #print('Va1, Ve1, Va2, Ve2', Va1, Ve1, Va2, Ve2)
+        # volume of ellipsoid for clus1
+        Ve1 = 4./3.*np.pi*cluster1.a*cluster1.b*cluster1.c
+        # volume of ellipsoid for clus2
+        Ve2 = 4./3.*np.pi*cluster2.a*cluster2.b*cluster2.c
+        # volume of ellipsoid for new agg
+        Ve3 = 4./3.*np.pi*cluster3.a*cluster3.b*cluster3.c
         Vr1 = Va1/Ve1 
         Vr2 = Va2/Ve2
         Vr_avg = np.average([Vr1,Vr2])
-        Vr3 = Va3/Ve3  #volumetric ratio after adding an agg, not a monomer
+        Vr3 = Va3/Ve3  # volumetric ratio after adding an agg, not a monomer
         #print('Vr1, Vr2, Vr3, Vravg', Vr1, Vr2, Vr3, Vr_avg)
 
         dds.append((Vr3-Vr_avg)/Vr_avg)
@@ -80,7 +82,7 @@ def collect_clusters_agg_agg(clusters1, clusters2, rand_orient=False):
         phi2Ds.append(cluster3.phi_2D_rotate())
         cluster3.points = cluster3.orient_points
 
-        #PLOTTING
+        # ----------- PLOTTING -----------
         #cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='w', circle=None)
 #         cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='y', circle=None)
 #        cluster3.plot_ellipsoid_aggs([cluster1, cluster2], view='z', circle=None)

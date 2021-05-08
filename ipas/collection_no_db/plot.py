@@ -1,10 +1,10 @@
 """
 Sub class to Cluster
-holds methods to plot the aggregate(s)
-no interactive plots
+Holds methods to plot the aggregate(s)
+No interactive plots
 """
 
-from cluster import Cluster
+import ipas.collection_no_db.cluster as cluster
 import numpy as np
 import shapely.geometry as geom
 import matplotlib.pyplot as plt
@@ -15,10 +15,10 @@ import numpy.linalg as la
 
 
 #Sub Class
-class PlotCluster(Cluster):
+class PlotCluster(cluster.Cluster):
 
     def __init__(self, cluster):
-        # call parent constructor IceCluster
+        # call parent constructor Cluster
         super().__init__(cluster)
 
 
@@ -85,8 +85,10 @@ class PlotCluster(Cluster):
         return xell, yell, zell
     
 
-    def _plot_crystal(self, ncrys, ax, color):  
-        #plots individual monomers
+    def plot_crystal(self, ncrys, ax, color):  
+        '''
+        plots nth monomer in aggregate based on ncrys
+        '''
         
         x = np.zeros(27)
         y = np.zeros(27)
@@ -170,7 +172,7 @@ class PlotCluster(Cluster):
                 #color = list(np.random.choice(range(10), size=3)/10)
                 color=colors[clus]
                 for crys in range(start[clus], end[clus]-1):   
-                    self._plot_crystal(crys, ax, color)
+                    self.plot_crystal(crys, ax, color)
         else:
             start_list = [clus.ncrystals-1 for clus in clusters]
             start_list = [i+1 if i == 0 else i for i in start_list]
@@ -182,7 +184,7 @@ class PlotCluster(Cluster):
                 #color = list(np.random.choice(range(10), size=3)/10)
                 color=colors[clus]
                 for crys in range(start[clus], end[clus]):   
-                    self._plot_crystal(crys, ax, color)
+                    self.plot_crystal(crys, ax, color)
         if circle is not None:
             xcirc,ycirc = circle.exterior.xy
             ax.plot(xcirc,ycirc, color='green')

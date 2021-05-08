@@ -16,11 +16,9 @@ import numpy.linalg as la
 
 
 class Crystal():
+    """A hexagonal prism representing a single ice crystal"""
 
-    """A hexagonal prism representing a single ice crystal."""     
     def __init__(self, a, c, center=[0, 0, 0], rotation=[0, 0, 0]):
-        """Create an ice crystal."""
-        
         self.a = a
         self.c = c
         self.phi = self.c/self.a
@@ -29,7 +27,7 @@ class Crystal():
         self.rotation = Quaternion()
         self.ncrystals = 1
         self.hold_clus = None
-        
+
         # put together the hexagonal prism
         ca = c*2  #diameter
         mf = a*2  #diameter
@@ -46,7 +44,7 @@ class Crystal():
                         (0, mf / 2, -x1), (-mf * f, mf / 4, -x1),
                         (-mf * f, -mf / 4, -x1), (0, -mf/2, -x1)],
                        dtype=[('x', float), ('y', float), ('z', float)])
-            
+
 
         else:  #initialize points so that columns fall prism face down
             self.points = np.array([(x1, -mf / 4, mf * f), (x1, mf / 4, mf * f),
@@ -59,6 +57,7 @@ class Crystal():
 
         self.rotate_to(rotation) # rotate the crystal
         self.move(center) # move the crystal to center
+
 
     def move(self, xyz):  #moves the falling crystal anywhere over the seed crystal/aggregate within the max bounds
         self.points['x'] += xyz[0]
@@ -76,26 +75,31 @@ class Crystal():
 
     def recenter(self):
         self.move([ -x for x in self._center_of_mass() ])
-    
+
+
     def add_crystal(self, crystal):
         self.points = np.vstack((self.points, crystal.points))
         self.ncrystals += crystal.ncrystals
         return self  #to make clus 3 instance
-    
+
+
     def remove_crystal(self, crystal):
         self.points = self.points[:-crystal.ncrystals]
         self.ncrystals -= crystal.ncrystals
-    
+
+
     def remove_cluster(self, crystal):
         self.points = self.points[:-crystal.ncrystals]
         self.ncrystals -= crystal.ncrystals
+
 
     def _rotate_mat(self, mat):  #when a crystal is rotated, rotate the matrix with it
         points=cp.deepcopy(self.points)
         self.points['x'] = points['x'] * mat[0, 0] + points['y'] * mat[0, 1] + points['z'] * mat[0, 2]
         self.points['y'] = points['x'] * mat[1, 0] + points['y'] * mat[1, 1] + points['z'] * mat[1, 2]
         self.points['z'] = points['x'] * mat[2, 0] + points['y'] * mat[2, 1] + points['z'] * mat[2, 2]
-        
+
+
     def _euler_to_mat(self, xyz):
         #Euler's rotation theorem, any rotation may be described using three angles.
         #takes angles and rotates coordinate system
@@ -105,14 +109,15 @@ class Crystal():
         rz = np.matrix([[np.cos(z), -np.sin(z), 0], [np.sin(z), np.cos(z), 0], [0, 0, 1]])
         return rx * ry * rz
 
+
     def rotate_to(self, angles):
-    
+
         # rotate to the orientation given by the 3 angles
         # get the rotation from the current position to the desired rotation
-        
+
         rmat = self._euler_to_mat(angles)
         desired_rot = Quaternion(matrix=rmat)
-        
+
         rot_mat = (desired_rot * self.rotation.inverse).rotation_matrix
         self._rotate_mat(rot_mat)
 
@@ -123,9 +128,9 @@ class Crystal():
         self.rotation = desired_rot
         return self
 
-    
+
     def orient_crystal(self, rand_orient=False):
-        
+
         #orient a crystal either randomly or to the rotation that maximizes the area
         if rand_orient:
             #self._reorient()
@@ -133,14 +138,6 @@ class Crystal():
             self.rotate_to([xrot, yrot, zrot])   
 
         else:
-#             f = lambda x: -(self.rotate_to([x,0,0]).projectxy().area)
-#             xrot = opt.minimize_scalar(f, bounds=(0, np.pi/2), method='Bounded').x
-         
-#             f = lambda x: -(self.rotate_to([0,x,0]).projectxy().area)
-#             yrot = opt.minimize_scalar(f, bounds=(0, np.pi/2), method='Bounded').x
-#             zrot=random.uniform(0, 2 * np.pi)    
-#             self.points = self.hold_clus
-            
             area_og = 0
             for i in np.arange(0.,np.pi/2, 0.1):
                 self.rotate_to([i,0,0])
@@ -182,9 +179,10 @@ class Crystal():
         agg_pt = list_of_points[0]
         new_pt = list_of_points[1]
         return (agg_pt, new_pt)
-    
+
+
     def closest_points(self, cluster2):
-            
+
         minclus2 = np.amin(cluster2.points['z'])
         maxclus1 = np.amax(self.points['z'])
 
@@ -208,12 +206,12 @@ class Crystal():
             nearest_geoms_xy = nearest_points(clus1projxy, clus2projxy)
         except ValueError:
             return (None, None)  
-                
+
         movex = nearest_geoms_xz[1].x - nearest_geoms_xz[0].x
         movey = nearest_geoms_yz[1].x - nearest_geoms_yz[0].x
         movez_xz = nearest_geoms_xz[1].y - nearest_geoms_xz[0].y
         movez_yz = nearest_geoms_yz[1].y - nearest_geoms_yz[0].y
-        
+
         #print('movez_xz, movez_yz', movez_xz, movez_yz)
         cluster2.move([-movex, -movey, -(max(abs(movez_xz), abs(movez_yz)))])
         #print('pts1', cluster2.points['x'].max(), cluster2.points['y'].max())
@@ -222,38 +220,24 @@ class Crystal():
         movey = nearest_geoms_xy[1].y - nearest_geoms_xy[0].y
         #if movex != 0.0 or movey != 0.0:
         #    print('moving x-y', movex, movey)
-            
+
         cluster2.move([-movex, -movey, 0])
 
         return (nearest_geoms_xz, nearest_geoms_yz, nearest_geoms_xy)
-    
 
-    def plot(self):
-        # return a multiline object representing the edges of the prism
-        lines = []
-        hex1 = self.points[0:6]  #one basal face of a crystal
-        hex2 = self.points[6:12]  #the other basal face
-
-        # make the lines representing each hexagon
-        for hex0 in [hex1, hex2]:
-            lines.append(geom.LinearRing(list(hex0)))
-
-        # make the lines connecting the two hexagons
-        for n in range(6):
-            lines.append(geom.LineString([hex1[n], hex2[n]]))
-
-        return geom.MultiLineString(lines)
-        #shapely automatically plots in jupyter notebook, no figure initialization needed
 
     def projectxy(self):
         return geom.MultiPoint(self.points[['x', 'y']]).convex_hull
 
+
     def projectxz(self):
         return geom.MultiPoint(self.points[['x', 'z']]).convex_hull
 
+
     def projectyz(self):
         return geom.MultiPoint(self.points[['y', 'z']]).convex_hull
-    
+
+
     def _mvee(self, tol=0.01):  # mve = minimum volume ellipse
         # Based on work by Nima Moshtagh
         # http://www.mathworks.com/matlabcentral/fileexchange/9542
@@ -289,7 +273,7 @@ class Crystal():
                    - np.multiply.outer(c, c)) / d
         return A, c
 
-    def spheroid_axes(self):
+    def ellipsoid_axes(self):
         A, c = self._mvee()
         U, D, V = la.svd(A)  # singular-value decomposition
         rx, ry, rz = 1. / np.sqrt(D)  # D is a diagonal matrix

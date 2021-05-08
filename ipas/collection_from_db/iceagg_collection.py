@@ -2,7 +2,7 @@
 Runs ice-aggregate collection
 """
 
-from ipas.collection_from_db.crystal import Crystal
+import ipas.collection_from_db.crystal as crys
 import time
 import numpy as np
 import random
@@ -22,11 +22,11 @@ def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
     # how many aggregates to create
     for n in range(len(clusters)):
         # create Crystal
-        monomer = Crystal(a[n], c[n])
+        monomer = crys.Crystal(a[n], c[n])
         monomer.hold_clus = monomer.points
         monomer.orient_crystal(rand_orient)
-        monomer.recenter() 
-        
+        monomer.recenter()
+
         # get cluster (agg) from db
         cluster = clusters[n]
 
@@ -42,52 +42,52 @@ def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
         movediffx = new_pt.x - agg_pt.x
         movediffy = new_pt.y - agg_pt.y
         monomer.move([-movediffx, -movediffy, 0])
-        
+
         # move cluster and monomer together
         cluster.closest_points(monomer)
-        
+
         # ----------- DENSITY CHANGE ----------
         # get cluster ellipsoid axes before aggregation
         A = cluster.fit_ellipsoid()
-        cluster.ellipsoid_axes_lengths(A)    
+        cluster.ellipsoid_axes_lengths(A)
         # volume of ellipsoid around cluster before aggregation
         Ve_clus = 4./3.*np.pi*cluster.a*cluster.b*cluster.c 
-        
+
         # a and c of monomers in cluster (all identical)
         a_clus = np.power((np.power(cluster.monor,3)/cluster.monophi),(1./3.))
         c_clus = cluster.monophi*a_clus
         # volume of all monomers in cluster
         Va_clus = 3*(np.sqrt(3)/2) * np.power(a_clus,2) * c_clus * cluster.ncrystals
-        
+
         # density ratio of aggregate and ellipsoid
         d1 = Va_clus/Ve_clus
-        
+
         # -------------------
         # add monomer points to original cluster (i.e., aggregate)
         cluster.add_crystal(monomer)
         # save original points before reorienting for max area
         cluster.add_points = cp.deepcopy(cluster.points)
         # -------------------
-        
+
         # monomer a and c axes
         a_mono = np.power((np.power(monomer.r,3)/monomer.phi),(1./3.))
         c_mono = monomer.phi*a_mono
         # volume of monomer to collect
         Va_mono = 3*(np.sqrt(3)/2) * np.power(a_mono,2) * c_mono
-    
+
         # get fit-ellipsoid radii (a-major, c-minor) after aggregation
         A = cluster.fit_ellipsoid()
-        cluster.ellipsoid_axes_lengths(A)    
+        cluster.ellipsoid_axes_lengths(A)
         agg_as.append(cluster.a)
         agg_bs.append(cluster.b)
         agg_cs.append(cluster.c)
-        
+
         # volume of ellipsoid around cluster after aggregation
-        Ve_clus = 4./3.*np.pi*cluster.a*cluster.b*cluster.c 
+        Ve_clus = 4./3.*np.pi*cluster.a*cluster.b*cluster.c
         d2 = (Va_clus + Va_mono)/Ve_clus
         # append relative change in density (after - before adding monomer)
         dds.append((d2 - d1)/d1)
-        
+
         # ----------------------------
         # orient cluster after adding monomer
         if a[n] > c[n] and rand_orient == False:

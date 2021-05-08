@@ -4,8 +4,9 @@ Performs any external calculations on the clusters
 such as aspect ratio, complexity, etc.
 '''
 
-from plot import PlotCluster
-from cluster import Cluster
+import ipas.collection_no_db.plot as plot
+import ipas.collection_no_db.cluster as clus
+
 import numpy.linalg as la
 import math
 from pyquaternion import Quaternion
@@ -19,7 +20,7 @@ import shapely.ops as shops
 
 
 #subclass
-class ClusterCalculations(PlotCluster, Cluster):
+class ClusterCalculations(plot.PlotCluster, clus.Cluster):
 
     def __init__(self, cluster):
         # call parent constructor 

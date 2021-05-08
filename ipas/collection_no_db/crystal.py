@@ -1,4 +1,6 @@
-"""Class representing ice crystals (monomers)"""
+"""
+Class representing ice crystals (monomers)
+"""
 
 import copy as cp
 import random
@@ -14,11 +16,9 @@ from scipy import spatial
 
 
 class Crystal():
+    """A hexagonal prism representing a single ice crystal.""" 
 
-    """A hexagonal prism representing a single ice crystal."""     
     def __init__(self, a, c , center=[0, 0, 0], rotation=[0, 0, 0]):
-        """Create an ice crystal."""
-
         self.a = a
         self.c = c
         self.phi = self.c/self.a
@@ -328,7 +328,7 @@ class Crystal():
         return self.agg_a, self.agg_b, self.agg_c
     
         
-    def _plot_crystal(self, ax, color):  
+    def plot_crystal(self, ax, color):  
         #plots individual monomers
         
         x = np.zeros(27)

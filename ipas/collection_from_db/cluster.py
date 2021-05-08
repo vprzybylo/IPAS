@@ -1,32 +1,26 @@
 """
 Class representing ice clusters or aggregates.
-Parent class that defines point arrays, 
-crystals within the cluster,
-and methods to move and reorient the arrays
+Parent class that defines:
+    - point arrays
+    - crystals within the cluster
+    - methods to move and reorient the arrays
 """
 
-import numpy.linalg as la
-import math
 import shapely.ops as shops
 from pyquaternion import Quaternion
 import copy as cp
 import numpy as np
-import scipy.optimize as opt
 import shapely.geometry as geom
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import random
-from descartes.patch import PolygonPatch
-import descartes
-import time
 from shapely.ops import nearest_points
 from matplotlib.patches import Ellipse
-import operator
 from scipy import spatial
 
 
-#Master Class
 class Cluster():
+    """An aggregate"""
     def __init__(self, cluster):
 
         self.ncrystals = cluster.ncrystals 
