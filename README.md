@@ -33,6 +33,21 @@ The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Mi
 The requirements.txt file lists all Python libraries required to run IPAS in a virtual environment.
 
     pip install -r requirements.txt
+    
+## Installation
+
+1.) Create a virtual environment and activate it:
+    conda create --name IPAS_v2.0.0 python=3.7.9
+    conda activate IPAS_v2.0.0
+    
+...
+#Go to dir with setup.py after cloning repo
+3.) pip install -e .[dev]   # remove dev if plotting isn’t needed
+4.) Start a jupyter kernel using new conda environment to find packages
+    python -m ipykernel install --user --name=IPAS_v1.3.0
+5.) Start jupyter notebook
+6.) ...
+
 
 ## Deployment
 
