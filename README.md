@@ -21,7 +21,7 @@
 
 <p align="center">
   <a>
-    <img src="https://github.com/vprzybylo/IPAS/blob/fix_column_intersect/rotateplot.gif" alt="Logo" width="250" height="250">
+    <img src="https://github.com/vprzybylo/IPAS/blob/master/rotateplot.gif" alt="Logo" width="250" height="250">
   </a>
 
   <h1 align="center">IPAS</h1>
