@@ -44,10 +44,11 @@ iceagg_collection:
         - calls all class methods in the proper order
         - returns relevant data after collection
         
-plot_cluster:
+plot:
     - Sub class to Cluster
         - holds methods to plot the aggregate(s)
         - no interactive plots
+        - identical to plot.py in collection_no_db
 
 plotly_aggs:
     - plots aggregates from database using plotly

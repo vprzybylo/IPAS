@@ -6,10 +6,8 @@ such as aspect ratio, complexity, etc.
 
 import ipas.collection_no_db.plot as plot
 import ipas.collection_no_db.cluster as clus
-
 import numpy.linalg as la
 import math
-from pyquaternion import Quaternion
 import numpy as np
 import shapely.geometry as geom
 import shapely.affinity as sha
@@ -27,17 +25,40 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
         super().__init__(cluster) 
 
 
-    def _mvee(self, tol=0.01):  # mve = minimum volume ellipse
+    def fit_ellipsoid(self, tol=0.01):  # mve = minimum volume ellipse
         # Based on work by Nima Moshtagh
         # http://www.mathworks.com/matlabcentral/fileexchange/9542
 
         """
-        Finds the ellipse equation in "center form"
+        Finds the minimum volume enclosing ellipsoid (3D)
+        of a set of data in "center form"
         (x-c).T * A * (x-c) = 1
+
+        Outputs:
+        -------
+        centroid (c) : D-dimensional vector containing
+                        the center of the ellipsoid.
+        A : This matrix contains all the information
+            regarding the shape of the ellipsoid.
+
+        To get the radii and orientation of the ellipsoid,
+        take the Singular Value Decomposition
+        of the output matrix A:
+
+        [U Q V] = svd(A);
+
+        the radii are given by:
+        r1 = 1/sqrt(Q(1,1));
+        r2 = 1/sqrt(Q(2,2));
+        ...
+        rD = 1/sqrt(Q(D,D));
+
+        and matrix V is the rotation matrix that gives
+        the orientation of the ellipsoid.
         """
 
+        # only run on vertices of hexagonal prisms
         points_arr = np.concatenate(self.points)[:self.ncrystals * 12]
-        # print('points_Arr', points_arr)
         points_arr = np.array([list(i) for i in points_arr])
         N, d = points_arr.shape
         Q = np.column_stack((points_arr, np.ones(N))).T
@@ -55,32 +76,50 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
             err = la.norm(new_u - u)
             u = new_u
 
-        c = np.dot(u, points_arr)
+        self.centroid = np.dot(u, points_arr)
 
-        A = la.inv(np.dot(np.dot(points_arr.T, np.diag(u)), points_arr)
-                   - np.multiply.outer(c, c)) / d
+        A = la.inv(np.dot(np.dot(points_arr.T, np.diag(u)), points_arr) -
+                   np.multiply.outer(self.centroid, self.centroid)) / d
 
-        return A, c
+        return A
 
 
-    def ellipsoid_axes(self):
-        A, c = self._mvee()
+    def ellipsoid_axes_lengths(self, A):
+
         U, D, V = la.svd(A)  # singular-value decomposition
-        rx, ry, rz = 1. / np.sqrt(D)  # D is a diagonal matrix
-        self.agg_a, self.agg_b, self.agg_c = sorted([rx, ry, rz], reverse=True)
+        # D is a diagonal matrix
+        rx, ry, rz = 1. / np.sqrt(D)  
+        self.a, self.b, self.c = \
+                sorted([rx, ry, rz], reverse=True)
+        return rx, ry, rz
 
-        return self.agg_a, self.agg_b, self.agg_c
 
-
-    def ellipse(self, u, v, rx, ry, rz):
+    def ellipsoid_axes_coords(self, rx, ry, rz):
+        
+        # Cartesian coordinates that correspond
+        # to the spherical angles:
+        u, v = np.mgrid[0:2 * np.pi:40j, -np.pi / 2:np.pi / 2:40j]
         x = rx * np.cos(u) * np.cos(v)
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
         return x, y, z
 
 
+    def ellipsoid_surface(self, A, x, y, z):
+
+        # singular-value decomposition
+        _, _, V = la.svd(A)
+        E = np.dstack([x, y, z])
+        self.E = np.dot(E, V) + self.centroid
+        
+        xell, yell, zell = np.rollaxis(self.E, axis=-1)
+
+        return xell, yell, zell
+
+
     def fit_ellipse(self, dims):
         '''
+        2D ellipse
         Emulating this function, but for polygons in continuous
         space rather than blobs in discrete space:
         http://www.idlcoyote.com/ip_tips/fit_ellipse.html
@@ -252,26 +291,6 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
         return [xxtotal, yytotal, xytotal]
 
 
-    def major_ax(self, dim):
-        
-        major_axis = {}
-        minor_axis = {}
-        # getting ellipse axes from 3 perspectives
-        ellipse = {}
-        dims = [['x', 'y']]
-        ellipse['z'] = self.fit_ellipse(dims)
-        dims = [['x', 'z']]
-        ellipse['y'] = self.fit_ellipse(dims)
-        dims = [['y', 'z']]
-        ellipse['x'] = self.fit_ellipse(dims)
-
-        for dim in ellipse.keys():
-            major_axis[dim] = max(ellipse[dim]['height'], ellipse[dim]['width'])
-            minor_axis[dim] = min(ellipse[dim]['height'], ellipse[dim]['width'])
-        
-        return major_axis[dim]
-
-
     def phi_2D(self):
 
         ellipse = self.fit_ellipse([['x', 'z']])
@@ -433,6 +452,10 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
 
 
     def complexity(self):
+        '''
+        Calculate particle complexity
+        from Schmitt (2010)
+        '''
         poly3 = self.projectxy()
         Ap = poly3.area
         P = poly3.length

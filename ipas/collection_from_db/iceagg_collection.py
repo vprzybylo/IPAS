@@ -9,7 +9,7 @@ import random
 import copy as cp
 
 
-def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
+def collect_clusters_iceagg(a, c, clusters, rand_orient=False, plot=False):
 
     #NEW AGGREGATE PROPERTIES
     cplxs = []
@@ -106,10 +106,11 @@ def collect_clusters_ice_agg(a, c, clusters, rand_orient=False):
         cluster.points = cluster.orient_points
 
         # -------- PLOTTING --------
-        #cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=None, agg_agg=False)
-        #cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None, agg_agg=False)
-#        cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None, agg_agg=False)
-#        cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None, agg_agg=False)
+        if plot:
+            cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=None, agg_agg=False)
+            cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None, agg_agg=False)
+           cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None, agg_agg=False)
+           cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None, agg_agg=False)
 
     # characteristic values determined in postprocessing
     return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds

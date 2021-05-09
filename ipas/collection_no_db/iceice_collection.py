@@ -1,5 +1,6 @@
 """
-Utilities for running ice particle simulations
+Main function for running ice particle simulations
+ICE-ICE collection
 """
 
 import ipas.collection_no_db.crystal as crys
@@ -8,7 +9,7 @@ import copy as cp
 import numpy as np
 
 
-def collect_clusters_ice_ice(phio, r, nclusters, ncrystals, rand_orient):
+def collect_clusters_iceice(phio, r, nclusters, ncrystals, rand_orient):
 
     #NEW AGGREGATE PROPERTIES
     agg_as = []
@@ -69,16 +70,17 @@ def collect_clusters_ice_ice(phio, r, nclusters, ncrystals, rand_orient):
             cluster.add_points = cp.deepcopy(cluster.points)
 
             #get fit-ellipsoid radii (a-major, c-minor) after aggregation
-            agg_a, agg_b, agg_c = cluster.ellipsoid_axes()
-            agg_as.append(agg_a)
-            agg_bs.append(agg_b)
-            agg_cs.append(agg_c)
+            A = cluster.fit_ellipsoid()
+            cluster.ellipsoid_axes_lengths(A)
+            agg_as.append(cluster.a)
+            agg_bs.append(cluster.b)
+            agg_cs.append(cluster.c)
 
             # --------------------------
             # volume of all monomers in cluster
             Va = 3*(np.sqrt(3)/2) * np.power(a1,2) * c1 *cluster.ncrystals
             # volume of ellipsoid around cluster after aggregation
-            Ve = 4./3.*np.pi*cluster.agg_a*cluster.agg_b*cluster.agg_c 
+            Ve = 4./3.*np.pi*cluster.a*cluster.b*cluster.c 
             d2 = Va/Ve 
             dd=(d2-d1)/d1
             dds.append(dd) #change in density

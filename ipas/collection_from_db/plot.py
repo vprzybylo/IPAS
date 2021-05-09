@@ -5,17 +5,12 @@ no interactive plots
 """
 
 import ipas.collection_from_db.cluster as clus
-import math
 import numpy as np
 import shapely.geometry as geom
-import shapely.affinity as sha
-from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import random
-import descartes
 from matplotlib.patches import Ellipse
 import shapely.ops as shops
-import numpy.linalg as la
 
 
 #Sub Class

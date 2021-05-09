@@ -4,11 +4,10 @@ Performs any external calculations on the clusters
 such as aspect ratio, complexity, etc.
 '''
 
-from ipas.collection_from_db.cluster import Cluster
-from ipas.collection_from_db.plot import PlotCluster
+import ipas.collection_from_db.plot as plot
+import ipas.collection_from_db.cluster as clus
 import numpy.linalg as la
 import math
-from pyquaternion import Quaternion
 import numpy as np
 import shapely.geometry as geom
 import shapely.affinity as sha
@@ -16,10 +15,10 @@ from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import random
 import shapely.ops as shops
-from scipy.spatial.transform import Rotation as R
+
 
 #subclass
-class ClusterCalculations(PlotCluster, Cluster):
+class ClusterCalculations(plot.PlotCluster, clus.Cluster):
 
     def __init__(self, cluster):
         # call parent constructor 
@@ -119,10 +118,12 @@ class ClusterCalculations(PlotCluster, Cluster):
 
 
     def fit_ellipse(self, dims):
-        # 2D ellipse
-        # Emulating this function, but for polygons in continuous
-        # space rather than blobs in discrete space:
-        # http://www.idlcoyote.com/ip_tips/fit_ellipse.html
+        '''
+        2D ellipse
+        Emulating this function, but for polygons in continuous
+        space rather than blobs in discrete space:
+        http://www.idlcoyote.com/ip_tips/fit_ellipse.html
+        '''
 
         if dims == [['x', 'y']]:
             try:
@@ -176,16 +177,16 @@ class ClusterCalculations(PlotCluster, Cluster):
 
         ellipse = {'xy': [centroid.x, centroid.y], 'width': minor,
                    'height': major, 'angle': orientation}
-        # print('crystals',self.ncrystals)
-        # print('ell',ellipse['height'])
-        return ellipse
 
+        return ellipse
+    
 
     def _get_moments(self, poly):
-
-        # get 'mass moments' for this cluster's 2D polygon using a
-        # variation of the shoelace algorithm
-
+        '''
+        get 'mass moments' for this cluster's 2D polygon using a
+        variation of the shoelace algorithm
+        '''
+        
         xys = poly.exterior.coords.xy
         npoints = len(xys[0])
         # values for the three points-- point[n], point[n+1], and
@@ -193,7 +194,6 @@ class ClusterCalculations(PlotCluster, Cluster):
         # edges of the polygon
         xmat = np.array([xys[0][0:-1], xys[0][1:], np.zeros(npoints - 1)]).transpose()
         ymat = np.array([xys[1][0:-1], xys[1][1:], np.zeros(npoints - 1)]).transpose()
-        
         # arrange the points in left-center-right order
         x_order = np.argsort(xmat, axis=1)
         ordered_xmat = xmat[np.array([range(npoints - 1)]).transpose(), x_order]
@@ -204,34 +204,27 @@ class ClusterCalculations(PlotCluster, Cluster):
         yl = ordered_ymat[:, 0]
         ym = ordered_ymat[:, 1]
         yr = ordered_ymat[:, 2]
-        
         # which slices have areas on the left and right sides of the
         # middle point? Ignore values smaller than 'tol' so we don't
         # run into terrible problems with division.
         left = xm - xl > self.tol_ellipse
         right = xr - xm > self.tol_ellipse
-        
         # slope and intercept of line connecting left and right points
         has_area = xr != xl
         m3 = np.zeros(npoints - 1)
         m3[has_area] = (yr[has_area] - yl[has_area]) / (xr[has_area] - xl[has_area])
         b3 = -xl * m3 + yl
-        
         # the y coordinate of the line connecting the left and right
         # points at the x position of the middle point
         m3_mid = yl + m3 * (xm - xl)
-        
         # is the midpoint above or below that line?
         mid_below = ym < m3_mid
-        
         # line connecting left and middle point (where applicable)
         m1 = (ym[left] - yl[left]) / (xm[left] - xl[left])
         b1 = -xl[left] * m1 + yl[left]
-        
         # line connecting middle and right point (where applicable)
         m2 = (yr[right] - ym[right]) / (xr[right] - xm[right])
         b2 = -xr[right] * m2 + yr[right]
-        
         # now that we have the points in a nice format + helpful
         # information we can calculate the integrals of the slices
         xx = np.zeros(npoints - 1)
@@ -266,13 +259,11 @@ class ClusterCalculations(PlotCluster, Cluster):
                      dx3r * (b2 * m2 ** 2 - b3[right] * m3[right] ** 2) / 3 + \
                      dx2r * (b2 ** 2 * m2 - b3[right] ** 2 * m3[right]) / 2 + \
                      dxr * (b2 ** 3 - b3[right] ** 3) / 3
-        
         # if the middle point was below the other points, multiply by
         # minus 1
         xx[mid_below] *= -1
         xy[mid_below] *= -1
         yy[mid_below] *= -1
-        
         # find out which slices were going clockwise, and make those
         # negative
         points = np.array([xys[0], xys[1]]).transpose()
@@ -281,18 +272,15 @@ class ClusterCalculations(PlotCluster, Cluster):
         xx[clockwise] *= -1
         xy[clockwise] *= -1
         yy[clockwise] *= -1
-        
         # add up the totals across the entire polygon
         xxtotal = np.sum(xx)
         yytotal = np.sum(yy)
         xytotal = np.sum(xy)
-        
         # and if the points were in clockwise order, flip the sign
         if np.sum(cross_prods) < 0:
             xxtotal *= -1
             yytotal *= -1
             xytotal *= -1
-        
         # also need to account for the holes, if they exist
         for linestring in list(poly.interiors):
             hole = geom.Polygon(linestring)
@@ -341,7 +329,6 @@ class ClusterCalculations(PlotCluster, Cluster):
         self.phi2D = sum(phi) / len(phi)
 
         return self.phi2D
-        # return reduce(lambda x, y: x + y, phi) / len(phi)
 
 
     def overlap(self, new_crystal, seedcrystal):
@@ -349,14 +336,17 @@ class ClusterCalculations(PlotCluster, Cluster):
         agg_nonew = self.projectxy().buffer(0)
 
         rel_area = self.projectxy().buffer(0).intersection(new_crystal.projectxy().buffer(0))
-        pctovrlp = (rel_area.area / (self.projectxy().area + \
-                                     new_crystal.projectxy().area)) * 100
+        # rel_area = self.projectxy().buffer(0).intersection(new_crystal.projectxy().buffer(0))
 
+        # pctovrlp1 = (rel_area.area/(seedcrystal.projectxy().area+new_crystal.projectxy().area-rel_area.area))*100
+        pctovrlp = (rel_area.area / (self.projectxy().area + new_crystal.projectxy().area)) * 100
+        # pctovrlp = (rel_area.area/(new_crystal.projectxy().area+self.projectxy().area))*100
+        # print('rel',rel_area.area)
+        # print(pctovrlp)
         return (pctovrlp)
 
 
-    def make_circle(self, points):
-        #https://www.nayuki.io/res/smallest-enclosing-circle/smallestenclosingcircle.py
+    def _make_circle(self, points):
         # Convert to float and randomize order
         shuffled = [(float(x), float(y)) for (x, y) in points]
         random.shuffle(shuffled)
@@ -433,16 +423,15 @@ class ClusterCalculations(PlotCluster, Cluster):
         d = (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by)) * 2.0
         if d == 0.0:
             return None
-        x = ox + ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) *
-                  (cy - ay) + (cx * cx + cy * cy) * (
+        x = ox + ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (
                     ay - by)) / d
-        y = oy + ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) *
-                  (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d
+        y = oy + ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (
+                    bx - ax)) / d
         ra = math.hypot(x - p0[0], y - p0[1])
         rb = math.hypot(x - p1[0], y - p1[1])
         rc = math.hypot(x - p2[0], y - p2[1])
         return (x, y, max(ra, rb, rc))
-
+    
 
     def _make_diameter(self, p0, p1):
         cx = (p0[0] + p1[0]) / 2.0
@@ -454,8 +443,8 @@ class ClusterCalculations(PlotCluster, Cluster):
 
     def is_in_circle(self, c, p):
         _MULTIPLICATIVE_EPSILON = 1 + 1e-14
-        return c is not None and math.hypot(p[0] - c[0],
-                                            p[1] - c[1]) <= c[2] * _MULTIPLICATIVE_EPSILON
+        return c is not None and math.hypot(p[0] - c[0], p[1] - c[1]) <= c[2] * _MULTIPLICATIVE_EPSILON
+
 
     def _cross_product(self, x0, y0, x1, y1, x2, y2):
         # Returns twice the signed area of the triangle defined by (x0, y0), (x1, y1), (x2, y2).
@@ -463,26 +452,39 @@ class ClusterCalculations(PlotCluster, Cluster):
 
 
     def complexity(self):
+        '''
+        Calculate particle complexity
+        from Schmitt (2010)
+        '''
         poly3 = self.projectxy()
         Ap = poly3.area
         P = poly3.length
-                
+    
+        #Ap = poly1.area+poly2.area
+        
+        #in the case that the clusters don't perfectly touch, we are still summing both cluster perims
+        #since there is such minimal overlap between clusters
+        #P = poly1.length +poly2.length # perim
+        
+        #next line is for a convex hull around both clusters (even if they are not touching)
+        
         try:
-            multipt = [geom.MultiPoint(self.points[n][['x','z']]) for n in range(self.ncrystals)]
+            multipt = [geom.MultiPoint(self.points[n][['x','y']]) for n in range(self.ncrystals)]
         except IndexError:
+            print('in index error in cplx')
             multipt = None
             
         if multipt is not None:
             poly = shops.cascaded_union(multipt).convex_hull
             x, y = poly.exterior.xy
 
-            circ = self.make_circle([x[i], y[i]] for i in range(len(x)))
+            circ = self._make_circle([x[i], y[i]] for i in range(len(x)))
             circle = Point(circ[0], circ[1]).buffer(circ[2])
+            x, y = circle.exterior.xy
             Ac = circle.area
-            #print('ar', Ap/Ac, 'Ap', Ap, 'Ac', Ac, 'P', P)
             
             self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
-            #print('Ap, Ac, P cplx, c', Ap, Ac, P, self.cplx, (np.sqrt(Ac * Ap) / P ** 2))
+            #print('Ap, Ac, P cplx= ', Ap, Ac, P, self.cplx)
             return (self.cplx, circle)
         else:
             return -999, None

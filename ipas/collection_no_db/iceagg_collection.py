@@ -9,7 +9,7 @@ import copy as cp
 import numpy as np
 
 
-def collect_clusters_iceagg(phio, r, ncrystals, rand_orient):
+def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=True):
 
     # NEW AGGREGATE PROPERTIES
     agg_as = np.empty(ncrystals-1)
@@ -57,9 +57,10 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient):
 
         # ----------- DENSITY CHANGE ----------
         # get cluster ellipsoid axes before aggregation
-        rx,ry,rz = cluster.ellipsoid_axes()
+        A = cluster.fit_ellipsoid()
+        cluster.ellipsoid_axes_lengths(A)
         # volume of ellipsoid around cluster before aggregation
-        Ve_clus = 4./3.*np.pi*rx*ry*rz 
+        Ve_clus = 4./3.*np.pi*cluster.a*cluster.b*cluster.c 
 
         # a and c of monomers in cluster (all identical)
         a_clus = np.power((np.power(cluster.mono_r,3)/cluster.mono_phi),(1./3.))
@@ -82,14 +83,14 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient):
         Va_mono = 3*(np.sqrt(3)/2) * np.power(a_mono,2) * c_mono
 
         #get fit-ellipsoid radii (a-major, c-minor) after aggregation
-        agg_a, agg_b, agg_c = cluster.ellipsoid_axes()
-        agg_as[l] = agg_a
-        agg_bs[l] = agg_b
-        agg_cs[l] = agg_c
-        #print(a, agg_cs)
+        A = cluster.fit_ellipsoid()
+        cluster.ellipsoid_axes_lengths(A)
+        agg_as[l] = cluster.a
+        agg_bs[l] = cluster.b
+        agg_cs[l] = cluster.c
 
         # volume of ellipsoid around cluster after aggregation
-        Ve_clus = 4./3.*np.pi*agg_a*agg_b*agg_c
+        Ve_clus = 4./3.*np.pi*cluster.a*cluster.b*cluster.c
         d2 = (Va_clus + Va_mono)/Ve_clus
         # append relative change in density (after - before adding monomer)
         dds[l] = (d2-d1)/d1
@@ -112,11 +113,11 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient):
         cluster.points = cluster.orient_points
 
         # -------- PLOTTING --------
-#         print('AFTER')
-        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='z', circle=None, agg_agg=False)
-        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
-        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='y', circle=None, agg_agg=False)
-        cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
+        if plot:
+            cluster.plot_ellipsoid_aggs([cluster, crystal2], view='z', circle=None, agg_agg=False)
+            cluster.plot_ellipsoid_aggs([cluster, crystal2], view='x', circle=None, agg_agg=False)
+            cluster.plot_ellipsoid_aggs([cluster, crystal2], view='y', circle=None, agg_agg=False)
+            cluster.plot_ellipsoid_aggs([cluster, crystal2], view='w', circle=None, agg_agg=False)
 
         cluster_cp = cp.deepcopy(cluster)
         l+=1

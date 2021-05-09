@@ -15,7 +15,6 @@ from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import random
 from shapely.ops import nearest_points
-from matplotlib.patches import Ellipse
 from scipy import spatial
 
 
@@ -23,7 +22,7 @@ class Cluster():
     """An aggregate"""
     def __init__(self, cluster):
 
-        self.ncrystals = cluster.ncrystals 
+        self.ncrystals = cluster.ncrystals
         self.rotation = Quaternion()
         self.points = cluster.points
         self.add_points = None
@@ -49,24 +48,29 @@ class Cluster():
         self.ncrystals += cluster.ncrystals
         return self
 
+
     def remove_cluster(self, cluster):
         self.points = self.points[:-cluster.ncrystals]
         self.ncrystals -= cluster.ncrystals
+
 
     def add_crystal(self, crystal):
         self.points = np.vstack((self.points, crystal.points))
         self.ncrystals += crystal.ncrystals
         return self  # to make clus 3 instance
 
+
     def remove_crystal(self, crystal):
         self.points = self.points[:-crystal.ncrystals]
         self.ncrystals -= crystal.ncrystals
+
 
     def move(self, xyz):
         # move the entire cluster 
         self.points['x'] += xyz[0]
         self.points['y'] += xyz[1]
         self.points['z'] += xyz[2]
+
 
     def _euler_to_mat(self, xyz):
         # Euler's rotation theorem, any rotation may be described using three angles
@@ -76,11 +80,13 @@ class Cluster():
         rz = np.matrix([[np.cos(z), -np.sin(z), 0], [np.sin(z), np.cos(z), 0], [0, 0, 1]])
         return rx * ry * rz
 
+
     def _rotate_mat(self, mat):
         points = cp.copy(self.points)
         self.points['x'] = points['x'] * mat[0, 0] + points['y'] * mat[0, 1] + points['z'] * mat[0, 2]
         self.points['y'] = points['x'] * mat[1, 0] + points['y'] * mat[1, 1] + points['z'] * mat[1, 2]
         self.points['z'] = points['x'] * mat[2, 0] + points['y'] * mat[2, 1] + points['z'] * mat[2, 2]
+
 
     def rotate_to(self, angles):
         # rotate to the orientation given by the 3 angles
@@ -118,31 +124,39 @@ class Cluster():
         z = np.mean(self.points[:self.ncrystals]['z'])
         return [x, y, z]
 
+
     def recenter(self):
         center_move = self.center_of_mass()
         self.move([-x for x in center_move])
         return center_move
 
+
     def _crystal_projectxy(self, n):
         return geom.MultiPoint(self.points[n][['x', 'y']])
+
 
     def _crystal_projectxz(self, n):
         return geom.MultiPoint(self.points[n][['x', 'z']])
 
+
     def _crystal_projectyz(self, n):
         return geom.MultiPoint(self.points[n][['y', 'z']])
+
 
     def projectxy(self):
         polygons = [self._crystal_projectxy(n) for n in range(self.ncrystals)]
         return shops.cascaded_union(polygons)
 
+
     def projectxz(self):
         polygons = [self._crystal_projectxz(n) for n in range(self.ncrystals)]
         return shops.cascaded_union(polygons)
 
+
     def projectyz(self):
         polygons = [self._crystal_projectyz(n) for n in range(self.ncrystals)]
         return shops.cascaded_union(polygons)
+
 
     def generate_random_point_fast(self, new_crystal, number=1):
 

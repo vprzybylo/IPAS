@@ -1,4 +1,4 @@
-import ipas
+import ipas.collection_no_db.iceagg_collection as collect
 import numpy as np
 import time
 from dask_jobqueue import SLURMCluster
@@ -24,13 +24,12 @@ def main():
     for phi in range(len(phioarr)):
         for r in range(len(reqarr)):
             for n in range(nclusters):
-                output[phi,r, n] = dask.delayed(ipas.collect_clusters_alldask)(phioarr[phi],
+                output[phi,r, n] = dask.delayed(collect.collect_clusters_iceagg)(phioarr[phi],
                                                                                reqarr[r],
                                                                                ncrystals,
                                                                                rand_orient)
-            #ipas.collect_clusters_alldask(phioarr[phi], reqarr[r], nclusters, ncrystals,rand_orient)
-    delayeds = client.compute(delayeds)
-    output = client.gather(delayeds)
+            #collect.collect_clusters_iceagg(phioarr[phi], reqarr[r], nclusters, ncrystals,rand_orient)
+
     return output
 
 def compute():

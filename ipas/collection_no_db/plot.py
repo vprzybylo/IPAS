@@ -1,24 +1,23 @@
 """
 Sub class to Cluster
-Holds methods to plot the aggregate(s)
-No interactive plots
+holds methods to plot the aggregate(s)
+no interactive plots
 """
 
-import ipas.collection_no_db.cluster as cluster
+import ipas.collection_no_db.cluster as clus
 import numpy as np
 import shapely.geometry as geom
 import matplotlib.pyplot as plt
 import random
 from matplotlib.patches import Ellipse
 import shapely.ops as shops
-import numpy.linalg as la
 
 
 #Sub Class
-class PlotCluster(cluster.Cluster):
+class PlotCluster(clus.Cluster):
 
     def __init__(self, cluster):
-        # call parent constructor Cluster
+        # call parent constructor IceCluster
         super().__init__(cluster)
 
 
@@ -41,55 +40,32 @@ class PlotCluster(cluster.Cluster):
             return geom.MultiPoint(self.points[n][['y', 'z']]).convex_hull
         except IndexError:
             return None
-        
+
 
     def projectxy(self):
-        polygons = [self._crystal_projectxy(n) for n in range(self.ncrystals) if self._crystal_projectxy(n) is not None]
+
+        polygons = [self._crystal_projectxy(n) for n in range(self.ncrystals)
+                    if self._crystal_projectxy(n) is not None]
         return shops.cascaded_union(polygons)
 
 
     def projectxz(self):
-        polygons = [self._crystal_projectxz(n) for n in range(self.ncrystals) if self._crystal_projectxz(n) is not None]
+
+        polygons = [self._crystal_projectxz(n) for n in range(self.ncrystals)
+                    if self._crystal_projectxz(n) is not None]
         return shops.cascaded_union(polygons)
 
 
     def projectyz(self):
-        polygons = [self._crystal_projectyz(n) for n in range(self.ncrystals) if self._crystal_projectyz(n) is not None]
+
+        polygons = [self._crystal_projectyz(n) for n in range(self.ncrystals)
+                    if self._crystal_projectyz(n) is not None]
         return shops.cascaded_union(polygons)
-   
 
-    def ellipse(self, u, v, rx, ry, rz):
-        x = rx * np.cos(u) * np.cos(v)
-        y = ry * np.sin(u) * np.cos(v)
-        z = rz * np.sin(v)
-        return x, y, z
-        
-        
-    def _get_ellipsoid_points(self):
-        A, centroid = self._mvee()
-        # print('centroid', centroid)
-        U, D, V = la.svd(A)
-        # print(U, D, V)
-        rx, ry, rz = 1. / np.sqrt(D)
-
-        u, v = np.mgrid[0:2 * np.pi:20j, -np.pi / 2:np.pi / 2:10j]
-
-        Ve = 4. / 3. * rx * ry * rz
-        # print(Ve)
-
-        E = np.dstack(self.ellipse(u, v, rx, ry, rz))
-
-        E = np.dot(E, V) + centroid
-
-        xell, yell, zell = np.rollaxis(E, axis=-1)
-        return xell, yell, zell
-    
 
     def plot_crystal(self, ncrys, ax, color):  
-        '''
-        plots nth monomer in aggregate based on ncrys
-        '''
-        
+        #plots individual monomers
+
         x = np.zeros(27)
         y = np.zeros(27)
         z = np.zeros(27)
@@ -98,7 +74,7 @@ class PlotCluster(cluster.Cluster):
         Y = self.points['y'][ncrys]
         Z = self.points['z'][ncrys]
 
-        
+
         prismind = [0, 6, 7, 1, 2, 8, 9, 3, 4, 10, 11, 5]  # prism lines
         i = 0
         for n in prismind:
@@ -106,7 +82,7 @@ class PlotCluster(cluster.Cluster):
             y[i] = Y[n]
             z[i] = Z[n]
             i += 1
-  
+
         ax.plot(x[0:12], y[0:12], z[0:12], color=color)
 
         i = 0
@@ -120,7 +96,7 @@ class PlotCluster(cluster.Cluster):
         x[18] = X[0]
         y[18] = Y[0]
         z[18] = Z[0]
-        
+
         ax.plot(x[12:19], y[12:19], z[12:19], color=color)
 
         i = 0
@@ -136,121 +112,168 @@ class PlotCluster(cluster.Cluster):
         z[25] = Z[6]
 
         ax.plot(x[19:26], y[19:26], z[19:26], color=color)
+
 #         ax.set_zticklabels([])
 #         ax.set_yticklabels([])
 #         ax.set_xticklabels([])
 #         ax.grid(False)
+#         for pos in ['right','top','bottom','left']:
+#             ax.spines[pos].set_visible(False)
+#         plt.axis('off')
 
 
-    def plot_ellipsoid_aggs(self, clusters, nearest_geoms_xz=None, nearest_geoms_yz=None, \
-                            nearest_geoms_xy=None, view='x', circle=None, agg_agg=True):
-        #plot multiple aggregates, each a different color
-        xell, yell, zell = self._get_ellipsoid_points()
+    def plot_ellipsoid_surface(self, ax):
 
-        fig = plt.figure(figsize=(7, 7))
-        ax = fig.add_subplot(111, projection='3d')
+        A = self.fit_ellipsoid()
+        rx, ry, rz = self.ellipsoid_axes_lengths(A)
+        x, y, z = self.ellipsoid_axes_coords(rx, ry, rz)
+        xell, yell, zell = self.ellipsoid_surface(A, x, y, z)
+        ax.plot_surface(xell, yell, zell, cstride=1, rstride=1, alpha=0.1)
+        maxXe = np.max(xell)
+        minXe = np.min(xell)
+        maxYe = np.max(yell)
+        minYe = np.min(yell)
+        maxZe = np.max(zell)
+        minZe = np.min(zell)
+
+        maxxyz = max(maxXe, maxYe, maxZe)
+        minxyz = min(minXe, minYe, minZe)
+
+        ax.set_xlim(minxyz, maxxyz)
+        ax.set_ylim(minxyz, maxxyz)
+        ax.set_zlim(minxyz, maxxyz)
+
+        return xell, yell, zell
+
+
+    def plot_ellipsoid_axes(self, ax, xell, yell, zell):
+
+        ax.plot(xell[0,:],
+                 yell[0,:],
+                 zell[0,:], color='b', marker='o')
+        ax.plot(xell[20,:],
+                 yell[20,:],
+                 zell[20,:], color='b', marker='o')
+
+        ax.plot(xell[10,:],
+                 yell[10,:],
+                 zell[10,:], color='r', marker='o')
+        ax.plot(xell[30,:],
+                 yell[30,:],
+                 zell[30,:], color='r', marker='o')
+
+        ax.plot(xell[:,20],
+                yell[:,20],
+                zell[:,20], color='g', marker='o')
+
+
+    def init_plot_view(self, ax, view):
+
         # 90, 0 for z orientation, 0, 90 for y orientation, 0, 0 for x orientation
         # ax.view_init(elev=90, azim=270)
-
-        if view == 'x':
+        # SET UP VIEW
+        if view == 'x': #default
             ax.view_init(elev=0, azim=90)
         elif view == 'y':
             ax.view_init(elev=0, azim=0)
         elif view == 'z':
             ax.view_init(elev=90, azim=0)
-        #else:
-        #    ax.view_init(elev=0, azim=40)
-        ax.plot_surface(xell, yell, zell, cstride=1, rstride=1, alpha=0.1)
+        else:
+            ax.view_init(elev=0, azim=40)
+        return ax
 
+
+    def plot_ellipsoid_aggs(self, clusters, nearest_geoms_xz=None,
+                            nearest_geoms_yz=None, nearest_geoms_xy=None,
+                            view='x', circle=None, agg_agg=True,
+                            add_ellipsoid=True, add_axes=True):
+        '''
+        plot multiple aggregates (3D), each a different color
+        '''
+        fig = plt.figure(figsize=(9, 9), dpi=300)
+        ax = fig.add_subplot(111, projection='3d')
+        ax = self.init_plot_view(ax, view)
+
+        #PLOT ELLIPSOID SURFACE
+        if add_ellipsoid:
+            xell, yell, zell = self.plot_ellipsoid_surface(ax)
+        
+        if add_axes:
+            self.plot_ellipsoid_axes(ax, xell, yell, zell)
+
+        # PLOT MONOMERS
         if agg_agg:
             start_list = [clus.ncrystals for clus in clusters]
             start = [0]+start_list
             end= [(np.sum([start[i], start[i+1]])+1) for i in range(len(start_list))] 
-            colors=['k', 'r', 'b', 'darkgreen']
+            colors=['k', 'k', 'b', 'darkgreen']
             for clus in range(len(clusters)): 
                 #lowered color range so that darker colors are generated
                 #color = list(np.random.choice(range(10), size=3)/10)
                 color=colors[clus]
-                for crys in range(start[clus], end[clus]-1):   
+                for crys in range(start[clus], end[clus]-1):
                     self.plot_crystal(crys, ax, color)
         else:
             start_list = [clus.ncrystals-1 for clus in clusters]
             start_list = [i+1 if i == 0 else i for i in start_list]
             start = [0]+start_list
             end= [np.sum([start[i], start[i+1]]) for i in range(len(start_list))] 
-            colors=['k', 'r', 'b', 'darkgreen']
+            colors=['k', 'k', 'b', 'darkgreen']
             for clus in range(len(clusters)): 
                 #lowered color range so that darker colors are generated
                 #color = list(np.random.choice(range(10), size=3)/10)
                 color=colors[clus]
-                for crys in range(start[clus], end[clus]):   
+                for crys in range(start[clus], end[clus]):
                     self.plot_crystal(crys, ax, color)
-        if circle is not None:
-            xcirc,ycirc = circle.exterior.xy
-            ax.plot(xcirc,ycirc, color='green')
-            maxXc = np.max(xcirc)
-            minXc = np.min(xcirc)
-            maxYc = np.max(ycirc)
-            minYc = np.min(ycirc)
-            maxXe = np.max(xell)
-            minXe = np.min(xell)
-            maxYe = np.max(yell)
-            minYe = np.min(yell)
-            maxZe = np.max(zell)
-            minZe = np.min(zell)
 
-            maxc = max(maxXc, maxYc, maxXe, maxYe, maxZe)
-            minc = min(minXc, minYc, minXe, minYe, minZe)
-            ax.set_xlim(minc, maxc)
-            ax.set_ylim(minc, maxc)
-            ax.set_zlim(minc, maxc)
-        else:
-
-            maxXe = np.max(xell)
-            minXe = np.min(xell)
-            maxYe = np.max(yell)
-            minYe = np.min(yell)
-            maxZe = np.max(zell)
-            minZe = np.min(zell)
-
-            maxxyz = max(maxXe, maxYe, maxZe)
-            minxyz = min(minXe, minYe, minZe)
-
-            ax.set_xlim(minxyz, maxxyz)
-            ax.set_ylim(minxyz, maxxyz)
-            ax.set_zlim(minxyz, maxxyz)
 
         if nearest_geoms_xz != None:
             if view == 'x':
-                ax.scatter(nearest_geoms_xz[0].x, nearest_geoms_yz[0].y, nearest_geoms_xz[0].y, c='red', s=100, zorder=10)
-                ax.scatter(nearest_geoms_xz[1].x, nearest_geoms_yz[1].y, nearest_geoms_xz[1].y, c='k', s=100, zorder=10)
+                ax.scatter(nearest_geoms_xz[0].x,
+                           nearest_geoms_yz[0].y,
+                           nearest_geoms_xz[0].y,
+                           c='red', s=100, zorder=10)
+                ax.scatter(nearest_geoms_xz[1].x,
+                           nearest_geoms_yz[1].y,
+                           nearest_geoms_xz[1].y,
+                           c='k', s=100, zorder=10)
             elif view == 'y':
-                ax.scatter(nearest_geoms_xz[0].x, nearest_geoms_yz[0].x, nearest_geoms_yz[0].y, c='red', s=100, zorder=10)
-                ax.scatter(nearest_geoms_xz[1].x, nearest_geoms_yz[1].x, nearest_geoms_yz[1].y, c='k', s=100, zorder=10)
+                ax.scatter(nearest_geoms_xz[0].x,
+                           nearest_geoms_yz[0].x, nearest_geoms_yz[0].y, c='red', s=100, zorder=10)
+                ax.scatter(nearest_geoms_xz[1].x,
+                           nearest_geoms_yz[1].x,
+                           nearest_geoms_yz[1].y,
+                           c='k', s=100, zorder=10)
             else: 
-                ax.scatter(nearest_geoms_xy[0].x, nearest_geoms_xy[0].y, nearest_geoms_yz[0].y, c='red', s=100, zorder=10)
-                ax.scatter(nearest_geoms_xy[1].x, nearest_geoms_xy[1].y, nearest_geoms_yz[1].y, c='k', s=100, zorder=10)
-
+                ax.scatter(nearest_geoms_xy[0].x,
+                           nearest_geoms_xy[0].y,
+                           nearest_geoms_yz[0].y,
+                           c='red', s=100, zorder=10)
+                ax.scatter(nearest_geoms_xy[1].x,
+                           nearest_geoms_xy[1].y,
+                           nearest_geoms_yz[1].y,
+                           c='k', s=100, zorder=10)
+                
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
-
 #         ax.set_zticklabels([])
 #         ax.set_yticklabels([])
 #         ax.set_xticklabels([])
 #         ax.grid(False)
-#         plt.axis("off")
+#         for pos in ['right','top','bottom','left']:
+#             ax.spines[pos].set_visible(False)
+#         plt.axis('off')
 
-        # ax.view_init(30, i)
+        #ax.view_init(30, i)
         # plt.pause(.001)
 
-#        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-#        fig.savefig('../plot_clusters/'+str(self.mono_phi)+'_'+current_time+'.png',rasterized=True, bbox_inches = 'tight', dpi=300, transparent=True)
-        
+        #current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        #fig.savefig('plot_clusters/'+current_time+'.png',rasterized=True, bbox_inches = 'tight')
+
         plt.show()
-        #fig.clear()
-        
+
 
     def ellipse_vertices_rotated(self, params, angle, leftverticex, rightverticex):
         # 2D
@@ -278,10 +301,9 @@ class PlotCluster(cluster.Cluster):
 
 
     def plot_axes_ellipse(self, params, ax):
-        # 2D ellipse axes
-        
-        # orientation angle of ellipse in radians
+        # 2D
         # major axis
+        # orientation angle of ellipse in radians
         angle = params['angle'] * np.pi / 180
         leftverticex = params['xy'][0] - params['width'] / 2
         rightverticex = params['xy'][0] + params['width'] / 2
@@ -357,5 +379,3 @@ class PlotCluster(cluster.Cluster):
 
         ax.set_aspect('equal', 'datalim')    
         plt.show()
-
-
