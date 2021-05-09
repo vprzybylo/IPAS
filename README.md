@@ -46,14 +46,17 @@ The requirements.txt file lists all Python libraries required to run IPAS in a v
 
 ## Folder Structure
 - executables:
--   holds all executables for running IPAS 
--   subdivided based on collection type
+  - holds all executables for running IPAS 
+  - subdivided based on collection type
 - collection_no_db:
--    creates aggregates from 'scratch' instead of the pre-made database of aggregates
--    can be run after cloning repo
-- collection_from_db: creates aggregates pulling from the predined aggregate database (~50Gb). Please contact for acquisition.
-- visualization: holds plotting scripts and notebooks for publication figures and visualizations.
-- CPI_verification: 'verify_IPAS.ipynb' shows comparisons between the Cloud Particle Imager (CPI) aggregates and IPAS aggregates.
+  - creates aggregates from 'scratch' instead of the pre-made database of aggregates
+  - can be run after cloning repo
+- collection_from_db: 
+  - creates aggregates pulling from the predined aggregate database (~50Gb). Please contact for acquisition.
+- visualization: 
+  - holds plotting scripts and notebooks for publication figures and visualizations.
+- CPI_verification:
+  - 'verify_IPAS.ipynb' shows comparisons between the Cloud Particle Imager (CPI) aggregates and IPAS aggregates.
 
 ## Authors
 
