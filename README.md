@@ -21,7 +21,7 @@
 
 <p align="center">
   <a>
-    <img src="https://github.com/vprzybylo/IPAS/blob/fix_column_intersect/rotateplot.gif" alt="Logo" width="250" height="250">
+    <img src="https://github.com/vprzybylo/IPAS/blob/master/rotateplot.gif" alt="Logo" width="250" height="250">
   </a>
 
   <h1 align="center">IPAS</h1>
@@ -36,17 +36,7 @@ The requirements.txt file lists all Python libraries required to run IPAS in a v
     
 ## Installation
 
-1.) Create a virtual environment and activate it:
-    conda create --name IPAS_v2.0.0 python=3.7.9
-    conda activate IPAS_v2.0.0
-    
-...
-#Go to dir with setup.py after cloning repo
-3.) pip install -e .[dev]   # remove dev if plotting isn’t needed
-4.) Start a jupyter kernel using new conda environment to find packages
-    python -m ipykernel install --user --name=IPAS_v1.3.0
-5.) Start jupyter notebook
-6.) ...
+... TBD
 
 
 ## Deployment
