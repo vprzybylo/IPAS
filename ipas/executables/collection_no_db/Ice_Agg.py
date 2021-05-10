@@ -7,6 +7,7 @@ import dask
 import pickle
 import argparse
 import time
+import sys
 
 def start_client(num_workers):
     '''
@@ -30,7 +31,7 @@ def start_client(num_workers):
 
 def write_file(filename, agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds):
     '''
-    save results to file
+    write results to file
     ''' 
     results = {'agg_as': agg_as, 'agg_bs':agg_bs, 'agg_cs':agg_cs,
               'phi2Ds': phi2Ds,' cplxs': cplxs, 'dds': dds}
@@ -38,10 +39,12 @@ def write_file(filename, agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds):
     filehandler = open(filename, 'wb')
     pickle.dump(results, filehandler)
     filehandler.close()
-    print('finished!')
+    print('done writing!')
 
 
-def compute(phioarr, reqarr, nclusters, ncrystals, rand_orient, num_workers):
+def compute(phioarr, reqarr, nclusters, ncrystals,
+            rand_orient, use_dask=False, num_workers=2,
+            plot=False):
     '''
     collect monomer and return aggregate attributes
     '''
@@ -69,14 +72,13 @@ def compute(phioarr, reqarr, nclusters, ncrystals, rand_orient, num_workers):
     gather = client.gather(gather)
 
     gather = np.array(gather)
-    agg_as = gather[:,:,:,0]
-    agg_bs = gather[:,:,:,1]
-    agg_cs = gather[:,:,:,2]
-    cplxs = gather[:,:,:,3]
-    phi2D = gather[:,:,:,4]
-    dds = gather[:,:,:,5] 
+    agg_as = gather[:,:,:,0,:]
+    agg_bs = gather[:,:,:,1,:]
+    agg_cs = gather[:,:,:,2,:]
+    phi2Ds = gather[:,:,:,3,:]
+    cplxs = gather[:,:,:,4,:] 
+    dds = gather[:,:,:,5,:]
 
-    print('DONE!')
     return agg_as, agg_bs, agg_cs, phi2D, cplxs, dds
 
 
@@ -103,18 +105,22 @@ def main():
                         type=bool, default=False)
     parser.add_argument('--filename', '-f', metavar='saving filename',
                         help='filename to save data (include path from execution location)',
-                        type=str, default=False)
+                        type=str, default=False, required='--filename' in sys.argv)
+    parser.add_argument('--use_dask', metavar='parallelization',
+                        help='use dask client for parallelization',
+                        type=bool, default=False)
     parser.add_argument('--workers', '-w', metavar='workers',
                         help='number of workers for dask client',
-                        type=int, default=False)
+                        type=int, default=5, required='--use_dask' in sys.argv)
+    
         
     args = parser.parse_args()
     
     
     # monomer aspect ratios (all the same in agg)
-    phioarr = [args.phi]
+    phioarr = args.phi
     # monomer radii 
-    reqarr = [args.radius]
+    reqarr = args.radius
      # how many aggregates to produce
     nclusters = args.aggregates
     # number of monomers per aggregate
@@ -123,14 +129,19 @@ def main():
     rand_orient = args.rand
     print('creating aggregates..')
     save = args.save
-    filename = args.filename
-    num_workers = args.workers
-    
-    agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds = compute(phioarr, reqarr, nclusters, ncrystals, rand_orient, num_workers)
+    if save:
+        filename = args.filename
+    use_dask = args.use_dask
+    if use_dask:
+        num_workers = args.workers
+        agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds = compute(phioarr, reqarr, nclusters, ncrystals, rand_orient, num_workers)
+    else:
+        agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds = compute(phioarr, reqarr, nclusters,
+                                                             ncrystals, rand_orient)
     
     if save:
         write_file(filename, agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds)
-    
+    print('finished!')
 
 if __name__ == '__main__':
     main()

@@ -1,28 +1,22 @@
-from distutils.core import setup
-from setuptools import find_packages
+from setuptools import setup, find_packages
 import os
 
 
-current_directory = os.path.dirname(os.path.abspath(__file__))
-try:
-    with open(os.path.join(current_directory, 'README.md'), encoding='utf-8') as f:
-        long_description = f.read()
-except Exception:
-    long_description = ''
+# read the contents of README file
+from os import path
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    readme = f.read()
 
 setup(
     # Name of the package
     name='ipas',
-    # Packages to include into the distribution
     packages=find_packages('.'),
-    version='1.3.0',
-    license='MIT',
-    # Short description of your library
+    version='2.0.1',
     description='Theoretically simulates ice crystal aggregation (snow) using hexagonal prisms',
-
-    # Long description of your library
-    long_description = long_description,
-    long_description_context_type = 'text/markdown',
+    long_description = readme,
+    long_description_content_type='text/markdown',
+    license='MIT',
     author='Vanessa Przybylo', 
     author_email='vprzybylo@albany.edu',     
     # Either the link to your github or to your website
@@ -60,7 +54,10 @@ setup(
             'ice_ice=ipas.executables.collection_no_db.Ice_Ice:main',
             'ice_agg=ipas.executables.collection_no_db.Ice_Agg:main'
     ]},
+    package_data={'': ['rotateplot.gif']},
+    include_package_data=True,
     # https://pypi.org/classifiers/
     classifiers=['Development Status :: 3 - Alpha',
-                 'Programming Language :: Python :: 3.7']
+                 'Programming Language :: Python :: 3.7',
+                 'License :: OSI Approved :: MIT License']
 )
