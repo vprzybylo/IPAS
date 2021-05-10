@@ -55,6 +55,11 @@ setup(
                             "nbstripout",
                             "seaborn"]
                    },
+    entry_points={
+        'console_scripts': [
+            'ice_ice=ipas.executables.collection_no_db.Ice_Ice:main',
+            'ice_agg=ipas.executables.collection_no_db.Ice_Agg:main'
+    ]},
     # https://pypi.org/classifiers/
     classifiers=['Development Status :: 3 - Alpha',
                  'Programming Language :: Python :: 3.7']

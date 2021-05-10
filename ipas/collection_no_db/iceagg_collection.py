@@ -9,7 +9,7 @@ import copy as cp
 import numpy as np
 
 
-def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=True):
+def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=False):
 
     # NEW AGGREGATE PROPERTIES
     agg_as = np.empty(ncrystals-1)
@@ -123,4 +123,4 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=True):
         l+=1
 
     # characteristic values determined in postprocessing
-    return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds
+    return agg_as, agg_bs, agg_cs, phi2D, cplxs, dds

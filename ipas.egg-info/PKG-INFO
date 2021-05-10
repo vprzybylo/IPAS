@@ -42,6 +42,11 @@ Description: [![Forks][forks-shield]][forks-url]
         The requirements.txt file lists all Python libraries required to run IPAS in a virtual environment.
         
             pip install -r requirements.txt
+            
+        ## Installation
+        
+        ... TBD
+        
         
         ## Deployment
         
@@ -74,5 +79,7 @@ Description: [![Forks][forks-shield]][forks-url]
         vprzybylo@albany.edu
         
 Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
 Classifier: Programming Language :: Python :: 3.7
+Requires-Python: >=3.7
 Provides-Extra: dev

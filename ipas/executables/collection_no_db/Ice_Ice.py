@@ -1,12 +1,12 @@
-import ipas.collection_no_db.iceagg_collection as collect
+import ipas.collection_no_db.iceice_collection as collect
 import numpy as np
-import time
 from dask_jobqueue import SLURMCluster
 from dask.distributed import Client
 import dask
 import pickle
 import argparse
 import time
+
 
 def start_client(num_workers):
     '''
@@ -43,41 +43,36 @@ def write_file(filename, agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds):
 
 def compute(phioarr, reqarr, nclusters, ncrystals, rand_orient, num_workers):
     '''
-    collect monomer and return aggregate attributes
+    collect monomers and return aggregate attributes
     '''
+    
     client = start_client(num_workers)
     
-    agg_as = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
-    agg_bs = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
-    agg_cs = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
-    phi2D = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
-    cplxs = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
-    dds = np.empty((len(phioarr),len(reqarr), nclusters, ncrystals-1))
+    agg_as = np.empty((len(phioarr),len(reqarr), nclusters))
+    agg_bs = np.empty((len(phioarr),len(reqarr), nclusters))
+    agg_cs = np.empty((len(phioarr),len(reqarr), nclusters))
+    phi2Ds = np.empty((len(phioarr),len(reqarr), nclusters))
+    cplxs = np.empty((len(phioarr),len(reqarr), nclusters))
+    dds = np.empty((len(phioarr),len(reqarr), nclusters))
     
-    output = np.empty((len(phioarr),len(reqarr), nclusters),dtype=object)
+    output = np.empty((len(phioarr),len(reqarr)),dtype=object)
     for phi in range(len(phioarr)):
         for r in range(len(reqarr)):
-            for n in range(nclusters):
-                output[phi,r, n] = dask.delayed(collect.collect_clusters_iceagg)(phioarr[phi],
-                                                                               reqarr[r],
-                                                                               ncrystals,
-                                                                               rand_orient)
-            #collect.collect_clusters_iceagg(phioarr[phi], reqarr[r], nclusters, ncrystals,rand_orient)
-
-
+            output[phi,r] = dask.delayed(collect.collect_clusters_iceice)(phioarr[phi], reqarr[r], nclusters, ncrystals, rand_orient)
+            #collect.collect_clusters_iceice(phioarr[phi], reqarr[r], nclusters, ncrystals, rand_orient)
+    
     gather = client.compute([*output.tolist()])
     gather = client.gather(gather)
 
     gather = np.array(gather)
-    agg_as = gather[:,:,:,0]
-    agg_bs = gather[:,:,:,1]
-    agg_cs = gather[:,:,:,2]
-    cplxs = gather[:,:,:,3]
-    phi2D = gather[:,:,:,4]
-    dds = gather[:,:,:,5] 
-
-    print('DONE!')
-    return agg_as, agg_bs, agg_cs, phi2D, cplxs, dds
+    agg_as = gather[:,:,0,:]
+    agg_bs = gather[:,:,1,:]
+    agg_cs = gather[:,:,2,:]
+    phi2Ds = gather[:,:,3,:]
+    cplxs = gather[:,:,4,:] 
+    dds = gather[:,:,5,:]
+    
+    return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds
 
 
 def main():
@@ -132,6 +127,6 @@ def main():
         write_file(filename, agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds)
     
 
-if __name__ == '__main__':
+if __name__ == '__main__':    
     main()
-
+    

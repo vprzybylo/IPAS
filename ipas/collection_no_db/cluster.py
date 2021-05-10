@@ -246,7 +246,7 @@ class Cluster():
 
         # -------------------
         if plot_closest_pts:
-            print('BEFORE MOVING')
+            #print('BEFORE MOVING')
             self.plot_closest_pts(particle,
                                   nearest_geoms_xz,
                                   nearest_geoms_yz,
@@ -258,31 +258,31 @@ class Cluster():
         particle_yz = np.array([nearest_geoms_yz[1].x,
                             nearest_geoms_yz[1].y])
 
-        fig = plt.figure(figsize=(7, 7))
-        ax = fig.add_subplot(111, projection='3d') 
+        #fig = plt.figure(figsize=(7, 7))
+        #ax = fig.add_subplot(111, projection='3d') 
         #ax.view_init(elev=0, azim=0)
 
         # particle 1
         x, y, z = self.evenly_spaced_mesh()
-        ax.scatter(x, y, z, 'b', alpha=0.2)  # mesh
+        #ax.scatter(x, y, z, 'b', alpha=0.2)  # mesh
         (x_closest_clus, y_closest_clus, z_closest_clus) = self.closest_point_mesh(cluster_yz, x, y, z)
-        ax.scatter(x_closest_clus, y_closest_clus, z_closest_clus, color='r',s=100)
-        ax.scatter(0, cluster_yz[0], cluster_yz[1], color='g',s=100)
+        #ax.scatter(x_closest_clus, y_closest_clus, z_closest_clus, color='r',s=100)
+        #ax.scatter(0, cluster_yz[0], cluster_yz[1], color='g',s=100)
 
         # particle 2
         x, y, z = particle.evenly_spaced_mesh()
-        ax.scatter(x, y, z, alpha=0.2)  # mesh
+        #ax.scatter(x, y, z, alpha=0.2)  # mesh
         (x_closest_particle, y_closest_particle, z_closest_particle) = particle.closest_point_mesh(particle_yz, x, y, z) 
-        ax.scatter(x_closest_particle, y_closest_particle, z_closest_particle, color='r',s=100)
-        ax.scatter(0, particle_yz[0], particle_yz[1], color='g',s=100)
+        #ax.scatter(x_closest_particle, y_closest_particle, z_closest_particle, color='r',s=100)
+        #ax.scatter(0, particle_yz[0], particle_yz[1], color='g',s=100)
 
-        particle.plot_crystal(ax, 'k')
-        self.plot_crystal(0, ax, 'k')
+        #particle.plot_crystal(ax, 'k')
+        #self.plot_crystal(0, ax, 'k')
 
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        plt.show()
+        #ax.set_xlabel('X')
+        #ax.set_ylabel('Y')
+        #ax.set_zlabel('Z')
+        #plt.show()
 
 #         if self.projectyz().contains(Point(y_closest_clus, z_closest_clus)):
 #             print('contained')
@@ -297,7 +297,7 @@ class Cluster():
         movey = y_closest_particle-y_closest_clus
         movez = z_closest_particle-z_closest_clus
 
-        print(movex, movey, movez)
+        #print(movex, movey, movez)
         particle.move([-movex, -movey, -movez])
 
         # -------------------
