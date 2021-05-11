@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: ipas
-Version: 2.0.1
+Version: 2.1.7
 Summary: Theoretically simulates ice crystal aggregation (snow) using hexagonal prisms
 Home-page: https://github.com/vprzybylo/IPAS
 Author: Vanessa Przybylo
@@ -30,7 +30,7 @@ Description: [![Forks][forks-shield]][forks-url]
         
         <p align="center">
           <a>
-            <img src="https://github.com/vprzybylo/IPAS/blob/master/rotateplot.gif" alt="Logo" width="250" height="250">
+            <img src="https://github.com/vprzybylo/IPAS/raw/master/rotateplot.gif" alt="Logo" width="250" height="250">
           </a>
         
         <h1 align="center">IPAS</h1>
@@ -42,18 +42,12 @@ Description: [![Forks][forks-shield]][forks-url]
             * only simulates ice crystal shapes of plates and columns
             * all monomers within each aggregate have the same size and shape
         * Aggregate calculations after collection:
-            - [x] Aggregate axis lengths and aspect ratio (0.0-1.0) from an encompassing fit-ellipsoid 
-            - [x] Change in density going from n to n+1 monomers within an aggregate
-            - [x] 2-dimensional aspect ratio from a given projection (e.g., x-y plane)
-            - [x] Aggregate complexity (uses aggregate perimeter and area of the smallest encompassing circle)
-            - [x] 2D area ratio (aggregate area to the area of the smallest encompassing circle)
-            - [] [Contact](#contact) if there is something specific you would like to add
-        
-        ##  Prerequisites
-        
-        The requirements.txt file lists all Python libraries required to run IPAS in a virtual environment.
-        
-        pip install -r requirements.txt
+            * Aggregate axis lengths and aspect ratio (0.0-1.0) from an encompassing fit-ellipsoid 
+            * Change in density going from n to n+1 monomers within an aggregate
+            * 2-dimensional aspect ratio from a given projection (e.g., x-y plane)
+            * Aggregate complexity (uses aggregate perimeter and area of the smallest encompassing circle)
+            * 2D area ratio (aggregate area to the area of the smallest encompassing circle)
+            * [Contact](#contact) if there is something specific you would like to add
             
         ## Installation
         
@@ -63,34 +57,35 @@ Description: [![Forks][forks-shield]][forks-url]
         ``` conda activate IPAS ```
         3. install IPAS:
         ``` pip install ipas ```
+            * if requirements aren't satisfied, run ``` pip install -r requirements.txt ``` 
         4. run ipas from any directory:
         * ICE-ICE AGGREGATION:
             * examples:
-                ``` ice_ice -p 0.1 0.2 -r 100 200 --rand True -a 3 -s True -f 'ipas/instance_files/test' ```
-                ``` ice_ice -p 0.1 10 -r 50 --rand False -a 3 --use_dask True --w 5 ```
+                * ``` ice_ice -p 0.1 0.2 -r 100 200 --rand True -a 3 -s True -f 'ipas/instance_files/test' ```
+                * ``` ice_ice -p 0.1 10 -r 50 --rand False -a 3 --use_dask True --w 5 ```
         * ICE-AGG AGGREGATION:
             * examples:
-                ``` ice_agg -p 0.1 0.2 -r 10 20 --rand True -a 3 -m 2 -s True -f 'ipas/instance_files/test' ```
-                ``` ice_agg -p 10.0 20.0 -r 1000 --rand False -a 3 -m 10 --use_dask True --w 5 ```
+                * ``` ice_agg -p 0.1 0.2 -r 10 20 --rand True -a 3 -m 2 -s True -f 'ipas/instance_files/test' ```
+                * ``` ice_agg -p 10.0 20.0 -r 1000 --rand False -a 3 -m 10 --use_dask True --w 5 ```
         
-        see flags with ice_ice --help or ice_ice -h:
+        FLAGS:
           * --help, -h:
-                * show this help message and exit
+            * show this help message and exit
           * --phi or -p:
-                * (list) monomer aspect ratio(s)
+            * (list) monomer aspect ratio(s)
           * --radius or -r:
-                * (list) monomer radius/radii
+            * (list) monomer radius/radii
           * --aggregates or -a:
-                *(int) number of aggregates to create per aspect ratio-radius pairing
+            * (int) number of aggregates to create per aspect ratio-radius pairing
           * --monomers or -m:
-                *(int) number of monomers per aggregate
-                * only used in ice_agg
+            * (int) number of monomers per aggregate
+            * only used in ice_agg
           * --rand: 
-                * (bool) monomer and aggregate orientation
+            * (bool) monomer and aggregate orientation
           * --save or -s:
-                * (bool) save aggregate attributes to pickled file
-            * if save is True also add filename
-            * load data back in using:
+            * (bool) save aggregate attributes to pickled file
+                * if save is True also add filename
+                * load data back in using:
                 ```
                 f = open('filename_with_path', 'rb')
                 results = pickle.load(f)
@@ -102,23 +97,27 @@ Description: [![Forks][forks-shield]][forks-url]
                 dds = results['dds'] # aggregate change in density
                 ```
           * --filename or -f:
-                * (str) filename to save data (include path from execution location)
+            * (str) filename to save data (include path from execution location)
           * --use_dask:
-                * (bool) whether or not to use dask for parallelization
-                **if True, requires setting up a client exclusive to your machine under start_client() in /ipas/executables/Ice_Agg.py or Ice_Ice.py**
+            * (bool) whether or not to use dask for parallelization
+            **if True, requires setting up a client exclusive to your machine under start_client() in /ipas/executables/Ice_Agg.py or Ice_Ice.py**
             * if use_dask is True add the number of workers to the client as an argument
           * --workers or -w: 
-                * (int) number of workers for dask client
+            * (int) number of workers for dask client
         
         ## Deployment
         
         * IPAS is typically scaled on a cluster using [dask](https://dask.org/) but can be run without a cluster.
         * For aggregate plotting and visualization, the command line initializations cannot be used (above):
             * The executables/collection_no_db and executables/collection_from_db directories hold jupyter notebooks that act as main executables to run IPAS with or without starting a dask cluster and output figures
-                * Plotting can be turned on (plot=True) under the ```if __name__ == '__main__':``` clause
-                * Parallelization can be turned on (```use_dask=True```) *again, initialize the client appropriately*
-            * For interactive plotting using [plotly](https://plotly.com/chart-studio/), turn to ipas/visualizations/Agg_Visualizations.ipynb
-        
+            * Plotting of aggregates can be turned on (plot=True) under the ```if __name__ == '__main__':``` clause
+            * Parallelization can be turned on (```use_dask=True```) *again, initialize the client appropriately*
+            
+            * To run these notebooks:
+                * start a kernel for IPAS:
+                    ``` python -m ipykernel install --user --name=IPAS ```
+                * start jupyter lab in the virtual environment and make sure the notebook kernel is changed to IPAS
+                * For interactive plotting using [plotly](https://plotly.com/chart-studio/), turn to ipas/visualizations/Agg_Visualizations.ipynb            
         
         ## Folder Structure
         * executables:

@@ -21,7 +21,7 @@
 
 <p align="center">
   <a>
-    <img src="https://github.com/vprzybylo/IPAS/blob/master/rotateplot.gif" alt="Logo" width="250" height="250">
+    <img src="https://github.com/vprzybylo/IPAS/raw/master/rotateplot.gif" alt="Logo" width="250" height="250">
   </a>
 
 <h1 align="center">IPAS</h1>
@@ -33,12 +33,12 @@ The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Mi
     * only simulates ice crystal shapes of plates and columns
     * all monomers within each aggregate have the same size and shape
 * Aggregate calculations after collection:
-    - [x] Aggregate axis lengths and aspect ratio (0.0-1.0) from an encompassing fit-ellipsoid 
-    - [x] Change in density going from n to n+1 monomers within an aggregate
-    - [x] 2-dimensional aspect ratio from a given projection (e.g., x-y plane)
-    - [x] Aggregate complexity (uses aggregate perimeter and area of the smallest encompassing circle)
-    - [x] 2D area ratio (aggregate area to the area of the smallest encompassing circle)
-    - [] [Contact](#contact) if there is something specific you would like to add
+    * Aggregate axis lengths and aspect ratio (0.0-1.0) from an encompassing fit-ellipsoid 
+    * Change in density going from n to n+1 monomers within an aggregate
+    * 2-dimensional aspect ratio from a given projection (e.g., x-y plane)
+    * Aggregate complexity (uses aggregate perimeter and area of the smallest encompassing circle)
+    * 2D area ratio (aggregate area to the area of the smallest encompassing circle)
+    * [Contact](#contact) if there is something specific you would like to add
     
 ## Installation
 
@@ -61,22 +61,22 @@ The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Mi
 
 FLAGS:
   * --help, -h:
-        * show this help message and exit
+    * show this help message and exit
   * --phi or -p:
-        * (list) monomer aspect ratio(s)
+    * (list) monomer aspect ratio(s)
   * --radius or -r:
-        * (list) monomer radius/radii
+    * (list) monomer radius/radii
   * --aggregates or -a:
-        *(int) number of aggregates to create per aspect ratio-radius pairing
+    * (int) number of aggregates to create per aspect ratio-radius pairing
   * --monomers or -m:
-        *(int) number of monomers per aggregate
-        * only used in ice_agg
+    * (int) number of monomers per aggregate
+    * only used in ice_agg
   * --rand: 
-        * (bool) monomer and aggregate orientation
+    * (bool) monomer and aggregate orientation
   * --save or -s:
-        * (bool) save aggregate attributes to pickled file
-    * if save is True also add filename
-    * load data back in using:
+    * (bool) save aggregate attributes to pickled file
+        * if save is True also add filename
+        * load data back in using:
         ```
         f = open('filename_with_path', 'rb')
         results = pickle.load(f)
@@ -88,23 +88,27 @@ FLAGS:
         dds = results['dds'] # aggregate change in density
         ```
   * --filename or -f:
-        * (str) filename to save data (include path from execution location)
+    * (str) filename to save data (include path from execution location)
   * --use_dask:
-        * (bool) whether or not to use dask for parallelization
-        **if True, requires setting up a client exclusive to your machine under start_client() in /ipas/executables/Ice_Agg.py or Ice_Ice.py**
+    * (bool) whether or not to use dask for parallelization
+    **if True, requires setting up a client exclusive to your machine under start_client() in /ipas/executables/Ice_Agg.py or Ice_Ice.py**
     * if use_dask is True add the number of workers to the client as an argument
   * --workers or -w: 
-        * (int) number of workers for dask client
+    * (int) number of workers for dask client
 
 ## Deployment
 
 * IPAS is typically scaled on a cluster using [dask](https://dask.org/) but can be run without a cluster.
 * For aggregate plotting and visualization, the command line initializations cannot be used (above):
     * The executables/collection_no_db and executables/collection_from_db directories hold jupyter notebooks that act as main executables to run IPAS with or without starting a dask cluster and output figures
-        * Plotting can be turned on (plot=True) under the ```if __name__ == '__main__':``` clause
-        * Parallelization can be turned on (```use_dask=True```) *again, initialize the client appropriately*
-    * For interactive plotting using [plotly](https://plotly.com/chart-studio/), turn to ipas/visualizations/Agg_Visualizations.ipynb
-
+    * Plotting of aggregates can be turned on (plot=True) under the ```if __name__ == '__main__':``` clause
+    * Parallelization can be turned on (```use_dask=True```) *again, initialize the client appropriately*
+    
+    * To run these notebooks:
+        * start a kernel for IPAS:
+            ``` python -m ipykernel install --user --name=IPAS ```
+        * start jupyter lab in the virtual environment and make sure the notebook kernel is changed to IPAS
+        * For interactive plotting using [plotly](https://plotly.com/chart-studio/), turn to ipas/visualizations/Agg_Visualizations.ipynb            
 
 ## Folder Structure
 * executables:

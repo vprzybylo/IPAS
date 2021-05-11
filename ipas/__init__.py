@@ -1,2 +1,1 @@
-__all__ = ['visualizations', 'collection_from_db',
-          'collection_no_db', 'create_db']
+__all__ = ['collection_from_db', 'collection_no_db', 'executables']

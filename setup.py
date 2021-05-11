@@ -1,7 +1,6 @@
 from setuptools import setup, find_packages
 import os
 
-
 # read the contents of README file
 from os import path
 this_directory = path.abspath(path.dirname(__file__))
@@ -12,7 +11,7 @@ setup(
     # Name of the package
     name='ipas',
     packages=find_packages('.'),
-    version='2.0.1',
+    version='2.1.7',
     description='Theoretically simulates ice crystal aggregation (snow) using hexagonal prisms',
     long_description = readme,
     long_description_content_type='text/markdown',
@@ -29,11 +28,6 @@ setup(
                       "dask",
                       "dask-jobqueue",
                       "descartes",
-                      "hickle",
-                      "jupyterlab",
-                      "jupyter-server",
-                      "jupyterlab-lsp",
-                      "matplotlib",
                       "numpy",
                       "pandas",
                       "plotly",
@@ -45,6 +39,10 @@ setup(
                             "ipympl",
                             "ipykernel",
                             "ipywidgets",
+                            "jupyterlab",
+                            "jupyter-server",
+                            "jupyterlab-lsp",
+                            "matplotlib",
                             "nbconvert",
                             "nbstripout",
                             "seaborn"]
@@ -54,7 +52,6 @@ setup(
             'ice_ice=ipas.executables.collection_no_db.Ice_Ice:main',
             'ice_agg=ipas.executables.collection_no_db.Ice_Agg:main'
     ]},
-    package_data={'': ['rotateplot.gif']},
     include_package_data=True,
     # https://pypi.org/classifiers/
     classifiers=['Development Status :: 3 - Alpha',

@@ -1,0 +1,7 @@
+include requirements.txt rotateplot.gif LICENSE.md
+recursive-include ipas/collection_no_db *.ipynb
+recursive-include ipas/collection_no_db *.py
+recursive-include ipas/collection_from_db *.ipynb
+recursive-include ipas/collection_from_db *.py
+recursive-include ipas/executables/collection_no_db *
+recursive-include ipas/executables/collection_from_db *

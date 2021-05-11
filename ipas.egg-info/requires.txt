@@ -2,11 +2,6 @@ cytoolz
 dask
 dask-jobqueue
 descartes
-hickle
-jupyterlab
-jupyter-server
-jupyterlab-lsp
-matplotlib
 numpy
 pandas
 plotly
@@ -20,6 +15,10 @@ flakehell
 ipympl
 ipykernel
 ipywidgets
+jupyterlab
+jupyter-server
+jupyterlab-lsp
+matplotlib
 nbconvert
 nbstripout
 seaborn
