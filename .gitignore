@@ -4,6 +4,7 @@
 # Ignore these folders
 instance_files
 dist
+ipas.egg-info
 build
 db_files*
 CPI_verification/final_databases*
