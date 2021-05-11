@@ -11,7 +11,7 @@ setup(
     # Name of the package
     name='ipas',
     packages=find_packages('.'),
-    version='2.1.7',
+    version='2.2.1',
     description='Theoretically simulates ice crystal aggregation (snow) using hexagonal prisms',
     long_description = readme,
     long_description_content_type='text/markdown',
@@ -22,7 +22,7 @@ setup(
     url='https://github.com/vprzybylo/IPAS',
     # Link from which the project can be downloaded
     download_url='https://github.com/vprzybylo/IPAS.git',
-    python_requires='>=3.7',
+    python_requires='>=3.0',
     # List of packages to install with this one
     install_requires=["cytoolz",
                       "dask",

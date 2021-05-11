@@ -1,0 +1,4 @@
+[console_scripts]
+ice_agg = ipas.executables.collection_no_db.Ice_Agg:main
+ice_ice = ipas.executables.collection_no_db.Ice_Ice:main
+

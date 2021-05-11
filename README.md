@@ -16,7 +16,6 @@
 [issues-url]: https://github.com/vprzybylo/IPAS/issues
 [license-shield]: https://img.shields.io/github/license/vprzybylo/IPAS?style=plastic
 [license-url]: https://github.com/vprzybylo/IPAS/blob/master/LICENSE.md
-[![DOI](https://zenodo.org/badge/232696476.svg)](https://zenodo.org/badge/latestdoi/232696476)
 
 
 <p align="center">
@@ -49,10 +48,12 @@ The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Mi
 3. install IPAS:
 ``` pip install ipas ```
     * if requirements aren't satisfied, run ``` pip install -r requirements.txt ``` 
+    * make sure the scripts ice_agg and ice_ice are installed in PATH
+        * ``` export PATH="outputpath:$PATH" ``` may be needed
 4. run ipas from any directory:
 * ICE-ICE AGGREGATION:
     * examples:
-        * ``` ice_ice -p 0.1 0.2 -r 100 200 --rand True -a 3 -s True -f 'ipas/instance_files/test' ```
+        * ``` ice_ice -p 0.1 0.2 -r 100 200 --rand True -a 3 -s True -f 'test' ```
         * ``` ice_ice -p 0.1 10 -r 50 --rand False -a 3 --use_dask True --w 5 ```
 * ICE-AGG AGGREGATION:
     * examples:
