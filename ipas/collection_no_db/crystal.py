@@ -330,7 +330,7 @@ class Crystal():
         
     def plot_crystal(self, ax, color):  
         #plots individual monomers
-        
+
         x = np.zeros(27)
         y = np.zeros(27)
         z = np.zeros(27)
@@ -339,39 +339,30 @@ class Crystal():
         Y = self.points['y']
         Z = self.points['z']
 
-        
+
         prismind = [0, 6, 7, 1, 2, 8, 9, 3, 4, 10, 11, 5]  # prism lines
-        i = 0
-        for n in prismind:
+        for i, n in enumerate(prismind):
             x[i] = X[n]
             y[i] = Y[n]
             z[i] = Z[n]
-            i += 1
-  
         ax.plot(x[0:12], y[0:12], z[0:12], color=color)
 
-        i = 0
-        for n in range(0, 6):  # basal face lines
+        for i, n in enumerate(range(6)):  # basal face lines
 
             x[i + 12] = X[n]
             y[i + 12] = Y[n]
             z[i + 12] = Z[n]
-            i += 1
-
         x[18] = X[0]
         y[18] = Y[0]
         z[18] = Z[0]
-        
+
         ax.plot(x[12:19], y[12:19], z[12:19], color=color)
 
-        i = 0
-        for n in range(6, 12):  # basal face lines
+        for i, n in enumerate(range(6, 12)):  # basal face lines
 
             x[i + 19] = X[n]
             y[i + 19] = Y[n]
             z[i + 19] = Z[n]
-            i += 1
-
         x[25] = X[6]
         y[25] = Y[6]
         z[25] = Z[6]

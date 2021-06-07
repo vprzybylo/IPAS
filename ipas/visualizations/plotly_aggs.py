@@ -40,7 +40,7 @@ class PlotAgg:
     def basal_points_top(self):
 
         basal_points_top = []
-        for n in range(0,6): # basal face lines 
+        for n in range(6): # basal face lines 
             basal_points_top.append(self.x[self.crystal_num][n])
             basal_points_top.append(self.y[self.crystal_num][n])
             basal_points_top.append(self.z[self.crystal_num][n])

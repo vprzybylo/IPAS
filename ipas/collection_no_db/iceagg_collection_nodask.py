@@ -17,17 +17,13 @@ def collect_clusters_iceagg(phio, r, nclusters, ncrystals, rand_orient):
     agg_as = np.empty((nclusters, ncrystals-1))
     agg_bs = np.empty((nclusters, ncrystals-1))
     agg_cs = np.empty((nclusters, ncrystals-1))
-    phi2Ds = np.empty((nclusters, ncrystals-1)) 
+    phi2Ds = np.empty((nclusters, ncrystals-1))
     dds = np.empty((nclusters, ncrystals-1))
 
     # get a and c axes of monomer using phi and r
     a = (r ** 3 / phio) ** (1. / 3.)
     c = phio * a
-    if c < a:
-        plates = True
-    else:
-        plates = False
-
+    plates = c < a
     # how many aggregates to create
     for n in range(nclusters):
         # create Crystal

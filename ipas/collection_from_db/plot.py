@@ -76,37 +76,28 @@ class PlotCluster(clus.Cluster):
 
 
         prismind = [0, 6, 7, 1, 2, 8, 9, 3, 4, 10, 11, 5]  # prism lines
-        i = 0
-        for n in prismind:
+        for i, n in enumerate(prismind):
             x[i] = X[n]
             y[i] = Y[n]
             z[i] = Z[n]
-            i += 1
-
         ax.plot(x[0:12], y[0:12], z[0:12], color=color)
 
-        i = 0
-        for n in range(0, 6):  # basal face lines
+        for i, n in enumerate(range(6)):  # basal face lines
 
             x[i + 12] = X[n]
             y[i + 12] = Y[n]
             z[i + 12] = Z[n]
-            i += 1
-
         x[18] = X[0]
         y[18] = Y[0]
         z[18] = Z[0]
 
         ax.plot(x[12:19], y[12:19], z[12:19], color=color)
 
-        i = 0
-        for n in range(6, 12):  # basal face lines
+        for i, n in enumerate(range(6, 12)):  # basal face lines
 
             x[i + 19] = X[n]
             y[i + 19] = Y[n]
             z[i + 19] = Z[n]
-            i += 1
-
         x[25] = X[6]
         y[25] = Y[6]
         z[25] = Z[6]
@@ -197,16 +188,16 @@ class PlotCluster(clus.Cluster):
         #PLOT ELLIPSOID SURFACE
         if add_ellipsoid:
             xell, yell, zell = self.plot_ellipsoid_surface(ax)
-        
+
         if add_axes:
             self.plot_ellipsoid_axes(ax, xell, yell, zell)
 
+        colors=['k', 'k', 'b', 'darkgreen']
         # PLOT MONOMERS
         if agg_agg:
             start_list = [clus.ncrystals for clus in clusters]
             start = [0]+start_list
-            end= [(np.sum([start[i], start[i+1]])+1) for i in range(len(start_list))] 
-            colors=['k', 'k', 'b', 'darkgreen']
+            end= [(np.sum([start[i], start[i+1]])+1) for i in range(len(start_list))]
             for clus in range(len(clusters)): 
                 #lowered color range so that darker colors are generated
                 #color = list(np.random.choice(range(10), size=3)/10)
@@ -217,8 +208,7 @@ class PlotCluster(clus.Cluster):
             start_list = [clus.ncrystals-1 for clus in clusters]
             start_list = [i+1 if i == 0 else i for i in start_list]
             start = [0]+start_list
-            end= [np.sum([start[i], start[i+1]]) for i in range(len(start_list))] 
-            colors=['k', 'k', 'b', 'darkgreen']
+            end= [np.sum([start[i], start[i+1]]) for i in range(len(start_list))]
             for clus in range(len(clusters)): 
                 #lowered color range so that darker colors are generated
                 #color = list(np.random.choice(range(10), size=3)/10)
@@ -253,7 +243,7 @@ class PlotCluster(clus.Cluster):
                            nearest_geoms_xy[1].y,
                            nearest_geoms_yz[1].y,
                            c='k', s=100, zorder=10)
-                
+
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -346,12 +336,12 @@ class PlotCluster(clus.Cluster):
         ellipse.set_alpha(.2)  # opacity
         ellipse.set_facecolor('darkorange')
 
+        crysmaxz = []
+        crysminz = []
+        maxzinds = []
+        minzinds = []
         for l in range(len(dims)):
 
-            crysmaxz = []
-            crysminz = []
-            maxzinds = []
-            minzinds = []
             for i in range(self.ncrystals):
                 hex1pts = self.points[dims[l]][i][0:6]  # first basal face
                 poly1 = geom.Polygon([[p[0], p[1]] for p in hex1pts])  
@@ -377,5 +367,5 @@ class PlotCluster(clus.Cluster):
         if add_axes:
             self.plot_axes_ellipse(params, ax)
 
-        ax.set_aspect('equal', 'datalim')    
+        ax.set_aspect('equal', 'datalim')
         plt.show()
