@@ -33,9 +33,8 @@ def write_file(filename, agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds):
     results = {'agg_as': agg_as, 'agg_bs':agg_bs, 'agg_cs':agg_cs,
               'phi2Ds': phi2Ds,' cplxs': cplxs, 'dds': dds}
     print('saving results to ', filename)
-    filehandler = open(filename, 'wb')
-    pickle.dump(results, filehandler)
-    filehandler.close()
+    with open(filename, 'wb') as filehandler:
+        pickle.dump(results, filehandler)
     print('done writing!')
 
 

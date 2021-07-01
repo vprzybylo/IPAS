@@ -24,11 +24,7 @@ def collect_clusters_iceagg(phio, r, ncrystals,
     # a and c axes of monomer using phi and r
     a = (r ** 3 / phio) ** (1. / 3.)
     c = phio * a
-    if c < a:
-        plates = True
-    else:
-        plates = False
-
+    plates = c < a
     # create Crystal
     crystal1 = crys.Crystal(a, c)
     crystal1.hold_clus = crystal1.points

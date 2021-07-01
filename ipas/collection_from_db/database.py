@@ -99,8 +99,7 @@ class Database:
     def get_plate_columns_agg(self):
         agg_mono_plates = self.df_r['mono_phi'][self.df_r['mono_phi'] < 1.0].count()
         agg_mono_col = self.df_r['mono_phi'][self.df_r['mono_phi'] > 1.0].count()
-        agg_mono_phi = (agg_mono_plates/(agg_mono_plates+agg_mono_col))*100
-        return agg_mono_phi
+        return (agg_mono_plates/(agg_mono_plates+agg_mono_col))*100
 
 
     def get_avg_radius(self):

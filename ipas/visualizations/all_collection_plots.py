@@ -145,10 +145,7 @@ def violin_density_plots(dds_iceice_flat, dds_iceagg_flat, dds_aggagg_flat):
     dataset = [dds_iceice_flat.ravel(), dds_iceagg_flat.ravel(), dds_aggagg_flat.ravel()]
     for c, data in enumerate(dataset): 
         data= data[(data<np.quantile(data, .95)) & (data>np.quantile(data, .05))]
-        if c == 2:
-            points = 1000
-        else:
-            points = 100
+        points = 1000 if c == 2 else 100
         parts = ax.violinplot(data,showmeans=False, showmedians=False,
                 showextrema=False, positions=[c], widths =0.8)
         for pc in parts['bodies']:
@@ -187,11 +184,10 @@ def phi_pdfs_ba_ca_rand(agg_as_iceagg_rand, agg_bs_iceagg_rand, agg_cs_iceagg_ra
 
     print('phi \t oblates\t prolates \tprolates majority?')
     r=9
-    i=0
     phios = [0,3,5,7,9,11,13,15,17,19]
-    for phio in phios:
+    for i, phio in enumerate(phios):
         iceagg = np.vstack([phi_ba_iceagg_rand[phio,r,:], phi_ca_iceagg_rand[phio,r,:]])
-        kde_iceagg = st.gaussian_kde(iceagg)    
+        kde_iceagg = st.gaussian_kde(iceagg)
         aggagg = np.vstack([phi_ba_aggagg_rand[phio,r,:], phi_ca_aggagg_rand[phio,r,:]])
         kde_aggagg = st.gaussian_kde(aggagg)
 
@@ -203,11 +199,7 @@ def phi_pdfs_ba_ca_rand(agg_as_iceagg_rand, agg_bs_iceagg_rand, agg_cs_iceagg_ra
                 prolates +=1
             else:
                 oblates+=1
-        if prolates>oblates:
-            bigger = 'True'
-        else:
-            bigger = ' '
-
+        bigger = 'True' if prolates>oblates else ' '
         print('%3.1f, %10.2f, %15.2f, %15s' %(phio, (oblates/300)*100, (prolates/300)*100, bigger))
 
         # evaluate on a regular grid
@@ -245,7 +237,6 @@ def phi_pdfs_ba_ca_rand(agg_as_iceagg_rand, agg_bs_iceagg_rand, agg_cs_iceagg_ra
 
         axs[i].set_title('[%.3f-%.3f]' %(phi_bins_flat[phio], phi_bins_flat[phio+1]), fontfamily='serif')
 
-        i+=1
     m = plt.cm.ScalarMappable(cmap='Reds')
     m.set_array(Z_aggagg)
 

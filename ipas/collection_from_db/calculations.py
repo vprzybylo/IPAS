@@ -25,7 +25,7 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
         super().__init__(cluster) 
 
 
-    def fit_ellipsoid(self, tol=0.01):  # mve = minimum volume ellipse
+    def fit_ellipsoid(self, tol=0.01):    # mve = minimum volume ellipse
         # Based on work by Nima Moshtagh
         # http://www.mathworks.com/matlabcentral/fileexchange/9542
 
@@ -78,10 +78,8 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
 
         self.centroid = np.dot(u, points_arr)
 
-        A = la.inv(np.dot(np.dot(points_arr.T, np.diag(u)), points_arr) -
+        return la.inv(np.dot(np.dot(points_arr.T, np.diag(u)), points_arr) -
                    np.multiply.outer(self.centroid, self.centroid)) / d
-
-        return A
 
 
     def ellipsoid_axes_lengths(self, A):
@@ -175,10 +173,8 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
         evec = np.squeeze(np.asarray(evecs[0]))
         orientation = np.arctan2(evec[1], evec[0]) * 180 / np.pi
 
-        ellipse = {'xy': [centroid.x, centroid.y], 'width': minor,
+        return {'xy': [centroid.x, centroid.y], 'width': minor,
                    'height': major, 'angle': orientation}
-
-        return ellipse
     
 
     def _get_moments(self, poly):

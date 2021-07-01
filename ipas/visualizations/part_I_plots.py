@@ -142,7 +142,7 @@ def axislengths_aspectratios(phio_p, phio_c, mono_as_p, mono_cs_p, mono_as_c, mo
     
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True, sharey=False, figsize=(16,10))
     plt.subplots_adjust(wspace=0.25, hspace=0.1)
-    
+
     # Flat
     ax1.plot(phio_p, avg_as_flat[:10], 'b')
     ax1.fill_between(phio_p, neg_error_flat_as[:10], pos_error_flat_as[:10], color='b', alpha=alpha)
@@ -228,12 +228,12 @@ def axislengths_aspectratios(phio_p, phio_c, mono_as_p, mono_cs_p, mono_as_c, mo
 
 
     for ax in [ax1, ax2, ax3, ax4]:
-        if ax == ax1 or ax == ax2:
+        if ax in [ax1, ax2]:
             ax.yaxis.set_major_formatter(mticker.ScalarFormatter())
             ax.yaxis.get_major_formatter().set_scientific(False)
             ax.yaxis.get_major_formatter().set_useOffset(False)
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-        if ax == ax3 or ax == ax4:
+        if ax in [ax3, ax4]:
             ax.yaxis.set_major_formatter(mticker.ScalarFormatter())
             ax.yaxis.get_major_formatter().set_scientific(False)
             ax.yaxis.get_major_formatter().set_useOffset(False)
