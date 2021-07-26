@@ -149,7 +149,7 @@ class Crystal():
         else:
 
             area_og = 0
-            for i in np.arange(0.,np.pi/2, 0.1):
+            for i in np.arange(0., np.pi/2, 0.1):
                 self.rotate_to([i,0,0])
                 area = self.projectxy().area
                 if area > area_og:
@@ -158,7 +158,7 @@ class Crystal():
                 self.points = self.hold_clus
 
             area_og = 0
-            for i in np.arange(0.,np.pi/2, 0.1):
+            for i in np.arange(0., np.pi/2, 0.1):
                 self.rotate_to([0,i,0])
                 area = self.projectxy().area
                 if area > area_og:

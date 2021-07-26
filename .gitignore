@@ -1,9 +1,10 @@
 # Ignore Mac system files
 .DS_store
 
-# Ignore these folders
+# Ignore these folders and files
 instance_files
 dist
+.env
 ipas.egg-info
 build
 db_files*
