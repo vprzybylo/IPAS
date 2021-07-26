@@ -12,12 +12,12 @@ batch_statistics:
         - min and max of batch
         - mode of histogram
         - characteristic value of gamma distribution
-        
+
 calculations:
     - Finds fit ellipse and ellipsoids surrounding clusters
-    - Performs any external calculations on the clusters 
+    - Performs any external calculations on the clusters
         - For example, aspect ratio, complexity, etc.
-        
+
 database:
     - Read database of IPAS aggregates
         - with and without point arrays
@@ -43,7 +43,7 @@ iceagg_collection:
     - Runs ice-aggregate collection
         - calls all class methods in the proper order
         - returns relevant data after collection
-        
+
 plot:
     - Sub class to Cluster
         - holds methods to plot the aggregate(s)

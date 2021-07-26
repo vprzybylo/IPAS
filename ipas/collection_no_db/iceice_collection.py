@@ -3,10 +3,12 @@ Main function for running ice particle simulations
 ICE-ICE collection
 """
 
-import ipas.collection_no_db.crystal as crys
-import ipas.collection_no_db.calculations as clus
 import copy as cp
+
 import numpy as np
+
+import ipas.collection_no_db.calculations as clus
+import ipas.collection_no_db.crystal as crys
 
 
 def collect_clusters_iceice(phio, r, ncrystals, rand_orient, plot=False):
@@ -22,10 +24,6 @@ def collect_clusters_iceice(phio, r, ncrystals, rand_orient, plot=False):
     # a and c axes of monomer using phi and r
     a = (r ** 3 / phio) ** (1.0 / 3.0)
     c = phio * a
-    if c < a:
-        plates = True
-    else:
-        plates = False
 
     # create Crystal
     crystal1 = crys.Crystal(a, c)
@@ -84,7 +82,7 @@ def collect_clusters_iceice(phio, r, ncrystals, rand_orient, plot=False):
 
         # ----------------------------
         # orient cluster after adding monomer
-        if a > c and rand_orient == False:
+        if a > c and rand_orient is False:
             cluster.orient_cluster()
         else:
             cluster.orient_cluster(rand_orient)
@@ -108,8 +106,6 @@ def collect_clusters_iceice(phio, r, ncrystals, rand_orient, plot=False):
             cluster.plot_ellipsoid_aggs([cluster], view="y", circle=None)
             print("z")
             cluster.plot_ellipsoid_aggs([cluster], view="z", circle=None)
-
-        cluster_cp = cp.deepcopy(cluster)
 
     # print('made it to the end of collect_clusters loops')
     return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds

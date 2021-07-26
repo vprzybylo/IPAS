@@ -2,16 +2,18 @@
 Runs ice-aggregate collection
 """
 
-import ipas.collection_from_db.crystal as crys
-import time
-import numpy as np
-import random
 import copy as cp
+import random
+import time
+
+import numpy as np
+
+import ipas.collection_from_db.crystal as crys
 
 
 def collect_clusters_iceagg(a, c, clusters, rand_orient=False, plot=False):
 
-    #NEW AGGREGATE PROPERTIES
+    # NEW AGGREGATE PROPERTIES
     cplxs = []
     agg_as = []
     agg_bs = []
@@ -31,10 +33,10 @@ def collect_clusters_iceagg(a, c, clusters, rand_orient=False, plot=False):
         cluster = clusters[n]
 
         # orient original cluster and recenter
-        if a[n]>c[n] and rand_orient== False:
+        if a[n] > c[n] and rand_orient is False:
             cluster.orient_cluster()
         else:
-            cluster.orient_cluster(rand_orient) 
+            cluster.orient_cluster(rand_orient)
         cluster.recenter()
 
         # move monomer on top of cluster
@@ -51,16 +53,18 @@ def collect_clusters_iceagg(a, c, clusters, rand_orient=False, plot=False):
         A = cluster.fit_ellipsoid()
         cluster.ellipsoid_axes_lengths(A)
         # volume of ellipsoid around cluster before aggregation
-        Ve_clus = 4./3.*np.pi*cluster.a*cluster.b*cluster.c 
+        Ve_clus = 4.0 / 3.0 * np.pi * cluster.a * cluster.b * cluster.c
 
         # a and c of monomers in cluster (all identical)
-        a_clus = np.power((np.power(cluster.monor,3)/cluster.monophi),(1./3.))
-        c_clus = cluster.monophi*a_clus
+        a_clus = np.power((np.power(cluster.monor, 3) / cluster.monophi), (1.0 / 3.0))
+        c_clus = cluster.monophi * a_clus
         # volume of all monomers in cluster
-        Va_clus = 3*(np.sqrt(3)/2) * np.power(a_clus,2) * c_clus * cluster.ncrystals
+        Va_clus = (
+            3 * (np.sqrt(3) / 2) * np.power(a_clus, 2) * c_clus * cluster.ncrystals
+        )
 
         # density ratio of aggregate and ellipsoid
-        d1 = Va_clus/Ve_clus
+        d1 = Va_clus / Ve_clus
 
         # -------------------
         # add monomer points to original cluster (i.e., aggregate)
@@ -70,10 +74,10 @@ def collect_clusters_iceagg(a, c, clusters, rand_orient=False, plot=False):
         # -------------------
 
         # monomer a and c axes
-        a_mono = np.power((np.power(monomer.r,3)/monomer.phi),(1./3.))
-        c_mono = monomer.phi*a_mono
+        a_mono = np.power((np.power(monomer.r, 3) / monomer.phi), (1.0 / 3.0))
+        c_mono = monomer.phi * a_mono
         # volume of monomer to collect
-        Va_mono = 3*(np.sqrt(3)/2) * np.power(a_mono,2) * c_mono
+        Va_mono = 3 * (np.sqrt(3) / 2) * np.power(a_mono, 2) * c_mono
 
         # get fit-ellipsoid radii (a-major, c-minor) after aggregation
         A = cluster.fit_ellipsoid()
@@ -83,14 +87,14 @@ def collect_clusters_iceagg(a, c, clusters, rand_orient=False, plot=False):
         agg_cs.append(cluster.c)
 
         # volume of ellipsoid around cluster after aggregation
-        Ve_clus = 4./3.*np.pi*cluster.a*cluster.b*cluster.c
-        d2 = (Va_clus + Va_mono)/Ve_clus
+        Ve_clus = 4.0 / 3.0 * np.pi * cluster.a * cluster.b * cluster.c
+        d2 = (Va_clus + Va_mono) / Ve_clus
         # append relative change in density (after - before adding monomer)
-        dds.append((d2 - d1)/d1)
+        dds.append((d2 - d1) / d1)
 
         # ----------------------------
         # orient cluster after adding monomer
-        if a[n] > c[n] and rand_orient == False:
+        if a[n] > c[n] and rand_orient is False:
             cluster.orient_cluster()
         else:
             cluster.orient_cluster(rand_orient)
@@ -99,7 +103,7 @@ def collect_clusters_iceagg(a, c, clusters, rand_orient=False, plot=False):
         # ------other calculations------
         # save points before reorienting to calculate phi_2D_rotate
         cluster.orient_points = cp.deepcopy(cluster.points)
-        cplx, circle= cluster.complexity()
+        cplx, circle = cluster.complexity()
         cplxs.append(cplx)
         phi2Ds.append(cluster.phi_2D_rotate())
         # reset points back to how they were before phi_2D_rotate
@@ -107,10 +111,16 @@ def collect_clusters_iceagg(a, c, clusters, rand_orient=False, plot=False):
 
         # -------- PLOTTING --------
         if plot:
-            cluster.plot_ellipsoid_aggs([cluster, monomer], view='x', circle=None, agg_agg=False)
-            cluster.plot_ellipsoid_aggs([cluster], view='z', circle=None, agg_agg=False)
-           cluster.plot_ellipsoid_aggs([cluster, monomer], view='y', circle=None, agg_agg=False)
-           cluster.plot_ellipsoid_aggs([cluster, monomer], view='z', circle=None, agg_agg=False)
+            cluster.plot_ellipsoid_aggs(
+                [cluster, monomer], view="x", circle=None, agg_agg=False
+            )
+            cluster.plot_ellipsoid_aggs([cluster], view="z", circle=None, agg_agg=False)
+            cluster.plot_ellipsoid_aggs(
+                [cluster, monomer], view="y", circle=None, agg_agg=False
+            )
+            cluster.plot_ellipsoid_aggs(
+                [cluster, monomer], view="z", circle=None, agg_agg=False
+            )
 
     # characteristic values determined in postprocessing
     return agg_as, agg_bs, agg_cs, phi2Ds, cplxs, dds

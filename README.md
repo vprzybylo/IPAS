@@ -28,17 +28,17 @@
 The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Microphysics.html) is a statistical model in a theoretical framework that mimics simplified laboratory investigations to perform sensitivity tests, visualize, and better understand ice crystal growth via collection.  IPAS collects any number of solid hexagonal prisms that represent primary habits of plates and columns.  A detailed background description on monomer-monomer collection in IPAS can be found in [Przybylo (2019)](https://journals.ametsoc.org/view/journals/atsc/76/6/jas-d-18-0187.1.xml?tab_body=abstract-display), bulk testing of which can be found in [Sulia (2020)](https://journals.ametsoc.org/view/journals/atsc/aop/JAS-D-20-0020.1/JAS-D-20-0020.1.xml?rskey=9V3BQD&result=6).
 
 ##  Features
-* Collection of any size and aspect ratio hexagonal prisms 
+* Collection of any size and aspect ratio hexagonal prisms
     * only simulates ice crystal shapes of plates and columns
     * all monomers within each aggregate have the same size and shape
 * Aggregate calculations after collection:
-    * Aggregate axis lengths and aspect ratio (0.0-1.0) from an encompassing fit-ellipsoid 
+    * Aggregate axis lengths and aspect ratio (0.0-1.0) from an encompassing fit-ellipsoid
     * Change in density going from n to n+1 monomers within an aggregate
     * 2-dimensional aspect ratio from a given projection (e.g., x-y plane)
     * Aggregate complexity (uses aggregate perimeter and area of the smallest encompassing circle)
     * 2D area ratio (aggregate area to the area of the smallest encompassing circle)
     * [Contact](#contact) if there is something specific you would like to add
-    
+
 ## Installation
 
 1. create a virtual environment:
@@ -47,7 +47,7 @@ The [Ice Particle and Aggregate Simulator (IPAS)](http://www.carlgschmitt.com/Mi
 ``` conda activate IPAS ```
 3. install IPAS:
 ``` pip install ipas ```
-    * if requirements aren't satisfied, run ``` pip install -r requirements.txt ``` 
+    * if requirements aren't satisfied, run ``` pip install -r requirements.txt ```
     * make sure the scripts ice_agg and ice_ice are installed in PATH
         * ``` export PATH="outputpath:$PATH" ``` may be needed
 4. run ipas from any directory:
@@ -72,7 +72,7 @@ FLAGS:
   * --monomers or -m:
     * (int) number of monomers per aggregate
     * only used in ice_agg
-  * --rand: 
+  * --rand:
     * (bool) monomer and aggregate orientation
   * --save or -s:
     * (bool) save aggregate attributes to pickled file
@@ -94,7 +94,7 @@ FLAGS:
     * (bool) whether or not to use dask for parallelization
     **if True, requires setting up a client exclusive to your machine under start_client() in /ipas/executables/Ice_Agg.py or Ice_Ice.py**
     * if use_dask is True add the number of workers to the client as an argument
-  * --workers or -w: 
+  * --workers or -w:
     * (int) number of workers for dask client
 
 ## Deployment
@@ -104,25 +104,25 @@ FLAGS:
     * The executables/collection_no_db and executables/collection_from_db directories hold jupyter notebooks that act as main executables to run IPAS with or without starting a dask cluster and output figures
     * Plotting of aggregates can be turned on (plot=True) under the ```if __name__ == '__main__':``` clause
     * Parallelization can be turned on (```use_dask=True```) *again, initialize the client appropriately*
-    
+
     * To run these notebooks:
         * start a kernel for IPAS:
             ``` python -m ipykernel install --user --name=IPAS ```
         * start jupyter lab in the virtual environment and make sure the notebook kernel is changed to IPAS
-        * For interactive plotting using [plotly](https://plotly.com/chart-studio/), turn to ipas/visualizations/Agg_Visualizations.ipynb            
+        * For interactive plotting using [plotly](https://plotly.com/chart-studio/), turn to ipas/visualizations/Agg_Visualizations.ipynb
 
 ## Folder Structure
 * executables:
-  * holds all executables for running IPAS 
+  * holds all executables for running IPAS
   * subdivided based on collection type
 * collection_no_db:
   * src code
   * creates aggregates from 'scratch' instead of the pre-made database of aggregates
   * the command line arg parser only uses this package (i.e., does not read in the aggregate database due to size)
-* collection_from_db: 
+* collection_from_db:
   * src code
-  * creates aggregates pulling from the predined aggregate database (ice-agg and agg-agg collection). Please [contact](#contact) for acquisition (~50Gb). 
-* visualization: 
+  * creates aggregates pulling from the predined aggregate database (ice-agg and agg-agg collection). Please [contact](#contact) for acquisition (~50Gb).
+* visualization:
   * holds plotting scripts and notebooks for publication figures and visualizations
 * CPI_verification:
   * 'verify_IPAS.ipynb' shows comparisons between the Cloud Particle Imager (CPI) aggregates and IPAS aggregates
