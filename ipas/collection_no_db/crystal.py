@@ -392,3 +392,292 @@ class Crystal:
         z[25] = Z[6]
 
         ax.plot(x[19:26], y[19:26], z[19:26], color=color)
+
+    def _bottom(self):
+        # return geometry of bottom side of falling crystal
+        # to be used in connecting bottom of one crystal to the top of the other
+        # getting the same points regardless of the orientation
+        points = [geom.Point(list(x)) for x in self.points]
+        lines = []
+        faces = []
+
+        p0 = self.points[0]
+        p6 = self.points[6]
+        if abs(p0["x"] - p6["x"]) < self.tol and abs(p0["y"] - p6["y"]) < self.tol:
+            # if it's vertical, only return the hexagon faces
+            # (for now)
+            for hexagon in range(2):
+                n0 = hexagon * 6
+                for i in range(5):
+                    n = n0 + i
+                    lines.append(geom.LineString([self.points[n], self.points[n + 1]]))
+                lines.append(geom.LineString([self.points[n0 + 5], self.points[n0]]))
+            # get the hexagons only-- no rectangles
+            for n in range(2):
+                i = n * 6
+                faces.append(geom.Polygon(list(self.points[i : (i + 6)])))
+        elif abs(p0["z"] - p6["z"]) < self.tol:
+            # lying flat on its side-- not returning hexagon faces
+            if len(np.unique(self.points["z"])) == 4:
+                # It's rotated so that there's a ridge on the top, and
+                # the sides are vertical. Don't return any vertical
+                # rectangular sides
+                for n in range(5):
+                    p1 = self.points[n]
+                    p2 = self.points[n + 1]
+                    # is it a non-vertical rectangle?
+                    if (
+                        abs(p1["x"] - p2["x"]) >= self.tol
+                        and abs(p1["y"] - p2["y"]) >= self.tol
+                    ):
+                        faces.append(
+                            geom.Polygon(
+                                [
+                                    self.points[n],
+                                    self.points[n + 1],
+                                    self.points[n + 7],
+                                    self.points[n + 6],
+                                ]
+                            )
+                        )
+                # get that last rectangle missed
+                p1 = self.points[5]
+                p2 = self.points[0]
+                if (
+                    abs(p1["x"] - p2["x"]) >= self.tol
+                    and abs(p1["y"] - p2["y"]) >= self.tol
+                ):
+                    faces.append(
+                        geom.Polygon(
+                            [
+                                self.points[5],
+                                self.points[0],
+                                self.points[6],
+                                self.points[11],
+                            ]
+                        )
+                    )
+                # get the lines around the hexagons
+                for hexagon in range(2):
+                    n0 = hexagon * 6
+                    for i in range(5):
+                        n = n0 + i
+                        p1 = self.points[n]
+                        p2 = self.points[n + 1]
+                        if (
+                            abs(p1["x"] - p2["x"]) >= self.tol
+                            and abs(p1["y"] - p2["y"]) >= self.tol
+                        ):
+                            lines.append(
+                                geom.LineString([self.points[n], self.points[n + 1]])
+                            )
+                    p1 = self.points[n0 + 5]
+                    p2 = self.points[n0]
+                    if (
+                        abs(p1["x"] - p2["x"]) >= self.tol
+                        and abs(p1["y"] - p2["y"]) >= self.tol
+                    ):
+                        lines.append(
+                            geom.LineString([self.points[n0 + 5], self.points[n0]])
+                        )
+                # get the between-hexagon lines
+                for n in range(6):
+                    lines.append(geom.LineString([self.points[n], self.points[n + 6]]))
+
+            # returning only rectangles
+            pass
+        else:
+            # return all the faces
+
+            # get the lines around the hexagons
+            for hexagon in range(2):
+                n0 = hexagon * 6
+                for i in range(5):
+                    n = n0 + i
+                    lines.append(geom.LineString([self.points[n], self.points[n + 1]]))
+                lines.append(geom.LineString([self.points[n0 + 5], self.points[n0]]))
+            # get the between-hexagon lines
+            for n in range(6):
+                lines.append(geom.LineString([self.points[n], self.points[n + 6]]))
+            # get the hexagons
+            for n in range(2):
+                i = n * 6
+                faces.append(geom.Polygon(list(self.points[i : (i + 6)])))
+            # get the rectangles
+            for n in range(5):
+                faces.append(
+                    geom.Polygon(
+                        [
+                            self.points[n],
+                            self.points[n + 1],
+                            self.points[n + 7],
+                            self.points[n + 6],
+                        ]
+                    )
+                )
+            # get that last rectangle I missed
+            faces.append(
+                geom.Polygon(
+                    [self.points[5], self.points[0], self.points[6], self.points[11]]
+                )
+            )
+
+        # return the geometry representing the bottom side of the prism
+
+        # # similar to projectxy
+        # if self.rotation[1] == math.pi / 2:
+        #     # it's vertical, so just return one of the hexagons
+        #     points = self.points[0:6]
+
+        # first find top and bottom hexagon
+
+        # remove the top two points
+
+        # make the lines
+
+        # make the faces
+
+        return {"lines": lines, "points": points, "faces": faces}
+
+    def _top(self):
+        # return the geometry representing the top side of the prism
+
+        # first find top and bottom hexagon
+
+        # remove the bottom two points
+
+        # make the lines
+
+        # make the faces
+
+        # return {'lines': lines, 'points': points, 'faces': faces}
+
+        # temporary, until I fix these functions
+        top = self._bottom()
+        # # unless it's vertical
+        # if self.rotation[1] / (np.pi / 2) % 4 == 1:
+        #     top['points'] = [ geom.Point(list(x)) for x in self.points[0:6] ]
+        #     top['lines'] = []
+        #     for i in range(5): # get the points around each hexagon
+        #         top['lines'].append(geom.LineString([self.points[i], self.points[i + 1]]))
+        #     top['lines'].append(geom.LineString([self.points[5], self.points[0]]))
+        # elif self.rotation[1] / (np.pi / 2) % 4 == 3:
+        #     top['points'] = [ geom.Point(list(x)) for x in self.points[6:12] ]
+        #     top['lines'] = []
+        #     for i in range(5): # get the points around each hexagon
+        #         top['lines'].append(geom.LineString([self.points[i + 6], self.points[i + 7]]))
+        #         top['lines'].append(geom.LineString([self.points[11], self.points[6]]))
+
+        return top
+
+    def _min_vert_dist(self, crystal2):
+        # find the minimum directed distance to crystal2 traveling straight downward
+
+        rel_area = (
+            self.projectxy().buffer(0).intersection(crystal2.projectxy().buffer(0))
+        )
+
+        if not isinstance(rel_area, geom.Polygon):
+            print("bad poly", file=current_job.out)
+            print(rel_area)
+
+            return None
+        c1_bottom = self._bottom()
+        c2_top = crystal2._top()
+        mindiffz = self.maxz - crystal2.minz
+
+        # 1) lines and lines
+        # all the intersections are calculated in 2d so no need to
+        # convert these 3d objects!
+        c1_lines = [l for l in c1_bottom["lines"] if l.intersects(rel_area)]
+        c2_lines = [l for l in c2_top["lines"] if l.intersects(rel_area)]
+        for line1 in c1_lines:
+            for line2 in c2_lines:
+                if line1.intersects(line2):
+                    # get (2D) point of intersection
+                    xy = line1.intersection(line2)
+                    if not isinstance(xy, geom.point.Point):
+                        # parallel lines don't count
+                        continue
+                    # get z difference
+                    # make sure the damn lines aren't vertical
+                    xrange1 = line1.xy[0][1] - line1.xy[0][0]
+                    xrange2 = line2.xy[0][1] - line2.xy[0][0]
+                    if xrange1 != 0:
+                        # interpolate using x value
+                        z1 = line1.interpolate(
+                            (xy.x - line1.xy[0][0]) / (xrange1), normalized=True
+                        ).z
+                    else:
+                        # interpolate using y value
+                        z1 = line1.interpolate(
+                            (xy.y - line1.xy[1][0]) / (line1.xy[1][1] - line1.xy[1][0]),
+                            normalized=True,
+                        ).z
+                    if xrange2 != 0:
+                        z2 = line2.interpolate(
+                            (xy.x - line2.xy[0][0]) / (xrange2), normalized=True
+                        ).z
+                    else:
+                        z2 = line2.interpolate(
+                            (xy.y - line2.xy[1][0]) / (line2.xy[1][1] - line2.xy[1][0]),
+                            normalized=True,
+                        ).z
+                    diffz = z1 - z2
+                    if diffz < mindiffz:
+                        mindiffz = diffz
+
+        # 2) points and surfaces
+        c1_points = [p for p in c1_bottom["points"] if p.intersects(rel_area)]
+        c2_faces = [f for f in c2_top["faces"] if f.intersects(rel_area)]
+        for point in c1_points:
+            for face in c2_faces:
+                if point.intersects(face):
+                    # get z difference
+                    z1 = point.z
+                    # find the equation of the polygon's plane, plug in xy
+                    a = np.array(face.exterior.coords[0])
+                    AB = np.array(face.exterior.coords[1]) - a
+                    AC = np.array(face.exterior.coords[2]) - a
+                    normal_vec = np.cross(AB, AC)
+                    # find constant value
+                    d = -np.dot(normal_vec, a)
+                    z2 = (
+                        -(point.x * normal_vec[0] + point.y * normal_vec[1] + d)
+                        / normal_vec[2]
+                    )
+                    diffz = z1 - z2
+                    if diffz < mindiffz:
+                        mindiffz = diffz
+                    # the point can only intersect one face, so we're
+                    # done with this one
+                    # break
+                    # ^ I should be able to do that but I have to fix my 'bottom' function first!
+
+        # 3) surfaces and points
+        c1_faces = [f for f in c1_bottom["faces"] if f.intersects(rel_area)]
+        c2_points = [p for p in c2_top["points"] if p.intersects(rel_area)]
+        for point in c2_points:
+            for face in c1_faces:
+                if point.intersects(face):
+                    # get z difference
+                    z2 = point.z  # z2 this time!!!
+                    # find the equation of the polygon's plane, plug in xy
+                    a = np.array(face.exterior.coords[0])
+                    AB = np.array(face.exterior.coords[1]) - a
+                    AC = np.array(face.exterior.coords[2]) - a
+                    normal_vec = np.cross(AB, AC)
+                    # find constant value
+                    d = -np.dot(normal_vec, a)
+                    z1 = (
+                        -(point.x * normal_vec[0] + point.y * normal_vec[1] + d)
+                        / normal_vec[2]
+                    )
+                    diffz = z1 - z2
+                    if diffz < mindiffz:
+                        mindiffz = diffz
+                        # the point can only intersect one face, so we're
+                        # done with this one
+                    # break
+
+        return mindiffz

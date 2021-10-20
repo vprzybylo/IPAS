@@ -156,6 +156,10 @@ class PlotCluster(clus.Cluster):
 
         ax.plot(xell[:, 20], yell[:, 20], zell[:, 20], color="g", marker="o")
 
+    def plot_farthest_points(self, ax):
+        ax.scatter(self.maxpt1[0], self.maxpt1[1], self.maxpt1[2], c="orange", s=100)
+        ax.scatter(self.maxpt2[0], self.maxpt2[1], self.maxpt2[2], c="orange", s=100)
+
     def init_plot_view(self, ax, view):
 
         # 90, 0 for z orientation, 0, 90 for y orientation, 0, 0 for x orientation
@@ -186,7 +190,7 @@ class PlotCluster(clus.Cluster):
         """
         plot multiple aggregates (3D), each a different color
         """
-        fig = plt.figure(figsize=(9, 9), dpi=300)
+        fig = plt.figure(figsize=(9, 9))
         ax = fig.add_subplot(111, projection="3d")
         ax = self.init_plot_view(ax, view)
 
@@ -277,6 +281,8 @@ class PlotCluster(clus.Cluster):
                     zorder=10,
                 )
 
+        # plot two farthest points on the agg from convex hull
+        self.plot_farthest_points(ax)
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")

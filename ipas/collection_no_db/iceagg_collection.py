@@ -51,7 +51,8 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=False):
         crystal2.move([-movediffx, -movediffy, 0])
 
         # move particles together
-        cluster.combine(crystal2)
+        # cluster.combine(crystal2)
+        cluster.add_crystal_from_above(crystal2)
 
         # ----------- DENSITY CHANGE ----------
         # get cluster ellipsoid axes before aggregation

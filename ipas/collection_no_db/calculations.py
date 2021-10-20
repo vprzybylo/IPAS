@@ -13,6 +13,8 @@ import numpy.linalg as la
 import shapely.affinity as sha
 import shapely.geometry as geom
 import shapely.ops as shops
+from scipy.spatial import ConvexHull, distance
+from scipy.spatial.distance import cdist
 from shapely.geometry import Point
 
 import ipas.collection_no_db.cluster as clus
@@ -479,18 +481,8 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
         Calculate particle complexity
         from Schmitt (2010)
         """
-        poly3 = self.projectxy()
-        Ap = poly3.area
-        P = poly3.length
-
-        # Ap = poly1.area+poly2.area
-
-        # in the case that the clusters don't perfectly touch, we are still summing both cluster perims
-        # since there is such minimal overlap between clusters
-        # P = poly1.length +poly2.length # perim
-
-        # next line is for a convex hull around both clusters (even if they are
-        # not touching)
+        self.Ap = self.projectxy().area
+        self.P = self.projectxy().length
 
         try:
             multipt = [
@@ -508,10 +500,31 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
             circ = self._make_circle([x[i], y[i]] for i in range(len(x)))
             circle = Point(circ[0], circ[1]).buffer(circ[2])
             x, y = circle.exterior.xy
-            Ac = circle.area
+            self.Ac = circle.area
 
-            self.cplx = 10 * (0.1 - (np.sqrt(Ac * Ap) / P ** 2))
+            self.cplx = 10 * (0.1 - (np.sqrt(self.Ac * self.Ap) / self.P ** 2))
             # print('Ap, Ac, P cplx= ', Ap, Ac, P, self.cplx)
             return (self.cplx, circle)
         else:
             return -999, None
+
+    def farthest_points(self):
+
+        points = self.points.view((float, len(self.points.dtype.names)))
+
+        points = points.reshape(12 * self.ncrystals, 3)
+        hull = ConvexHull(points)
+
+        # Extract the points forming the hull
+        hullpoints = points[hull.vertices, :]
+
+        hdist = cdist(hullpoints, hullpoints, metric="euclidean")
+
+        # Get the farthest apart points
+        bestpair = np.unravel_index(hdist.argmax(), hdist.shape)
+
+        self.maxpt1 = hullpoints[bestpair[0]]
+        self.maxpt2 = hullpoints[bestpair[1]]
+
+    def max_dimension(self):
+        return distance.euclidean(self.maxpt1, self.maxpt2)
