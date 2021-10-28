@@ -1,3 +1,4 @@
+#!/network/rit/lab/sulialab/share/bin/miniconda3/envs/IPAS_v1.3.0/bin/python3 -u
 import pickle
 
 import dask
@@ -24,7 +25,7 @@ def start_client(num_workers):
     # cluster.adapt(minimum=3, maximum=20)
     cluster.scale(num_workers)
     client = Client(cluster)
-    print("dashboard link: ", cluster.dashboard_link)
+    print("dashboard link: ", cluster.dashboard_link, flush=True)
     return client
 
 
@@ -110,22 +111,22 @@ def compute(
 
 def main():
     # monomer aspect ratios (all the same in agg)
-    phioarr = np.logspace(
-        -2, 2, num=20, dtype=None
-    )  # just columns (0,2); plates (-2,0)
+    phioarr = [0.01, 0.10, 1.0, 10.0, 50.0]
     reqarr = [10, 100, 1000]  # microns
     # how many aggregates to produce
     nclusters = 300
     # number of monomers per aggregate
     ncrystals = 100
     # monomer orientation - random (True) or flat (False)
-    rand_orient = True
+    rand_orient = False
 
     # save aggregate attributes to pickled file
     save = True
     # savename (relative path)
     if save:
-        filename = "../../instance_files/mD_vT_vars"
+        filename = (
+            "/network/rit/lab/sulialab/share/IPAS/ipas/instance_files/mD_vT_vars_flat"
+        )
 
     # parallelize IPAS using dask
     use_dask = True
