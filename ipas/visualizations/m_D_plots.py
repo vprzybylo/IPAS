@@ -197,87 +197,12 @@ class Plots:
         self.ax.set_title("Random Orientation")
         # self.ax.set_title('Quasi-Horizontal Orientation')
 
-    def terminal_velocity(self, T):
-
-        m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
-        m_ellipsoid_vol = self.get_modes(m_ellipsoid_vol)
-
-        rho_a = 1.225  # kg/m^3
-        eta = 1.718 + 0.0049 * T - 1.2e-5 * T ** 2
-        eta = eta * 1e-4 * (100 / 1000)
-        # eta = 1.63E10-5  # kg/ms
-        print(eta)
-        area_ratio = (
-            self.Acs[self.phi_idx, self.r_idx, :, :]
-            / self.Aps[self.phi_idx, self.r_idx, :, :]
-        )
-
-        X = (
-            (8 * m_ellipsoid_vol * self.GRAVITY * rho_a) / (np.pi * eta ** 2)
-        ) * area_ratio ** (1 / 4)
-        Re = 8.5 * ((1 + 0.1519 * X ** (1 / 2)) ** (1 / 2) - 1) ** 2
-
-        # print(Re)
-        self.vt = (eta * Re / (2 * rho_a)) * (
-            np.pi / self.Aps[self.phi_idx, self.r_idx, :, :]
-        ) ** (1 / 2)
-
-    def best_number(self, eta):
-        rho_p = self.RHO_B * (
-            self.Aps[self.phi_idx, self.r_idx, :, :]
-            / self.Acs[self.phi_idx, self.r_idx, :, :]
-        )
-        # print('rho_p', rho_p)
-
-        m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
-        m_ellipsoid_vol = self.get_modes(m_ellipsoid_vol)
-
-        X = (
-            (2 * m_ellipsoid_vol / rho_p)
-            * ((rho_p - self.RHO_A) * self.GRAVITY * self.RHO_A / eta ** 2)
-            * (
-                self.Dmaxs[self.phi_idx, self.r_idx, :, :] ** 2
-                / self.Aps[self.phi_idx, self.r_idx, :, :]
-            )
-        )
-
-        return X
-
-    def reynolds_number(self, Xs):
-
-        # X has a shape of 99 for all number of monomers
-        # loop through each to calculate Re for each index
-        Res = []
-        for X in Xs:
-            if X <= 10:
-                a = 0.04394
-                b = 0.970
-            if X > 10 and X <= 585:
-                a = 0.06049
-                b = 0.831
-            if X > 585 and X <= 1.56e5:
-                a = 0.2072
-                b = 0.638
-            if X > 1.56e5 and X < 1.0e8:
-                a = 1.0865
-                b = 0.499
-            Res.append(a * X ** b)
-        # print('Res', min(Res), max(Res))
-        return Res
-
-    def eta(self, T):
-        eta = 1.718 + 0.0049 * T - 1.2e-5 * T ** 2
-        return eta * 1e-4 * (100 / 1000)
-
-    def terminal_velocity_Mitchell(self, T, D, Re, eta):
-        self.vt = (np.array([eta] * len(Re)) * Re) / (self.RHO_A * D)
-
     def vt_plot(self, T=-15):
 
         colors = ["#E0B069", "#B55F56", "#514F51", "#165E6E", "#A0B1BC"]
         aspect_ratios = [0.01, 0.1, 1.0, 10.0, 50.0]
         for self.phi_idx in self.phi_idxs:
-            for self.r_idx in self.r_idxs:
+            for self.r_idx in self.r_idxs[:-1]:
                 eta = self.eta(T)
                 D = self.Dmaxs[self.phi_idx, self.r_idx, :, :]
                 D = self.get_modes(D)
