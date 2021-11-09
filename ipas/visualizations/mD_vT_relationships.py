@@ -9,10 +9,15 @@ class Relationships:
     mass-dimensional and terminal velocity plotting code
     """
 
+    ASPECT_RATIOS = [0.01, 0.1, 1.0, 10.0, 50.0]
     RHO_A = 1.395  # air density at -20C kg/m^3
+    T = -15  # temperature [C]
+    P = 800  # pressure [hPa]
+    RHO_A = (
+        1.2754 * (P / 1000) * (273.15 / (T + 273.15))
+    )  # air density for a given pressure and temp
     RHO_B = 916.8  # bulk density of ice [kg/m^3]
     GRAVITY = 9.81  # [m/sec^2]
-    T = -15  # C
 
     # Best # to Reynolds # power law fit coeffs
     ao = 1.0e-5
@@ -59,51 +64,55 @@ class Relationships:
         self.r_idxs = r_idxs
         self.Aps = Aps * 1e-12  # [m2]
         self.Acs = Acs * 1e-12  # [m2]
+        self.Ars = Aps / Acs
         self.Vps = Vps * 1e-18  # [m3]
         self.Ves = Ves * 1e-18  # [m3]
+        self.Vrs = Vps / Ves
         self.Dmaxs = Dmaxs * 1e-6  # [m]
-        self.nm = np.arange(0, 99, 1)  # number of monomers
+        self.nms = np.arange(0, 99, 1)  # number of monomers
 
     def get_modes(self, var):
-        """return mode of variable across all aggregates for a given monomer phi and r"""
-        modes = np.zeros(shape=(var.shape[1]))
-        for nm in range(var.shape[1]):
-            hist, bin_edges = np.histogram(var[:, nm], bins=30)
-            mode_index = hist.argmax()
-            modes[nm] = bin_edges[mode_index]
-        return modes
+        hist, bin_edges = np.histogram(var, bins=30)
+        mode_index = hist.argmax()
+        #         plt.hist(var, bins=30)
+        #         plt.show()
+        return bin_edges[mode_index]
 
-    def mass_ellipsoid_volumes(self):
-        rho_i = self.RHO_B * (
-            self.Vps[self.phi_idx, self.r_idx, :, :]
-            / self.Ves[self.phi_idx, self.r_idx, :, :]
-        )
+    def mass_ellipsoid_volumes(self, Vr):
 
-        m_spheroid = (
-            4
-            / 3
-            * np.pi
-            * self.agg_as[self.phi_idx, self.r_idx, :, :]
-            * self.agg_bs[self.phi_idx, self.r_idx, :, :]
-            * self.agg_cs[self.phi_idx, self.r_idx, :, :]
-            * rho_i
-        )  # kg
+        m_ellipsoid = np.zeros((self.agg_as.shape[2]))
+        for n in range(self.agg_as.shape[2]):
+            rho_i = self.RHO_B * Vr[n]
+            m_ellipsoid[n] = (
+                4
+                / 3
+                * np.pi
+                * self.agg_as[self.phi_idx, self.r_idx, n, self.nm]
+                * self.agg_bs[self.phi_idx, self.r_idx, n, self.nm]
+                * self.agg_cs[self.phi_idx, self.r_idx, n, self.nm]
+                * rho_i
+            )  # kg
 
         # print('m spheroid', m_spheroid)
-        return m_spheroid
+        return m_ellipsoid
 
     def mass_spheroid_areas(self, Ar):
 
-        rho_i = self.RHO_B * (Ar)
+        agg_as = self.agg_as[self.phi_idx, self.r_idx, :, self.nm]
+        agg_bs = self.agg_bs[self.phi_idx, self.r_idx, :, self.nm]
+        agg_cs = self.agg_cs[self.phi_idx, self.r_idx, :, self.nm]
 
-        m_spheroid = (
-            4
-            / 3
-            * np.pi
-            * self.agg_as[self.phi_idx, self.r_idx, :, :] ** 2
-            * self.agg_cs[self.phi_idx, self.r_idx, :, :]
-            * rho_i
-        )  # kg
+        m_spheroid = np.zeros((self.agg_as.shape[2]))
+        for n in range(self.agg_as.shape[2]):
+            rho_i = self.RHO_B * Ar[n]
+
+            if (agg_bs[n] - agg_cs[n]) <= (agg_as[n] - agg_bs[n]):
+                # prolate
+                m_spheroid[n] = 4 / 3 * np.pi * agg_as[n] * agg_cs[n] ** 2 * rho_i  # kg
+            else:
+                # oblate
+                m_spheroid[n] = 4 / 3 * np.pi * agg_as[n] ** 2 * agg_cs[n] * rho_i  # kg
+
         return m_spheroid
 
     def b1(self, X):
@@ -141,28 +150,36 @@ class Relationships:
             * Ar ** ((self.n - 1) * self.b1(X))
         )
 
-    def best_number_area_ratio(self, Ar, D, Ap):
+        #     def best_number(self, Ar, D, Ap, Ac, m):
+
+        #         rho_p = self.RHO_B * (Ar)
+        #         X = (
+        #             (2 * m / self.RHO_A)
+        #             * ((rho_p - self.RHO_A) * self.GRAVITY * self.RHO_A / self.eta ** 2)
+        #             * (D ** 2 / Ac)*(Ap/Ac)**(1/4)
+        #         )
+        #         #print(rho_p)
+        #         #print('X, m, D, Ap', X, m, D, Ap)
+        return X
+
+    def best_number(self, Ar, D, Ap, Ac, qe, m):
+
         rho_p = self.RHO_B * (Ar)
-        # print('rho_p', rho_p)
-
-        m_ellipsoid = self.mass_spheroid_areas(Ar)  #  kg
-        m_ellipsoid = self.get_modes(m_ellipsoid)
-
-        #         print('density', rho_p)
-        #         print('Dmax', D)
-        #         print('mass', m_ellipsoid)
         X = (
-            (2 * m_ellipsoid / rho_p)
+            (2 * m / rho_p)
             * ((rho_p - self.RHO_A) * self.GRAVITY * self.RHO_A / self.eta ** 2)
             * (D ** 2 / Ap)
+            * (qe) ** (3 / 4)
         )
-
+        # print(rho_p)
+        # print('X, m, D, Ap', X, m, D, Ap)
         return X
 
     def best_number_Mitchell(self, D):
         """
         From Mitchell and Heymsfield 2005
-        only using coeff from other studies, not taking into account IPAS values except Dmax
+        only using coeff from other studies,
+        not taking into account IPAS values except Dmax
         """
         X = (
             2
@@ -173,29 +190,29 @@ class Relationships:
         ) / (self.gamma * self.eta ** 2)
         return X
 
-    def reynolds_number(self, Xs):
-
-        # X has a shape of 99 for all number of monomers
-        # loop through each to calculate Re for each index
-        Res = []
-        for X in Xs:
-            if X <= 10:
-                a = 0.04394
-                b = 0.970
-            if X > 10 and X <= 585:
-                a = 0.06049
-                b = 0.831
-            if X > 585 and X <= 1.56e5:
-                a = 0.2072
-                b = 0.638
-            if X > 1.56e5 and X < 1.0e8:
-                a = 1.0865
-                b = 0.499
-            Res.append(a * X ** b)
-        # print('Res', min(Res), max(Res))
-        return Res
+    def reynolds_number(self, X):
+        if X <= 10:
+            a = 0.04394
+            b = 0.970
+        if X > 10 and X <= 585:
+            a = 0.06049
+            b = 0.831
+        if X > 585 and X <= 1.56e5:
+            a = 0.2072
+            b = 0.638
+        if X > 1.56e5 and X < 1.0e8:
+            a = 1.0865
+            b = 0.499
+        if X > 1.0e8:
+            # print('bad')
+            a = 0
+            b = 1.0
+        # return 8.5 * ((1 + 0.1519 * X ** (1 / 2)) ** (1 / 2) - 1) ** 2
+        # print('a, x, b', X)
+        return a * X ** b
 
     def dynamic_viscosity(self):
+        # only true with T < 0C
         eta = 1.718 + 0.0049 * self.T - 1.2e-5 * self.T ** 2
         self.eta = eta * 1e-4 * (100 / 1000)
 
@@ -206,4 +223,4 @@ class Relationships:
         # should be around 1.17E-5 m2/s
 
     def terminal_velocity_Mitchell(self, D, Re):
-        self.vt = (np.array([self.eta] * len(Re)) * Re) / (self.RHO_A * D)
+        self.vt = (self.eta * Re) / (self.RHO_A * D)
