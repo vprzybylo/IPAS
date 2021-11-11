@@ -78,42 +78,65 @@ class Relationships:
         #         plt.show()
         return bin_edges[mode_index]
 
-    def mass_ellipsoid_volumes(self, Vr):
+    def mass_CPI(self, df):
+        # a the longer axis always
+        m_spheroid = (
+            4 / 3 * np.pi * df["a"] ** 2 * df["c"] * self.RHO_B * df["area_ratio"]
+        )  # kg
+        return m_spheroid
 
-        m_ellipsoid = np.zeros((self.agg_as.shape[2]))
-        for n in range(self.agg_as.shape[2]):
-            rho_i = self.RHO_B * Vr[n]
-            m_ellipsoid[n] = (
-                4
-                / 3
-                * np.pi
-                * self.agg_as[self.phi_idx, self.r_idx, n, self.nm]
-                * self.agg_bs[self.phi_idx, self.r_idx, n, self.nm]
-                * self.agg_cs[self.phi_idx, self.r_idx, n, self.nm]
-                * rho_i
-            )  # kg
+    def mass_ellipsoid_volumes(self):
 
-        # print('m spheroid', m_spheroid)
+        m_ellipsoid = (
+            4
+            / 3
+            * np.pi
+            * self.agg_as[self.phi_idx, self.r_idx, :, self.nm]
+            * self.agg_bs[self.phi_idx, self.r_idx, :, self.nm]
+            * self.agg_cs[self.phi_idx, self.r_idx, :, self.nm]
+            * self.RHO_B
+            * self.Vrs[self.phi_idx, self.r_idx, :, self.nm]
+        )  # kg
+
         return m_ellipsoid
 
-    def mass_spheroid_areas(self, Ar):
+    def mass_spheroid_areas(self):
+        agg_as = self.agg_as[self.phi_idx, :, :, :]
+        agg_bs = self.agg_bs[self.phi_idx, :, :, :]
+        agg_cs = self.agg_cs[self.phi_idx, :, :, :]
+        Ar = self.Ars[self.phi_idx, :, :, :]
 
-        agg_as = self.agg_as[self.phi_idx, self.r_idx, :, self.nm]
-        agg_bs = self.agg_bs[self.phi_idx, self.r_idx, :, self.nm]
-        agg_cs = self.agg_cs[self.phi_idx, self.r_idx, :, self.nm]
+        m_spheroid = np.zeros(
+            (self.agg_as.shape[1], self.agg_as.shape[2], self.agg_as.shape[3])
+        )
+        for r in range(self.agg_as.shape[1]):
+            for n in range(self.agg_as.shape[2]):
+                for nm in range(self.agg_as.shape[3]):
+                    rho_i = self.RHO_B * Ar[r, n, nm]
 
-        m_spheroid = np.zeros((self.agg_as.shape[2]))
-        for n in range(self.agg_as.shape[2]):
-            rho_i = self.RHO_B * Ar[n]
-
-            if (agg_bs[n] - agg_cs[n]) <= (agg_as[n] - agg_bs[n]):
-                # prolate
-                m_spheroid[n] = 4 / 3 * np.pi * agg_as[n] * agg_cs[n] ** 2 * rho_i  # kg
-            else:
-                # oblate
-                m_spheroid[n] = 4 / 3 * np.pi * agg_as[n] ** 2 * agg_cs[n] * rho_i  # kg
-
-        return m_spheroid
+                    if (agg_bs[r, n, nm] - agg_cs[r, n, nm]) <= (
+                        agg_as[r, n, nm] - agg_bs[r, n, nm]
+                    ):
+                        # prolate
+                        m_spheroid[r, n, nm] = (
+                            4
+                            / 3
+                            * np.pi
+                            * agg_as[r, n, nm]
+                            * agg_cs[r, n, nm] ** 2
+                            * rho_i
+                        )  # kg
+                    else:
+                        # oblate
+                        m_spheroid[r, n, nm] = (
+                            4
+                            / 3
+                            * np.pi
+                            * agg_as[r, n, nm] ** 2
+                            * agg_cs[r, n, nm]
+                            * rho_i
+                        )  # kg
+        return m_spheroid.flatten()
 
     def b1(self, X):
         return (self.C1 * X ** (1 / 2)) / (
