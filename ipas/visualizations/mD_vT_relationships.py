@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
@@ -11,11 +13,7 @@ class Relationships:
 
     ASPECT_RATIOS = [0.01, 0.1, 1.0, 10.0, 50.0]
     RHO_A = 1.395  # air density at -20C kg/m^3
-    T = -15  # temperature [C]
-    P = 800  # pressure [hPa]
-    RHO_A = (
-        1.2754 * (P / 1000) * (273.15 / (T + 273.15))
-    )  # air density for a given pressure and temp
+
     RHO_B = 916.8  # bulk density of ice [kg/m^3]
     GRAVITY = 9.81  # [m/sec^2]
 
@@ -74,15 +72,16 @@ class Relationships:
     def get_modes(self, var):
         hist, bin_edges = np.histogram(var, bins=30)
         mode_index = hist.argmax()
-        #         plt.hist(var, bins=30)
-        #         plt.show()
+        # plt.hist(var, bins=30)
+        # plt.show()
         return bin_edges[mode_index]
 
     def mass_CPI(self, df):
         # a the longer axis always
-        m_spheroid = (
-            4 / 3 * np.pi * df["a"] ** 2 * df["c"] * self.RHO_B * df["area_ratio"]
-        )  # kg
+
+        rho_i = self.RHO_B * df["area_ratio"]
+
+        m_spheroid = 4 / 3 * np.pi * df["a"] ** 2 * df["c"] * rho_i  # kg
         return m_spheroid
 
     def mass_ellipsoid_volumes(self):
@@ -152,29 +151,22 @@ class Relationships:
             * Ar ** ((self.n - 1) * self.b1(X))
         )
 
-        #     def best_number(self, Ar, D, Ap, Ac, m):
-
-        #         rho_p = self.RHO_B * (Ar)
-        #         X = (
-        #             (2 * m / self.RHO_A)
-        #             * ((rho_p - self.RHO_A) * self.GRAVITY * self.RHO_A / self.eta ** 2)
-        #             * (D ** 2 / Ac)*(Ap/Ac)**(1/4)
-        #         )
-        #         #print(rho_p)
-        #         #print('X, m, D, Ap', X, m, D, Ap)
-        return X
-
-    def best_number(self, Ar, D, Ap, Ac, qe, m):
-
+    def best_number(self, Ar, Ap, D, m):
         rho_p = self.RHO_B * (Ar)
         X = (
             (2 * m / rho_p)
             * ((rho_p - self.RHO_A) * self.GRAVITY * self.RHO_A / self.eta ** 2)
             * (D ** 2 / Ap)
-            * (qe) ** (3 / 4)
+            * (Ar) ** (3 / 4)
         )
         # print(rho_p)
-        # print('X, m, D, Ap', X, m, D, Ap)
+        # print('Ap, X, m', Ap, X, m)
+        return X
+
+    def best_number_Heymsfield(self, Ar, m):
+        X = (self.RHO_A / self.eta ** 2) * (
+            8 * m * self.GRAVITY / (np.pi * np.sqrt(Ar))
+        )
         return X
 
     def best_number_Mitchell(self, D):
@@ -207,11 +199,22 @@ class Relationships:
             b = 0.499
         if X > 1.0e8:
             # print('bad')
-            a = 0
-            b = 1.0
+            a = 1.0
+            b = 0.4
         # return 8.5 * ((1 + 0.1519 * X ** (1 / 2)) ** (1 / 2) - 1) ** 2
-        # print('a, x, b', X)
+        # print('a, x, b', a * X ** b)
         return a * X ** b
+
+    def reynolds_number_Heymsfield(self, X):
+        Co = 0.35
+        delta_o = 8.0
+        Re = (
+            delta_o ** 2
+            / 4
+            * (((1 + (4 * np.sqrt(X)) / (delta_o ** 2 * np.sqrt(Co))) ** (1 / 2)) - 1)
+            ** 2
+        )
+        return Re
 
     def dynamic_viscosity(self):
         # only true with T < 0C
@@ -224,5 +227,5 @@ class Relationships:
         # return 1.81E-5
         # should be around 1.17E-5 m2/s
 
-    def terminal_velocity_Mitchell(self, D, Re):
+    def terminal_velocity(self, D, Re):
         self.vt = (self.eta * Re) / (self.RHO_A * D)
