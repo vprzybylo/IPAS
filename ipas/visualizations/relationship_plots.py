@@ -46,7 +46,7 @@ class Plots(relationships.Relationships):
 
         colors = ["#3c1518", "#69140e", "#a44200", "#d58936", "#efd6ac"]
         colors_cpi = ["#0B2B26", "#235347", "#8EB69B", "#DAF1DE", "w"]
-        colors_others = ["#03045e", "#0077b6", "#90e0ef", "#caf0f8"]
+        colors_others = ["#072F5F", "#1261A0", "#ADC4DD", "#caf0f8"]
 
         linewidth = 5
         alpha = 0.7
@@ -88,20 +88,24 @@ class Plots(relationships.Relationships):
                     yfit,
                     color=colors[self.phi_idx],
                     linewidth=linewidth,
-                    label=self.ASPECT_RATIOS[self.phi_idx] if self.r_idx == 0 else "",
+                    label=f"{self.ASPECT_RATIOS[self.phi_idx]} [n=90k]"
+                    if self.r_idx == 0
+                    else "",
                 )
 
         # CALCULATE AND PLOT MASS FROM CPI IMAGERY
         if mflag == "area":
-            line_style = [":", "-.", "-", "--", " "]
             particle_types = ["compact_irreg", "agg", "bullet", "column", " "]
+            samples = ["99,017", "24,481", "11,433", "16,627", " ", " ", " "]
             cpi_lines = []
             for i, part_type in enumerate(particle_types):
                 if part_type == " ":
                     alpha = 0
                     x = 0
                     yfit = 0
+                    label = " "
                 else:
+                    label = f"{part_type} [n={samples[i]}]"
                     df = self.df_CPI[self.df_CPI["classification"] == part_type]
                     part_type = (
                         "compact irregular"
@@ -113,12 +117,7 @@ class Plots(relationships.Relationships):
                     y = self.mass_CPI(df)
                     yfit = self.plot_poly_curve_fits(x, y)
                 cpi = self.ax.plot(
-                    x,
-                    yfit,
-                    linewidth=linewidth,
-                    linestyle=line_style[i],
-                    color=colors_cpi[i],
-                    label=f"{part_type}",
+                    x, yfit, linewidth=linewidth, color=colors_cpi[i], label=label
                 )
                 cpi_lines.append(cpi)
 
@@ -126,31 +125,29 @@ class Plots(relationships.Relationships):
         ### KARRER 2020 aggregates ###
         # dendrites and needles coexist with similar PSD and likeli-hood of aggregation
         # 10E-4 m <= D <= 10E-1 m
-        D = np.arange(0.0001, 0.1, 0.0001)  # m
+        D = np.arange(0.001, 0.1, 0.0001)  # m
         m_aggs = 0.045 * D ** 2.16  # kg
         self.ax.plot(
             D * 1000,
             m_aggs,
-            c="purple",
-            linestyle=":",
+            c="#46315C",
             linewidth=linewidth,
-            alpha=alpha,
-            label="K2020 Mix1 [n=105,000]",
+            label="K2020 Mix1 [n=105k]",
         )
 
         ### KARRER 2020 aggregates ###
         #  the monomers with Dmax < 1 mm are columns,
         # while dendrites are taken for larger monomers (”Mix2”)
         # 10E-4 m <= D <= 10E-1 m
-        D = np.arange(0.0001, 0.1, 0.0001)  # m
+        D = np.arange(0.001, 0.1, 0.0001)  # m
         m_aggs = 0.017 * D ** 1.94  # kg
         self.ax.plot(
             D * 1000,
             m_aggs,
-            c="indigo",
+            c="#B3A3BA",
+            linestyle=":",
             linewidth=linewidth,
-            alpha=alpha,
-            label="K2020 Mix2 [n=105,000]",
+            label="K2020 Mix2 [n=105k]",
         )
 
         ### MITCHELL 1996 ###
@@ -214,8 +211,8 @@ class Plots(relationships.Relationships):
                 bbox_to_anchor=(x, y),
                 loc="lower center",
                 ncol=3,
-                title="         IPAS                           CPI                          OBSERVATIONS                      ",
-            )
+                title="   IPAS                                CPI                                      OBSERVATIONS                ",
+            )  # fmt: on/off
 
         self.ax.grid(which="major")
         self.ax.grid(which="minor")
@@ -229,92 +226,122 @@ class Plots(relationships.Relationships):
         self.ax.set_xlim([6e-3, 3e2])
         self.ax.set_title(title)
 
+    def bin_D(self, df, linewidth, color, part_type, label):
+        """
+        bin vt based on D; equal count bins ~9k samples
+        find mode in each bin
+        plot the mode instead of a scatter plot with all observations
+        plot an envelope of min-max value in each bin; shaded
+        """
+
+        if part_type == " ":
+            # only plot modes
+            self.ax.plot(0, 0, alpha=0.0, linewidth=linewidth, color=color, label=label)
+        else:
+            df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
+            df["binned"] = pd.qcut(df["Dmax"], 30)
+            groups = df.groupby(df["binned"])
+            vt_modes = groups.vt.agg(self.get_modes)
+            # only plot modes
+            self.ax.plot(
+                groups.mean().Dmax * 1000,
+                vt_modes,
+                alpha=1.0,
+                linewidth=linewidth,
+                color=color,
+                zorder=3,
+                label=label,
+            )
+
+            # scatter all observations
+
+    #         self.ax.scatter(
+    #             df['Dmax'] * 1000,
+    #             df['vt'],
+    #             alpha=0.05,
+    #             color=color,
+    #             label=f"{part_type}",
+    #         )
+
+    # fill between min and max
+    #         self.ax.fill_between(
+    #             groups.mean().Dmax * 1000,
+    #             y1=groups.vt.min(),
+    #             y2=groups.vt.max(),
+    #             alpha=0.2,
+    #             color=color,
+    #         )
+    # fill between +/- 2 std
+    #         self.ax.fill_between(
+    #             groups.mean().Dmax * 1000,
+    #             y1=vt_modes - 2*(groups.vt.std()),
+    #             y2=vt_modes + 2*(groups.vt.std()),
+    #             alpha=0.2,
+    #             color=color,
+    #         )
+
+    #         self.ax.plot(groups.mean().Dmax * 1000, groups.vt.min(), color=color)
+    #         self.ax.plot(groups.mean().Dmax * 1000, groups.vt.max(), color=color)
+
     def vt_plot(self, title, ylabel, mflag, result_rand):
 
         colors = ["#3c1518", "#69140e", "#a44200", "#d58936", "#efd6ac"]
-        colors_cpi = ["#0B2B26", "#235347", "#8EB69B", "#DAF1DE", "w"]
-        colors_others = ["#03045e", "#0077b6", "#90e0ef", "#caf0f8"]
-        linewidth = 3
-
-        #         m_area_modes = np.zeros(
-        #             (len(self.phi_idxs), len(self.r_idxs), self.agg_as.shape[3])
-        #         )
-        #         m_vol_modes = np.zeros(
-        #             (len(self.phi_idxs), len(self.r_idxs), self.agg_as.shape[3])
-        #         )
+        colors_cpi = ["#0B2B26", "#235347", "#8EB69B", "gray", "#DAF1DE"]
+        colors_others = ["#072F5F", "#1261A0", "#ADC4DD", "#CAE9F5"]
+        linewidth = 4
 
         # CALCULATE AND PLOT VT FROM CPI IMAGERY
-
         self.P = 750  # pressure [hPa]
-        self.T = -5
-        self.RHO_A = (
-            1.2754 * (self.P / 1000) * (273.15 / (self.T + 273.15))
-        )  # air density for a given pressure and temp
-        self.dynamic_viscosity()
-
         if mflag == "area":
-            line_style = [":", "-.", "-", "--", " "]
-            particle_types = ["compact_irreg", "agg", "bullet", "column"]
-            cpi_lines = []
+            # line_style = [":", "-.", "-", "--", "-"]
+            particle_types = [
+                "agg",
+                "bullet",
+                "column",
+                "planar_polycrystal",
+                "compact_irreg",
+                " ",
+            ]
+            T = [-10, -30, -5, -20, -10, 0]
+            samples = ["24,481", "11,432", "16,627", "14,363", "99,012", " "]
             for i, part_type in enumerate(particle_types):
 
+                self.T = T[i]
+                self.RHO_A = (
+                    1.2754 * (self.P / 1000) * (273.15 / (self.T + 273.15))
+                )  # air density for a given pressure and temp
+                self.dynamic_viscosity()
                 df = self.df_CPI[self.df_CPI["classification"] == part_type]
                 part_type = (
                     "compact irregular" if part_type == "compact_irreg" else part_type
                 )
                 df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
+                # samples.append(len(df) if part_type != " " else " ")
                 Ar = df["area_ratio"]
                 # Ap = df['cnt_area']
                 m = self.mass_CPI(df)
                 D = df["Dmax"]
 
-                X = self.best_number_Heymsfield(Ar, m)
-                Re = self.reynolds_number_Heymsfield(X)
-                self.terminal_velocity(D, Re)
+                if part_type == " ":
+                    color = "w"
+                    df["vt"] = self.vt
+                    label = " "
+                    self.bin_D(df, linewidth, color, part_type, label)
+                else:
+                    X = self.best_number_Heymsfield(Ar, m)
+                    Re = self.reynolds_number_Heymsfield(X)
+                    self.terminal_velocity(D, Re)
 
-                x = df["Dmax"] * 1000
-                y = self.vt
-                #                yfit = self.plot_poly_curve_fits(x, y)
+                    #                     X = self.best_number(Ar, m)
+                    #                     Re = self.reynolds_number(X)
+                    #                     self.terminal_velocity(D, Re)
 
-                #                 cpi = self.ax.plot(
-                #                     x,
-                #                     yfit,
-                #                     linewidth=linewidth,
-                #                     linestyle=line_style[i],
-                #                     color=colors_cpi[i],
-                #                     label=f"{part_type}",
-                #                 )
-                #                 print(np.std(yfit), np.exp(np.std(yfit)))
-                #                 cpi = self.ax.scatter(
-                #                     x,
-                #                     yfit,
-                #                     linewidth=linewidth,
-                #                     linestyle=line_style[i],
-                #                     color=colors_cpi[i],
-                #                     label=f"{part_type}",
-                #                 )
-                #                 cpi = self.ax.scatter(
-                #                     x,
-                #                     yfit+np.std(yfit),
-                #                     linewidth=linewidth,
-                #                     linestyle=line_style[i],
-                #                     color=colors_cpi[i],
-                #                     label=f"{part_type}",
-                #                 )
+                    df["vt"] = self.vt
+                    color = colors_cpi[i]
+                    label = f"{part_type} [n={samples[i]}]"
+                    self.bin_D(df, linewidth, color, part_type, label)
 
-                cpi = self.ax.scatter(
-                    D * 1000,
-                    self.vt,
-                    s=1,
-                    alpha=0.1,
-                    linewidth=linewidth,
-                    linestyle=line_style[i],
-                    color=colors_cpi[i],
-                    label=f"{part_type}",
-                )
-
-                cpi_lines.append(cpi)
-
+        # IPAS
         for self.phi_idx in self.phi_idxs:
             if self.ASPECT_RATIOS[self.phi_idx] < 1.0:
                 self.T = -15  # temperature [C] plates
@@ -326,8 +353,9 @@ class Plots(relationships.Relationships):
                 1.2754 * (self.P / 1000) * (273.15 / (self.T + 273.15))
             )  # air density for a given pressure and temp
             self.dynamic_viscosity()
+
             for self.r_idx in self.r_idxs:
-                for nm in range(self.agg_as.shape[3])[:20]:
+                for nm in range(self.agg_as.shape[3]):
                     self.nm = nm
 
                     D_modes = self.get_modes(
@@ -340,28 +368,54 @@ class Plots(relationships.Relationships):
                         m = self.mass_ellipsoid_volumes()  #  kg
 
                     Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
-                    # print(Ap)
                     D = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
                     # X = self.best_number(Ar, Ap, D, m)
                     X = self.best_number_Heymsfield(Ar, m)
 
                     X = self.get_modes(X)
-                    # print('IPAS', X)
                     Re = self.reynolds_number(X)
                     # Re = self.reynolds_number_Heymsfield(X)
-                    # print("Re IPAS", Re)
                     # self.terminal_velocity_Mitchell_2005(Ar, X)
                     self.terminal_velocity(D_modes, Re)
                     self.ax.scatter(
                         D_modes * 1000,
                         self.vt,
-                        s=self.nm,
-                        zorder=10,
+                        s=self.nm / 3,
+                        alpha=0.7,
+                        zorder=2,
                         c=colors[self.phi_idx],
-                        label=self.ASPECT_RATIOS[self.phi_idx]
-                        if self.r_idx == 0 and self.nm == 0
+                        label=f"{self.ASPECT_RATIOS[self.phi_idx]} [n=90k]"
+                        if self.r_idx == 0
+                        and self.nm == range(self.agg_as.shape[3])[-1]
                         else "",
                     )
+
+        # Zawadski 2010
+        D = np.arange(1.0, 8.0, 0.001)  # [mm]
+
+        # Karrer 2020
+        D = np.arange(0.001, 0.01, 0.0001)  # m
+        # D = np.arange(0.1, 10.0, 0.01)  # mm
+        self.ax.plot(
+            D * 1000,
+            21.739 * D ** 0.580,
+            c="#B3A3BA",
+            zorder=4,
+            linewidth=linewidth,
+            label="K2020 Mix1 [n=105k]",
+        )
+
+        # Karrer 2020
+        D = np.arange(0.001, 0.01, 0.0001)  # m
+        # D = np.arange(0.01, 10.0, 0.0001)  # mm
+        self.ax.plot(
+            D * 1000,
+            8.567 * D ** 0.393,
+            c="#46315C",
+            linewidth=linewidth,
+            zorder=4,
+            label="K2020 Mix2 [n=105k]",
+        )
 
         # Locatelli and Hobbs 1974
         # aggregates of unrimed radiating assemblages of dendrites
@@ -370,8 +424,9 @@ class Plots(relationships.Relationships):
             D,
             0.8 * D * 0.16,
             c=colors_others[0],
-            linewidth=3,
-            label="LH unrimed assemblage dendrite [n=28]",
+            linewidth=linewidth,
+            zorder=3,
+            label="LH74 unrimed assemblage dendrite [n=28]",
         )
 
         # aggregates of unrimed radiating assemblages of
@@ -381,8 +436,9 @@ class Plots(relationships.Relationships):
             D,
             0.69 * D * 0.41,
             c=colors_others[1],
-            linewidth=3,
-            label="LH unrimed assemblage mix [n=31]",
+            linewidth=linewidth,
+            zorder=3,
+            label="LH74 unrimed assemblage mix [n=31]",
         )
 
         # aggregates of unrimed sideplanes
@@ -391,46 +447,37 @@ class Plots(relationships.Relationships):
             D,
             0.82 * D * 0.12,
             colors_others[2],
-            linewidth=3,
-            label="LH sideplane aggregates [n=23]",
+            linewidth=linewidth,
+            zorder=3,
+            label="LH74 sideplane aggregates [n=23]",
         )
 
-        # aggregates of unrimed sideplanes
-        D = np.arange(0.4, 1.2, 0.01)  # mm
-        self.ax.plot(
-            D,
-            0.81 * D * 0.99,
-            c=colors_others[3],
-            linewidth=3,
-            label="LH unrimed sideplane [n=10]",
-        )
-
-        #         # Zawadski 2010
-        #         D = np.arange(0.10, 8.0, 0.01)  # mm
-        #         self.ax.plot(D, 0.069 * D * 0.21, c="k", linewidth=3, label="Z10")
-
-        #         # Karrer 2020
-        #         D = np.arange(0.0001, 0.1, 0.0001)  # m
-        #         #D = np.arange(0.01, 10.0, 0.0001)  # mm
-        #         self.ax.plot(D*1000, 21.739 * D * 0.580, c='indigo', linewidth=3, label="K2020 Mix1")
-
-        #         # Karrer 2020
-        #         D = np.arange(0.0001, 0.1, 0.0001)  # m
-        #         #D = np.arange(0.01, 10.0, 0.0001)  # mm
-        #         self.ax.plot(D*1000, 8.567 * D * 0.393, c="purple", linestyle=":", alpha = 0.7, linewidth=3, label="K2020 Mix2")
+        #         D = np.arange(0.4, 1.2, 0.01)  # mm
+        #         self.ax.plot(
+        #             D,
+        #             0.81 * D * 0.99,
+        #             c=colors_others[3],
+        #             linewidth=linewidth,
+        #             label="LH74 unrimed sideplane [n=10]",
+        #         )
 
         if mflag == "area" and result_rand == True:
             x = 1.1
-            y = -2.1
+            y = -2.5
 
-            self.ax.legend(bbox_to_anchor=(x, y), loc="lower center", ncol=3, title="")
+            self.ax.legend(
+                bbox_to_anchor=(x, y),
+                loc="lower center",
+                ncol=3,
+                title="    CPI                                                       OBSERVATIONS                                                                IPAS      ",
+            )  # fmt: on/off
 
         self.ax.grid(which="major")
         self.ax.grid(which="minor")
         self.ax.grid(True)
         self.ax.set_yscale("log")
-        # self.ax.set_ylim(0.01, 1.0)
-        self.ax.set_xlim([6e-3, 3e1])
+        self.ax.set_ylim(0.002, 10.0)
+        self.ax.set_xlim([4e-2, 1e2])
         # self.ax.set_xlim(0.0, 10)
         self.ax.set_xscale("log")
         if mflag != "area":
