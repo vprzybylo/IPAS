@@ -12,7 +12,6 @@ class Relationships:
     """
 
     ASPECT_RATIOS = [0.01, 0.1, 1.0, 10.0, 50.0]
-    RHO_A = 1.395  # air density at -20C kg/m^3
     RHO_B = 916.8  # bulk density of ice [kg/m^3]
     GRAVITY = 9.81  # [m/sec^2]
 
@@ -48,6 +47,9 @@ class Relationships:
         self.nms = np.arange(0, 99, 1)  # number of monomers
 
     def get_modes(self, var):
+        """
+        find the mode of a variale from a histogram bin with the highest frequency
+        """
         hist, bin_edges = np.histogram(var, bins=30)
         mode_index = hist.argmax()
         # plt.hist(var, bins=30)
@@ -55,15 +57,19 @@ class Relationships:
         return bin_edges[mode_index]
 
     def mass_CPI(self, df):
-        # a the longer axis always
-
+        """
+        -calculate the mass of a CPI particle from the area ratio and axis lengths
+        -assume oblate with a as the longer axis always
+        """
         rho_i = self.RHO_B * df["area_ratio"]
-
         m_spheroid = 4 / 3 * np.pi * df["a"] ** 2 * df["c"] * rho_i  # kg
         return m_spheroid
 
     def mass_ellipsoid_volumes(self):
-
+        """
+        -calculate the mass of IPAS particles using all 3 dimensions
+        and the volumetric ratio
+        """
         m_ellipsoid = (
             4
             / 3
@@ -78,6 +84,11 @@ class Relationships:
         return m_ellipsoid
 
     def mass_spheroid_areas(self):
+        """
+        -calculate the mass of IPAS particles
+        -first determine if the particle is closer to oblate or prolate in shape
+        -then use the area ratio and minor and major axis to find the mass
+        """
         agg_as = self.agg_as[self.phi_idx, self.r_idx, :, self.nm]
         agg_bs = self.agg_bs[self.phi_idx, self.r_idx, :, self.nm]
         agg_cs = self.agg_cs[self.phi_idx, self.r_idx, :, self.nm]
@@ -95,7 +106,12 @@ class Relationships:
         return m_spheroid
 
     def best_number_Mitchell(self, Ar, Ap, D, m):
-
+        """
+        -best number following harrington et al. 2013 appendix A
+        - similar to Mitchell 1996 but includes buoyancy term
+        and area ratio (particle area divided by area of circumscribed
+        circle projected from overhead for IPAS uses)
+        """
         rho_p = self.RHO_B * (Ar)
         X = (
             (2 * m / rho_p)
@@ -107,15 +123,12 @@ class Relationships:
         # print('Ap, X, m', Ap, X, m)
         return X
 
-    def best_number_Heymsfield(self, Ar, m):
-
-        X = (self.RHO_A / self.eta ** 2) * (
-            8 * m * self.GRAVITY / (np.pi * np.sqrt(Ar))
-        )
-        return X
-
     def reynolds_number_Mitchell(self, X):
-
+        """
+        equations 18-21 in mitchell 1996
+        IPAS larger sizes go outside the bounds of X
+        the last if statement sets to moderate values
+        """
         if X <= 10:
             a = 0.04394
             b = 0.970
@@ -136,7 +149,17 @@ class Relationships:
         # print('a, x, b', a * X ** b)
         return a * X ** b
 
+    def best_number_Heymsfield(self, Ar, m):
+        """
+        eq 6 in Heymsfield and Westbrook 2010
+        """
+        X = (self.RHO_A / self.eta ** 2) * (8 * m * self.GRAVITY / (np.pi * Ar))
+        return X
+
     def reynolds_number_Heymsfield(self, X):
+        """
+        eq 5 in Heymsfield 2010
+        """
         Co = 0.35
         delta_o = 8.0
         Re = (
@@ -147,9 +170,9 @@ class Relationships:
         )
         return Re
 
-    def dynamic_viscosity(self):
+    def dynamic_viscosity(self, T):
         # only true with T < 0C
-        eta = 1.718 + 0.0049 * self.T - 1.2e-5 * self.T ** 2
+        eta = 1.718 + 0.0049 * T - 1.2e-5 * T ** 2
         self.eta = eta * 1e-4 * (100 / 1000)
 
     def kinematic_viscosity(self):

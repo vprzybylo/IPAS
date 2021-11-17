@@ -46,7 +46,7 @@ class Plots(relationships.Relationships):
             "Z": "k",
         }
         self.colors = ["#3c1518", "#69140e", "#a44200", "#d58936", "#efd6ac"]  # ipas
-        self.colors_cpi = ["#0B2B26", "#235347", "#8EB69B", "gray", "#DAF1DE"]
+        self.colors_cpi = ["#132010", "#396031", "#4c8042", "#7fb375", "#9fc697"]
 
         # colors_others = ["#072F5F", "#1261A0", "#ADC4DD", "#caf0f8"]
 
@@ -59,10 +59,12 @@ class Plots(relationships.Relationships):
             "compact_irreg",
         ]
         self.samples = ["24,481", "11,432", "16,627", "14,363", "99,012", " "]
-        self.T = [-10, -30, -5, -20, -10, 0]
         self.P = 750  # pressure [hPa]
 
     def plot_poly_curve_fits(self, x, y):
+        """
+        fit regression curve in log-log space to IPAS data
+        """
         # fit log(y) = m*log(x) + c
 
         # add catch for x<0 for planar
@@ -70,7 +72,7 @@ class Plots(relationships.Relationships):
         y = y[x > 0]
         m, c = np.polyfit(np.log(x1), np.log(y), 1)
         yfit = np.exp(m * np.log(x1) + c)
-        return yfit
+        return x1, yfit
 
     def m_ipas(self, mflag):
         """
@@ -108,9 +110,9 @@ class Plots(relationships.Relationships):
                 # with 300 aggregates per nm
                 x = D_modes[self.phi_idx, self.r_idx, :] * 1000
                 y = m[self.phi_idx, self.r_idx, :]
-                yfit = self.plot_poly_curve_fits(x, y)
+                x1, yfit = self.plot_poly_curve_fits(x, y)
                 self.ax.plot(
-                    x,
+                    x1,
                     yfit,
                     color=self.colors[self.phi_idx],
                     linewidth=self.linewidth,
@@ -119,41 +121,45 @@ class Plots(relationships.Relationships):
                     else "",
                 )
 
-    def m_cpi(self, mflag):
+    def m_cpi(self):
         """calculate and plot mass from cpi observed particles"""
 
-        if mflag == "area":
-            cpi_lines = []
-            for i, part_type in enumerate(self.particle_types):
-                if part_type == " ":
-                    x = 0
-                    yfit = 0
-                    label = " "
-                else:
-                    label = f"{part_type} [n={samples[i]}]"
-                    df = self.df_CPI[self.df_CPI["classification"] == part_type]
-                    part_type = (
-                        "compact irregular"
-                        if part_type == "compact_irreg"
-                        else part_type
-                    )
-                    df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
-                    x = df["Dmax"] * 1000
-                    y = self.mass_CPI(df)
-                    yfit = self.plot_poly_curve_fits(x, y)
-                cpi = self.ax.plot(
-                    x,
-                    yfit,
-                    linewidth=self.linewidth,
-                    color=self.colors_cpi[i],
-                    label=label,
+        cpi_lines = []
+        for i, part_type in enumerate(self.particle_types):
+            if part_type == " ":
+                x = 0
+                yfit = 0
+                label = " "
+            else:
+                label = f"{part_type} [n={self.samples[i]}]"
+                df = self.df_CPI[self.df_CPI["classification"] == part_type]
+                part_type = (
+                    "compact irregular" if part_type == "compact_irreg" else part_type
                 )
-                cpi_lines.append(cpi)
+                df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
+                x = df["Dmax"] * 1000
+                y = self.mass_CPI(df)
+                x1, yfit = self.plot_poly_curve_fits(x, y)
+            cpi = self.ax.plot(
+                x1,
+                yfit,
+                linewidth=self.linewidth,
+                color=self.colors_cpi[i],
+                label=label,
+            )
+            cpi_lines.append(cpi)
+
+        return cpi_lines
 
     def m_D_plot(self, title, ylabel, mflag="vol", result_rand=False):
+        """
+        calculate and plot the mass of ice particles from IPAS and CPI data
+        other empirical estimates included below
+        """
 
-        self.ipas_cpi(mflag)
-        self.m_cpi(mflag)
+        self.m_ipas(mflag)
+        if mflag == "area":
+            cpi_lines = self.m_cpi()
 
         ### KARRER 2020 aggregates ###
         # dendrites and needles coexist with similar PSD and likeli-hood of aggregation
@@ -164,7 +170,7 @@ class Plots(relationships.Relationships):
             D * 1000,
             m_aggs,
             c=self.obs_names["KMix1"],
-            linewidth=linewidth,
+            linewidth=self.linewidth,
             label="K2020 Mix1 [n=105k]",
         )
 
@@ -179,7 +185,7 @@ class Plots(relationships.Relationships):
             m_aggs,
             c=self.obs_names["KMix2"],
             linestyle=":",
-            linewidth=linewidth,
+            linewidth=self.linewidth,
             label="K2020 Mix2 [n=105k]",
         )
 
@@ -192,7 +198,7 @@ class Plots(relationships.Relationships):
             D * 10,
             m_aggs,
             c=self.obs_names["M96"],
-            linewidth=linewidth,
+            linewidth=self.linewidth,
             label="M96 aggregates",
         )
 
@@ -203,8 +209,7 @@ class Plots(relationships.Relationships):
             D,
             m_aggs,
             c=self.obs_names["M90"],
-            linewidth=linewidth,
-            linestyle="--",
+            linewidth=self.linewidth,
             label="M90 plate aggregates [n=30]",
         )
 
@@ -215,8 +220,7 @@ class Plots(relationships.Relationships):
             D,
             m,
             c=self.obs_names["LH74 mix"],
-            linewidth=linewidth,
-            linestyle="--",
+            linewidth=self.linewidth,
             label="LH74 mixed aggregates [n=19]",
         )
 
@@ -312,50 +316,48 @@ class Plots(relationships.Relationships):
     #         self.ax.plot(groups.mean().Dmax * 1000, groups.vt.min(), color=color)
     #         self.ax.plot(groups.mean().Dmax * 1000, groups.vt.max(), color=color)
 
-    def cpi_vt(self, mflag, Mitchell, result_rand, ylabel):
+    def cpi_vt(self, Mitchell, result_rand, ylabel):
         """
         calculate and plot terminal velocities of CPI observed ice particles
         """
+        for i, part_type in enumerate(self.particle_types):
+            T = [-10, -30, -5, -20, -10, 0]
+            self.RHO_A = (
+                1.2754 * (self.P / 1000) * (273.15 / (T[i] + 273.15))
+            )  # air density for a given pressure and temp
+            self.dynamic_viscosity(T[i])
+            df = self.df_CPI[self.df_CPI["classification"] == part_type]
+            part_type = (
+                "compact irregular" if part_type == "compact_irreg" else part_type
+            )
+            df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
+            # samples.append(len(df) if part_type != " " else " ")
 
-        if mflag == "area":
-
-            for i, part_type in enumerate(self.particle_types):
-
-                T = self.T[i]
-                self.RHO_A = (
-                    1.2754 * (self.P / 1000) * (273.15 / (T + 273.15))
-                )  # air density for a given pressure and temp
-                self.dynamic_viscosity()
-                df = self.df_CPI[self.df_CPI["classification"] == part_type]
-                part_type = (
-                    "compact irregular" if part_type == "compact_irreg" else part_type
-                )
-                df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
-                # samples.append(len(df) if part_type != " " else " ")
-
-                if part_type == " ":
-                    color = "w"
-                    df["vt"] = self.vt
-                    label = " "
-                    self.bin_D(df, linewidth, color, part_type, label)
+            if part_type == " ":
+                color = "w"
+                df["vt"] = self.vt
+                label = " "
+                self.bin_D(df, linewidth, color, part_type, label)
+            else:
+                Ar = df["area_ratio"]
+                Ap = df["cnt_area"]
+                m = self.mass_CPI(df)
+                D = df["Dmax"]
+                if Mitchell:
+                    X = self.best_number_Mitchell(Ar, Ap, D, m)
+                    X = self.get_modes(X)
+                    Re = self.reynolds_number_Mitchell(X)
                 else:
-                    Ar = df["area_ratio"]
-                    Ap = df["cnt_area"]
-                    m = self.mass_CPI(df)
-                    D = df["Dmax"]
-                    if Mitchell:
-                        X = self.best_number_Mitchell(Ar, Ap, D, m)
-                        Re = self.reynolds_number_Mitchell(X)
-                    else:
 
-                        X = self.best_number_Heymsfield(Ar, m)
-                        Re = self.reynolds_number_Heymsfield(X)
+                    X = self.best_number_Heymsfield(Ar, m)
+                    X = self.get_modes(X)
+                    Re = self.reynolds_number_Heymsfield(X)
 
-                    self.terminal_velocity(D, Re)
-                    df["vt"] = self.vt
-                    color = self.colors_cpi[i]
-                    label = f"{part_type} [n={samples[i]}]"
-                    self.bin_D(df, color, part_type, label)
+                self.terminal_velocity(D, Re)
+                df["vt"] = self.vt
+                color = self.colors_cpi[i]
+                label = f"{part_type} [n={self.samples[i]}]"
+                self.bin_D(df, color, part_type, label)
 
     def ipas_vt(self, mflag, Mitchell, result_rand, ylabel):
         """
@@ -364,11 +366,15 @@ class Plots(relationships.Relationships):
         """
 
         for self.phi_idx in self.phi_idxs:
-            self.P = 750  # pressure [hPa]
+            if self.ASPECT_RATIOS[self.phi_idx] < 1.0:
+                T = -15
+            else:
+                T = -5
+
             self.RHO_A = (
-                1.2754 * (self.P / 1000) * (273.15 / (self.T + 273.15))
+                1.2754 * (self.P / 1000) * (273.15 / (T + 273.15))
             )  # air density for a given pressure and temp
-            self.dynamic_viscosity()
+            self.dynamic_viscosity(T)
 
             for self.r_idx in self.r_idxs:
                 for nm in range(self.agg_as.shape[3]):
@@ -412,10 +418,12 @@ class Plots(relationships.Relationships):
         """
         plot all vt relationships
         calls ipas and cpi vt methods
+        additionally holds empirical relationships from other studies
         """
 
         self.ipas_vt(mflag, Mitchell, result_rand, ylabel)
-        self.cpi_vt(mflag, Mitchell, result_rand, ylabel)
+        if mflag == "area":
+            self.cpi_vt(Mitchell, result_rand, ylabel)
 
         # Zawadski 2010
         D = np.arange(1.0, 8.0, 0.001)  # [mm]
@@ -521,7 +529,11 @@ class Plots(relationships.Relationships):
         self.ax.set_title(title)
 
     def area_plot(self, title, xlabel, nm):
-
+        """
+        box plot for area and volumne of polygons from IPAS and CPI data
+        plotted as a function of aspect ratio for IPAS
+        CPI data threshold value included for reference
+        """
         Vps, Ves, Vrs, Aps, Acs, Ars = [], [], [], [], [], []
         for self.phi_idx in self.phi_idxs:
 
@@ -553,9 +565,7 @@ class Plots(relationships.Relationships):
 
         df = pd.DataFrame(
             {
-                "Ap CPI": Ap_CPI,
                 "Ap IPAS": Aps,
-                "Ar CPI": Ar_CPI,
                 "Ar IPAS": Ars,
                 "Vp IPAS": Vps,
                 "Ve IPAS": Ves,
@@ -570,10 +580,25 @@ class Plots(relationships.Relationships):
             "Vp IPAS": "#F4AC4D",
             "Ve IPAS": "#E26610",
             "Vr IPAS": "#671E14",
-            "Ap CPI": "#DAF1DE",
-            "Ar CPI": "#235347",
         }
         self.ax = df.plot.bar(rot=0, color=color, ax=self.ax, legend=False, width=0.7)
+
+        self.ax.hlines(
+            Ap_CPI,
+            xmin=min(0.01),
+            xmax=max(50.0),
+            c="#DAF1DE",
+            linestyle=":",
+            label="Ap_CPI",
+        )
+        self.ax.hlines(
+            Ar_CPI,
+            xmin=min(0.01),
+            xmax=max(50.0),
+            c="#235347",
+            linestyle=":",
+            label="Ar_CPI",
+        )
 
         # self.ax.set_ylim([1E-4, 1E11])
         self.ax.set_yscale("log")
