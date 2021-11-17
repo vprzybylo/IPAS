@@ -35,21 +35,47 @@ class Plots(relationships.Relationships):
         )
         self.ax = ax
         self.df_CPI = df_CPI
+        self.obs_names = {
+            "KMix1": "#46315C",
+            "KMix2": "#B3A3BA",
+            "M96": "#072F5F",
+            "M90": "#1261A0",
+            "LH74 mix": "#ADC4DD",
+            "LH74 dendrite": "#CAE9F5",
+            "LH74 sideplane agg": "darkblue",
+            "Z": "k",
+        }
+        self.colors = ["#3c1518", "#69140e", "#a44200", "#d58936", "#efd6ac"]  # ipas
+        self.colors_cpi = ["#0B2B26", "#235347", "#8EB69B", "gray", "#DAF1DE"]
+
+        # colors_others = ["#072F5F", "#1261A0", "#ADC4DD", "#caf0f8"]
+
+        self.linewidth = 4
+        self.particle_types = [
+            "agg",
+            "bullet",
+            "column",
+            "planar_polycrystal",
+            "compact_irreg",
+        ]
+        self.samples = ["24,481", "11,432", "16,627", "14,363", "99,012", " "]
+        self.T = [-10, -30, -5, -20, -10, 0]
+        self.P = 750  # pressure [hPa]
 
     def plot_poly_curve_fits(self, x, y):
         # fit log(y) = m*log(x) + c
-        m, c = np.polyfit(np.log(x), np.log(y), 1)
-        yfit = np.exp(m * np.log(x) + c)
+
+        # add catch for x<0 for planar
+        x1 = x[x > 0]
+        y = y[x > 0]
+        m, c = np.polyfit(np.log(x1), np.log(y), 1)
+        yfit = np.exp(m * np.log(x1) + c)
         return yfit
 
-    def m_D_plot(self, title, ylabel, mflag="vol", result_rand=False):
-
-        colors = ["#3c1518", "#69140e", "#a44200", "#d58936", "#efd6ac"]
-        colors_cpi = ["#0B2B26", "#235347", "#8EB69B", "#DAF1DE", "w"]
-        colors_others = ["#072F5F", "#1261A0", "#ADC4DD", "#caf0f8"]
-
-        linewidth = 5
-        alpha = 0.7
+    def m_ipas(self, mflag):
+        """
+        calculate and plot mass of ipas particles
+        """
 
         D_modes = np.zeros((len(self.phi_idxs), len(self.r_idxs), self.agg_as.shape[3]))
         m = np.zeros((len(self.phi_idxs), len(self.r_idxs), self.agg_as.shape[3]))
@@ -86,21 +112,20 @@ class Plots(relationships.Relationships):
                 self.ax.plot(
                     x,
                     yfit,
-                    color=colors[self.phi_idx],
-                    linewidth=linewidth,
+                    color=self.colors[self.phi_idx],
+                    linewidth=self.linewidth,
                     label=f"{self.ASPECT_RATIOS[self.phi_idx]} [n=90k]"
                     if self.r_idx == 0
                     else "",
                 )
 
-        # CALCULATE AND PLOT MASS FROM CPI IMAGERY
+    def m_cpi(self, mflag):
+        """calculate and plot mass from cpi observed particles"""
+
         if mflag == "area":
-            particle_types = ["compact_irreg", "agg", "bullet", "column", " "]
-            samples = ["99,017", "24,481", "11,433", "16,627", " ", " ", " "]
             cpi_lines = []
-            for i, part_type in enumerate(particle_types):
+            for i, part_type in enumerate(self.particle_types):
                 if part_type == " ":
-                    alpha = 0
                     x = 0
                     yfit = 0
                     label = " "
@@ -117,11 +142,19 @@ class Plots(relationships.Relationships):
                     y = self.mass_CPI(df)
                     yfit = self.plot_poly_curve_fits(x, y)
                 cpi = self.ax.plot(
-                    x, yfit, linewidth=linewidth, color=colors_cpi[i], label=label
+                    x,
+                    yfit,
+                    linewidth=self.linewidth,
+                    color=self.colors_cpi[i],
+                    label=label,
                 )
                 cpi_lines.append(cpi)
 
-        alpha = 1.0
+    def m_D_plot(self, title, ylabel, mflag="vol", result_rand=False):
+
+        self.ipas_cpi(mflag)
+        self.m_cpi(mflag)
+
         ### KARRER 2020 aggregates ###
         # dendrites and needles coexist with similar PSD and likeli-hood of aggregation
         # 10E-4 m <= D <= 10E-1 m
@@ -130,7 +163,7 @@ class Plots(relationships.Relationships):
         self.ax.plot(
             D * 1000,
             m_aggs,
-            c="#46315C",
+            c=self.obs_names["KMix1"],
             linewidth=linewidth,
             label="K2020 Mix1 [n=105k]",
         )
@@ -144,7 +177,7 @@ class Plots(relationships.Relationships):
         self.ax.plot(
             D * 1000,
             m_aggs,
-            c="#B3A3BA",
+            c=self.obs_names["KMix2"],
             linestyle=":",
             linewidth=linewidth,
             label="K2020 Mix2 [n=105k]",
@@ -158,9 +191,8 @@ class Plots(relationships.Relationships):
         self.ax.plot(
             D * 10,
             m_aggs,
-            c=colors_others[0],
+            c=self.obs_names["M96"],
             linewidth=linewidth,
-            alpha=alpha,
             label="M96 aggregates",
         )
 
@@ -170,11 +202,10 @@ class Plots(relationships.Relationships):
         self.ax.plot(
             D,
             m_aggs,
-            c=colors_others[1],
+            c=self.obs_names["M90"],
             linewidth=linewidth,
             linestyle="--",
             label="M90 plate aggregates [n=30]",
-            alpha=alpha,
         )
 
         ### Locatellii and Hobbs 1974 ###
@@ -183,11 +214,10 @@ class Plots(relationships.Relationships):
         self.ax.plot(
             D,
             m,
-            c=colors_others[2],
+            c=self.obs_names["LH74 mix"],
             linewidth=linewidth,
             linestyle="--",
             label="LH74 mixed aggregates [n=19]",
-            alpha=alpha,
         )
 
         #         D = np.arange(2, 10, 0.0001)  # mm
@@ -195,7 +225,7 @@ class Plots(relationships.Relationships):
         #         self.ax.plot(
         #             D,
         #             m,
-        #             c=colors_others[3],
+        #             c=self.colors_others[3],
         #             linewidth=linewidth,
         #             linestyle="--",
         #             label="LH74 dendritic aggregates",
@@ -226,7 +256,7 @@ class Plots(relationships.Relationships):
         self.ax.set_xlim([6e-3, 3e2])
         self.ax.set_title(title)
 
-    def bin_D(self, df, linewidth, color, part_type, label):
+    def bin_D(self, df, color, part_type, label):
         """
         bin vt based on D; equal count bins ~9k samples
         find mode in each bin
@@ -236,7 +266,7 @@ class Plots(relationships.Relationships):
 
         if part_type == " ":
             # only plot modes
-            self.ax.plot(0, 0, alpha=0.0, linewidth=linewidth, color=color, label=label)
+            self.ax.plot(0, 0, alpha=0.0, color=color, label=label)
         else:
             df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
             df["binned"] = pd.qcut(df["Dmax"], 30)
@@ -246,8 +276,7 @@ class Plots(relationships.Relationships):
             self.ax.plot(
                 groups.mean().Dmax * 1000,
                 vt_modes,
-                alpha=1.0,
-                linewidth=linewidth,
+                linewidth=self.linewidth,
                 color=color,
                 zorder=3,
                 label=label,
@@ -283,32 +312,18 @@ class Plots(relationships.Relationships):
     #         self.ax.plot(groups.mean().Dmax * 1000, groups.vt.min(), color=color)
     #         self.ax.plot(groups.mean().Dmax * 1000, groups.vt.max(), color=color)
 
-    def vt_plot(self, title, ylabel, mflag, result_rand):
+    def cpi_vt(self, mflag, Mitchell, result_rand, ylabel):
+        """
+        calculate and plot terminal velocities of CPI observed ice particles
+        """
 
-        colors = ["#3c1518", "#69140e", "#a44200", "#d58936", "#efd6ac"]
-        colors_cpi = ["#0B2B26", "#235347", "#8EB69B", "gray", "#DAF1DE"]
-        colors_others = ["#072F5F", "#1261A0", "#ADC4DD", "#CAE9F5"]
-        linewidth = 4
-
-        # CALCULATE AND PLOT VT FROM CPI IMAGERY
-        self.P = 750  # pressure [hPa]
         if mflag == "area":
-            # line_style = [":", "-.", "-", "--", "-"]
-            particle_types = [
-                "agg",
-                "bullet",
-                "column",
-                "planar_polycrystal",
-                "compact_irreg",
-                " ",
-            ]
-            T = [-10, -30, -5, -20, -10, 0]
-            samples = ["24,481", "11,432", "16,627", "14,363", "99,012", " "]
-            for i, part_type in enumerate(particle_types):
 
-                self.T = T[i]
+            for i, part_type in enumerate(self.particle_types):
+
+                T = self.T[i]
                 self.RHO_A = (
-                    1.2754 * (self.P / 1000) * (273.15 / (self.T + 273.15))
+                    1.2754 * (self.P / 1000) * (273.15 / (T + 273.15))
                 )  # air density for a given pressure and temp
                 self.dynamic_viscosity()
                 df = self.df_CPI[self.df_CPI["classification"] == part_type]
@@ -317,10 +332,6 @@ class Plots(relationships.Relationships):
                 )
                 df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
                 # samples.append(len(df) if part_type != " " else " ")
-                Ar = df["area_ratio"]
-                # Ap = df['cnt_area']
-                m = self.mass_CPI(df)
-                D = df["Dmax"]
 
                 if part_type == " ":
                     color = "w"
@@ -328,26 +339,31 @@ class Plots(relationships.Relationships):
                     label = " "
                     self.bin_D(df, linewidth, color, part_type, label)
                 else:
-                    X = self.best_number_Heymsfield(Ar, m)
-                    Re = self.reynolds_number_Heymsfield(X)
+                    Ar = df["area_ratio"]
+                    Ap = df["cnt_area"]
+                    m = self.mass_CPI(df)
+                    D = df["Dmax"]
+                    if Mitchell:
+                        X = self.best_number_Mitchell(Ar, Ap, D, m)
+                        Re = self.reynolds_number_Mitchell(X)
+                    else:
+
+                        X = self.best_number_Heymsfield(Ar, m)
+                        Re = self.reynolds_number_Heymsfield(X)
+
                     self.terminal_velocity(D, Re)
-
-                    #                     X = self.best_number(Ar, m)
-                    #                     Re = self.reynolds_number(X)
-                    #                     self.terminal_velocity(D, Re)
-
                     df["vt"] = self.vt
-                    color = colors_cpi[i]
+                    color = self.colors_cpi[i]
                     label = f"{part_type} [n={samples[i]}]"
-                    self.bin_D(df, linewidth, color, part_type, label)
+                    self.bin_D(df, color, part_type, label)
 
-        # IPAS
+    def ipas_vt(self, mflag, Mitchell, result_rand, ylabel):
+        """
+        calculate and plot ipas terminal fall velocities
+        as a function of aspect ratio and orientation
+        """
+
         for self.phi_idx in self.phi_idxs:
-            if self.ASPECT_RATIOS[self.phi_idx] < 1.0:
-                self.T = -15  # temperature [C] plates
-            else:
-                self.T = -5  # temperature [C] columns
-
             self.P = 750  # pressure [hPa]
             self.RHO_A = (
                 1.2754 * (self.P / 1000) * (273.15 / (self.T + 273.15))
@@ -358,10 +374,6 @@ class Plots(relationships.Relationships):
                 for nm in range(self.agg_as.shape[3]):
                     self.nm = nm
 
-                    D_modes = self.get_modes(
-                        self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
-                    )
-
                     if mflag == "area":
                         m = self.mass_spheroid_areas()  #  kg
                     else:
@@ -369,13 +381,19 @@ class Plots(relationships.Relationships):
 
                     Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
                     D = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
-                    # X = self.best_number(Ar, Ap, D, m)
-                    X = self.best_number_Heymsfield(Ar, m)
+                    if Mitchell:
+                        Ap = self.Aps[self.phi_idx, self.r_idx, :, self.nm]
+                        X = self.best_number_Mitchell(Ar, Ap, D, m)
+                        X = self.get_modes(X)
+                        Re = self.reynolds_number_Mitchell(X)
+                    else:
+                        X = self.best_number_Heymsfield(Ar, m)
+                        X = self.get_modes(X)
+                        Re = self.reynolds_number_Heymsfield(X)
 
-                    X = self.get_modes(X)
-                    Re = self.reynolds_number(X)
-                    # Re = self.reynolds_number_Heymsfield(X)
-                    # self.terminal_velocity_Mitchell_2005(Ar, X)
+                    D_modes = self.get_modes(
+                        self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
+                    )
                     self.terminal_velocity(D_modes, Re)
                     self.ax.scatter(
                         D_modes * 1000,
@@ -383,15 +401,32 @@ class Plots(relationships.Relationships):
                         s=self.nm / 3,
                         alpha=0.7,
                         zorder=2,
-                        c=colors[self.phi_idx],
+                        c=self.colors[self.phi_idx],
                         label=f"{self.ASPECT_RATIOS[self.phi_idx]} [n=90k]"
                         if self.r_idx == 0
                         and self.nm == range(self.agg_as.shape[3])[-1]
                         else "",
                     )
 
+    def vt_plot(self, title, ylabel, mflag, Mitchell, result_rand):
+        """
+        plot all vt relationships
+        calls ipas and cpi vt methods
+        """
+
+        self.ipas_vt(mflag, Mitchell, result_rand, ylabel)
+        self.cpi_vt(mflag, Mitchell, result_rand, ylabel)
+
         # Zawadski 2010
         D = np.arange(1.0, 8.0, 0.001)  # [mm]
+        self.ax.plot(
+            D,
+            0.69 * D ** 0.21,
+            c=self.obs_names["Z"],
+            zorder=4,
+            linewidth=self.linewidth,
+            label="K2020 Mix1 [n=105k]",
+        )
 
         # Karrer 2020
         D = np.arange(0.001, 0.01, 0.0001)  # m
@@ -399,9 +434,9 @@ class Plots(relationships.Relationships):
         self.ax.plot(
             D * 1000,
             21.739 * D ** 0.580,
-            c="#B3A3BA",
+            c=self.obs_names["KMix1"],
             zorder=4,
-            linewidth=linewidth,
+            linewidth=self.linewidth,
             label="K2020 Mix1 [n=105k]",
         )
 
@@ -411,8 +446,8 @@ class Plots(relationships.Relationships):
         self.ax.plot(
             D * 1000,
             8.567 * D ** 0.393,
-            c="#46315C",
-            linewidth=linewidth,
+            c=self.obs_names["KMix2"],
+            linewidth=self.linewidth,
             zorder=4,
             label="K2020 Mix2 [n=105k]",
         )
@@ -422,9 +457,9 @@ class Plots(relationships.Relationships):
         D = np.arange(2.0, 10.0, 0.01)  # mm
         self.ax.plot(
             D,
-            0.8 * D * 0.16,
-            c=colors_others[0],
-            linewidth=linewidth,
+            0.8 * D ** 0.16,
+            c=self.obs_names["LH74 dendrite"],
+            linewidth=self.linewidth,
             zorder=3,
             label="LH74 unrimed assemblage dendrite [n=28]",
         )
@@ -434,9 +469,9 @@ class Plots(relationships.Relationships):
         D = np.arange(0.2, 3.0, 0.01)  # mm
         self.ax.plot(
             D,
-            0.69 * D * 0.41,
-            c=colors_others[1],
-            linewidth=linewidth,
+            0.69 * D ** 0.41,
+            c=self.obs_names["LH74 mix"],
+            linewidth=self.linewidth,
             zorder=3,
             label="LH74 unrimed assemblage mix [n=31]",
         )
@@ -445,9 +480,9 @@ class Plots(relationships.Relationships):
         D = np.arange(0.5, 4.0, 0.01)  # mm
         self.ax.plot(
             D,
-            0.82 * D * 0.12,
-            colors_others[2],
-            linewidth=linewidth,
+            0.82 * D ** 0.12,
+            c=self.obs_names["LH74 sideplane agg"],
+            linewidth=self.linewidth,
             zorder=3,
             label="LH74 sideplane aggregates [n=23]",
         )
@@ -456,7 +491,7 @@ class Plots(relationships.Relationships):
         #         self.ax.plot(
         #             D,
         #             0.81 * D * 0.99,
-        #             c=colors_others[3],
+        #             c=self.colors_others[3],
         #             linewidth=linewidth,
         #             label="LH74 unrimed sideplane [n=10]",
         #         )

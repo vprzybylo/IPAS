@@ -13,30 +13,8 @@ class Relationships:
 
     ASPECT_RATIOS = [0.01, 0.1, 1.0, 10.0, 50.0]
     RHO_A = 1.395  # air density at -20C kg/m^3
-
     RHO_B = 916.8  # bulk density of ice [kg/m^3]
     GRAVITY = 9.81  # [m/sec^2]
-
-    # Best # to Reynolds # power law fit coeffs
-    ao = 1.0e-5
-    bo = 1.0
-    # sfc roughness
-    delta_o = 5.83
-    Co = 0.6
-    C1 = 4 / (delta_o ** 2 * Co ** (1 / 2))
-    C2 = delta_o ** 2 / 4
-    # effective density coefficients
-    k = (
-        0.07
-    )  # Exponent  in  the  terminal  velocity  versusdiameter relationship; aggs at ground H11 in chart
-    n = 1.5  # Exponent in effective density relationship
-    # Mitchell power laws for best number
-    # all monomers and for limited size ranges
-    # trying bullet rosette between D 200microns and 1000microns
-    alpha = 0.00308
-    beta = 2.26
-    sigma = 1.57
-    gamma = 0.0869
 
     def __init__(
         self, agg_as, agg_bs, agg_cs, phi_idxs, r_idxs, Aps, Acs, Vps, Ves, Dmaxs
@@ -116,42 +94,8 @@ class Relationships:
                 m_spheroid[n] = 4 / 3 * np.pi * agg_as[n] ** 2 * agg_cs[n] * rho_i  # kg
         return m_spheroid
 
-    def b1(self, X):
-        return (self.C1 * X ** (1 / 2)) / (
-            2
-            * ((1 + self.C1 * X ** (1 / 2)) ** (1 / 2) - 1)
-            * (1 + self.C1 * X ** (1 / 2)) ** (1 / 2)
-        ) - (
-            self.ao
-            * self.bo
-            * X ** self.bo
-            / (self.C2 * ((1 + self.C1 * X ** (1 / 2)) ** (1 / 2) - 1) ** 2)
-        )
+    def best_number_Mitchell(self, Ar, Ap, D, m):
 
-    def a1(self, X):
-        return self.C2 * (
-            (1 + self.C1 * X ** (1 / 2)) ** (1 / 2) - 1
-        ) ** 2 - self.ao * X ** self.bo / (X ** self.b1(X))
-
-    def terminal_velocity_Mitchell_2005(self, Ar, X):
-
-        m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
-        m_ellipsoid_vol = self.get_modes(m_ellipsoid_vol)
-
-        D = self.Dmaxs[self.phi_idx, self.r_idx, :, :]
-        D = self.get_modes(D)
-
-        u = self.kinematic_viscosity()
-
-        self.vt = (
-            self.a1(X)
-            * ((4 * self.GRAVITY * self.k) / (3 * self.RHO_A)) ** self.b1(X)
-            * u ** (1 - 2 * self.b1(X))
-            * D ** (3 * self.b1(X) - 1)
-            * Ar ** ((self.n - 1) * self.b1(X))
-        )
-
-    def best_number(self, Ar, Ap, D, m):
         rho_p = self.RHO_B * (Ar)
         X = (
             (2 * m / rho_p)
@@ -164,27 +108,14 @@ class Relationships:
         return X
 
     def best_number_Heymsfield(self, Ar, m):
+
         X = (self.RHO_A / self.eta ** 2) * (
             8 * m * self.GRAVITY / (np.pi * np.sqrt(Ar))
         )
         return X
 
-    def best_number_Mitchell(self, D):
-        """
-        From Mitchell and Heymsfield 2005
-        only using coeff from other studies,
-        not taking into account IPAS values except Dmax
-        """
-        X = (
-            2
-            * self.alpha
-            * self.GRAVITY
-            * self.RHO_A
-            * D ** (self.beta + 2 - self.sigma)
-        ) / (self.gamma * self.eta ** 2)
-        return X
+    def reynolds_number_Mitchell(self, X):
 
-    def reynolds_number(self, X):
         if X <= 10:
             a = 0.04394
             b = 0.970

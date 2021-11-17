@@ -125,13 +125,13 @@ def main():
     # savename (relative path)
     if save:
         filename = (
-            "/network/rit/lab/sulialab/share/IPAS/ipas/instance_files/mD_vT_vars_flat"
+            "/network/rit/lab/sulialab/share/IPAS/ipas/instance_files/mD_vT_vars_flat_1"
         )
 
     # parallelize IPAS using dask
     use_dask = True
     if use_dask:
-        num_workers = 15
+        num_workers = 50
         agg_as, agg_bs, agg_cs, Aps, Acs, Vps, Ves, Dmaxs = compute(
             phioarr,
             reqarr,
