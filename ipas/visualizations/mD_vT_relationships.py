@@ -129,30 +129,59 @@ class Relationships:
         IPAS larger sizes go outside the bounds of X
         the last if statement sets to moderate values
         """
-        if X <= 10:
+        Res = []
+        for x in X:
+            if x <= 10:
+                a = 0.04394
+                b = 0.970
+            if x > 10 and x <= 585:
+                a = 0.06049
+                b = 0.831
+            if x > 585 and x <= 1.56e5:
+                a = 0.2072
+                b = 0.638
+            if x > 1.56e5 and x < 1.0e8:
+                a = 1.0865
+                b = 0.499
+            if x > 1.0e8:
+                # print('bad')
+                a = 1.0
+                b = 0.4
+            # return 8.5 * ((1 + 0.1519 * X ** (1 / 2)) ** (1 / 2) - 1) ** 2
+            Res.append(a * x ** b)
+        return Res
+
+    def reynolds_number_Mitchell_mode_first(self, x):
+        """
+        equations 18-21 in mitchell 1996
+        IPAS larger sizes go outside the bounds of X
+        the last if statement sets to moderate values
+        """
+        if x <= 10:
             a = 0.04394
             b = 0.970
-        if X > 10 and X <= 585:
+        if x > 10 and x <= 585:
             a = 0.06049
             b = 0.831
-        if X > 585 and X <= 1.56e5:
+        if x > 585 and x <= 1.56e5:
             a = 0.2072
             b = 0.638
-        if X > 1.56e5 and X < 1.0e8:
+        if x > 1.56e5 and x < 1.0e8:
             a = 1.0865
             b = 0.499
-        if X > 1.0e8:
+        if x > 1.0e8:
             # print('bad')
             a = 1.0
             b = 0.4
-        # return 8.5 * ((1 + 0.1519 * X ** (1 / 2)) ** (1 / 2) - 1) ** 2
-        # print('a, x, b', a * X ** b)
-        return a * X ** b
+            # return 8.5 * ((1 + 0.1519 * X ** (1 / 2)) ** (1 / 2) - 1) ** 2
+
+        return a * x ** b
 
     def best_number_Heymsfield(self, Ar, m):
         """
         eq 6 in Heymsfield and Westbrook 2010
         """
+
         X = (self.RHO_A / self.eta ** 2) * (8 * m * self.GRAVITY / (np.pi * Ar))
         return X
 
@@ -182,4 +211,4 @@ class Relationships:
         # should be around 1.17E-5 m2/s
 
     def terminal_velocity(self, D, Re):
-        self.vt = (self.eta * Re) / (self.RHO_A * D)
+        self.vt = (self.eta * np.array(Re)) / (self.RHO_A * np.array(D))

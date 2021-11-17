@@ -267,7 +267,6 @@ class Plots(relationships.Relationships):
         plot the mode instead of a scatter plot with all observations
         plot an envelope of min-max value in each bin; shaded
         """
-
         if part_type == " ":
             # only plot modes
             self.ax.plot(0, 0, alpha=0.0, color=color, label=label)
@@ -332,29 +331,27 @@ class Plots(relationships.Relationships):
             )
             df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
             # samples.append(len(df) if part_type != " " else " ")
-
             if part_type == " ":
                 color = "w"
                 df["vt"] = self.vt
                 label = " "
-                self.bin_D(df, linewidth, color, part_type, label)
+                self.bin_D(df, color, part_type, label)
             else:
                 Ar = df["area_ratio"]
                 Ap = df["cnt_area"]
                 m = self.mass_CPI(df)
                 D = df["Dmax"]
+                Mitchell = False
                 if Mitchell:
-                    X = self.best_number_Mitchell(Ar, Ap, D, m)
-                    X = self.get_modes(X)
-                    Re = self.reynolds_number_Mitchell(X)
+                    Xs = self.best_number_Mitchell(Ar, Ap, D, m)
+                    Res = self.reynolds_number_Mitchell(Xs)
                 else:
+                    Xs = self.best_number_Heymsfield(Ar, m)
+                    Res = self.reynolds_number_Heymsfield(Xs)
 
-                    X = self.best_number_Heymsfield(Ar, m)
-                    X = self.get_modes(X)
-                    Re = self.reynolds_number_Heymsfield(X)
-
-                self.terminal_velocity(D, Re)
+                self.terminal_velocity(D, Res)
                 df["vt"] = self.vt
+
                 color = self.colors_cpi[i]
                 label = f"{part_type} [n={self.samples[i]}]"
                 self.bin_D(df, color, part_type, label)
@@ -390,20 +387,22 @@ class Plots(relationships.Relationships):
                     if Mitchell:
                         Ap = self.Aps[self.phi_idx, self.r_idx, :, self.nm]
                         X = self.best_number_Mitchell(Ar, Ap, D, m)
-                        X = self.get_modes(X)
+                        # X = self.get_modes(X)
                         Re = self.reynolds_number_Mitchell(X)
                     else:
                         X = self.best_number_Heymsfield(Ar, m)
-                        X = self.get_modes(X)
+                        # X = self.get_modes(X)
                         Re = self.reynolds_number_Heymsfield(X)
 
+                    self.terminal_velocity(D, Re)
+                    vt = self.get_modes(self.vt)
                     D_modes = self.get_modes(
                         self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
                     )
-                    self.terminal_velocity(D_modes, Re)
+
                     self.ax.scatter(
                         D_modes * 1000,
-                        self.vt,
+                        vt,
                         s=self.nm / 3,
                         alpha=0.7,
                         zorder=2,
@@ -433,11 +432,11 @@ class Plots(relationships.Relationships):
             c=self.obs_names["Z"],
             zorder=4,
             linewidth=self.linewidth,
-            label="K2020 Mix1 [n=105k]",
+            label="Z10 [n=16,324]",
         )
 
         # Karrer 2020
-        D = np.arange(0.001, 0.01, 0.0001)  # m
+        D = np.arange(0.0001, 0.01, 0.0001)  # m
         # D = np.arange(0.1, 10.0, 0.01)  # mm
         self.ax.plot(
             D * 1000,
@@ -449,7 +448,7 @@ class Plots(relationships.Relationships):
         )
 
         # Karrer 2020
-        D = np.arange(0.001, 0.01, 0.0001)  # m
+        D = np.arange(0.0001, 0.01, 0.0001)  # m
         # D = np.arange(0.01, 10.0, 0.0001)  # mm
         self.ax.plot(
             D * 1000,
@@ -460,16 +459,15 @@ class Plots(relationships.Relationships):
             label="K2020 Mix2 [n=105k]",
         )
 
-        # Locatelli and Hobbs 1974
-        # aggregates of unrimed radiating assemblages of dendrites
-        D = np.arange(2.0, 10.0, 0.01)  # mm
+        # aggregates of unrimed sideplanes
+        D = np.arange(0.5, 4.0, 0.01)  # mm
         self.ax.plot(
             D,
-            0.8 * D ** 0.16,
-            c=self.obs_names["LH74 dendrite"],
+            0.82 * D ** 0.12,
+            c=self.obs_names["LH74 sideplane agg"],
             linewidth=self.linewidth,
             zorder=3,
-            label="LH74 unrimed assemblage dendrite [n=28]",
+            label="LH74 sideplane aggregates [n=23]",
         )
 
         # aggregates of unrimed radiating assemblages of
@@ -484,15 +482,16 @@ class Plots(relationships.Relationships):
             label="LH74 unrimed assemblage mix [n=31]",
         )
 
-        # aggregates of unrimed sideplanes
-        D = np.arange(0.5, 4.0, 0.01)  # mm
+        # Locatelli and Hobbs 1974
+        # aggregates of unrimed radiating assemblages of dendrites
+        D = np.arange(2.0, 10.0, 0.01)  # mm
         self.ax.plot(
             D,
-            0.82 * D ** 0.12,
-            c=self.obs_names["LH74 sideplane agg"],
+            0.8 * D ** 0.16,
+            c=self.obs_names["LH74 dendrite"],
             linewidth=self.linewidth,
             zorder=3,
-            label="LH74 sideplane aggregates [n=23]",
+            label="LH74 unrimed assemblage dendrite [n=28]",
         )
 
         #         D = np.arange(0.4, 1.2, 0.01)  # mm
@@ -519,6 +518,7 @@ class Plots(relationships.Relationships):
         self.ax.grid(which="minor")
         self.ax.grid(True)
         self.ax.set_yscale("log")
+        # self.ax.set_ylim(0.0, 1.0)
         self.ax.set_ylim(0.002, 10.0)
         self.ax.set_xlim([4e-2, 1e2])
         # self.ax.set_xlim(0.0, 10)
@@ -585,18 +585,18 @@ class Plots(relationships.Relationships):
 
         self.ax.hlines(
             Ap_CPI,
-            xmin=min(0.01),
-            xmax=max(50.0),
-            c="#DAF1DE",
-            linestyle=":",
+            xmin=-1.0,
+            xmax=50.0,
+            color="#DAF1DE",
+            linewidth=self.linewidth,
             label="Ap_CPI",
         )
         self.ax.hlines(
             Ar_CPI,
-            xmin=min(0.01),
-            xmax=max(50.0),
-            c="#235347",
-            linestyle=":",
+            xmin=-1.0,
+            xmax=50.0,
+            linewidth=self.linewidth,
+            color="#235347",
             label="Ar_CPI",
         )
 
@@ -701,3 +701,9 @@ class Plots(relationships.Relationships):
         self.ax.set_xlabel(xlabel)
         self.ax.set_ylabel("Density [$kg/m^3$]", color="maroon")
         self.ax.set_title(title)
+
+    def aspect_ratios_cpi(self):
+
+        for i, part_type in enumerate(self.particle_types):
+            df = self.df_CPI[self.df_CPI["classification"] == part_type]
+            self.ax.hist(df["phi"], color=self.colors_cpi[i])
