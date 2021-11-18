@@ -105,6 +105,7 @@ class Plots(relationships.Relationships):
                 #                             c=colors[self.phi_idx],
                 #                         )
 
+                print(m)
                 # use a power law to fit a regression line for each IPAS monomer
                 # aspect ratio and radius grouping; fitting along increasing nm
                 # with 300 aggregates per nm
@@ -164,7 +165,7 @@ class Plots(relationships.Relationships):
         ### KARRER 2020 aggregates ###
         # dendrites and needles coexist with similar PSD and likeli-hood of aggregation
         # 10E-4 m <= D <= 10E-1 m
-        D = np.arange(0.001, 0.1, 0.0001)  # m
+        D = np.arange(0.0001, 0.01, 0.00001)  # m
         m_aggs = 0.045 * D ** 2.16  # kg
         self.ax.plot(
             D * 1000,
@@ -177,8 +178,7 @@ class Plots(relationships.Relationships):
         ### KARRER 2020 aggregates ###
         #  the monomers with Dmax < 1 mm are columns,
         # while dendrites are taken for larger monomers (”Mix2”)
-        # 10E-4 m <= D <= 10E-1 m
-        D = np.arange(0.001, 0.1, 0.0001)  # m
+        D = np.arange(0.0001, 0.01, 0.00001)  # m
         m_aggs = 0.017 * D ** 1.94  # kg
         self.ax.plot(
             D * 1000,
@@ -315,7 +315,7 @@ class Plots(relationships.Relationships):
     #         self.ax.plot(groups.mean().Dmax * 1000, groups.vt.min(), color=color)
     #         self.ax.plot(groups.mean().Dmax * 1000, groups.vt.max(), color=color)
 
-    def cpi_vt(self, Mitchell, result_rand, ylabel):
+    def cpi_vt(self, study, result_rand, ylabel):
         """
         calculate and plot terminal velocities of CPI observed ice particles
         """
@@ -339,24 +339,26 @@ class Plots(relationships.Relationships):
             else:
                 Ar = df["area_ratio"]
                 Ap = df["cnt_area"]
+                # print('CPI', Ap)
                 m = self.mass_CPI(df)
                 D = df["Dmax"]
-                Mitchell = False
-                if Mitchell:
+                if study == "Mitchell":
                     Xs = self.best_number_Mitchell(Ar, Ap, D, m)
                     Res = self.reynolds_number_Mitchell(Xs)
-                else:
+                    self.terminal_velocity(D, Res)
+                if study == "Heymsfield":
                     Xs = self.best_number_Heymsfield(Ar, m)
                     Res = self.reynolds_number_Heymsfield(Xs)
-
-                self.terminal_velocity(D, Res)
+                    self.terminal_velocity(D, Res)
+                if study == "Heymsfield2002":
+                    self.vt_Heymsfield(Ar, D)
                 df["vt"] = self.vt
 
                 color = self.colors_cpi[i]
                 label = f"{part_type} [n={self.samples[i]}]"
                 self.bin_D(df, color, part_type, label)
 
-    def ipas_vt(self, mflag, Mitchell, result_rand, ylabel):
+    def ipas_vt(self, mflag, study, result_rand, ylabel):
         """
         calculate and plot ipas terminal fall velocities
         as a function of aspect ratio and orientation
@@ -367,7 +369,6 @@ class Plots(relationships.Relationships):
                 T = -15
             else:
                 T = -5
-
             self.RHO_A = (
                 1.2754 * (self.P / 1000) * (273.15 / (T + 273.15))
             )  # air density for a given pressure and temp
@@ -384,17 +385,22 @@ class Plots(relationships.Relationships):
 
                     Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
                     D = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
-                    if Mitchell:
+                    if study == "Mitchell":
                         Ap = self.Aps[self.phi_idx, self.r_idx, :, self.nm]
+                        # print('IPAS', Ap)
                         X = self.best_number_Mitchell(Ar, Ap, D, m)
                         # X = self.get_modes(X)
                         Re = self.reynolds_number_Mitchell(X)
-                    else:
+                        self.terminal_velocity(D, Re)
+                    if study == "Heymsfield":
                         X = self.best_number_Heymsfield(Ar, m)
                         # X = self.get_modes(X)
                         Re = self.reynolds_number_Heymsfield(X)
+                        self.terminal_velocity(D, Re)
 
-                    self.terminal_velocity(D, Re)
+                    if study == "Heymsfield2002":
+                        self.vt_Heymsfield(Ar, D)
+
                     vt = self.get_modes(self.vt)
                     D_modes = self.get_modes(
                         self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
@@ -413,16 +419,16 @@ class Plots(relationships.Relationships):
                         else "",
                     )
 
-    def vt_plot(self, title, ylabel, mflag, Mitchell, result_rand):
+    def vt_plot(self, title, ylabel, mflag, study, result_rand):
         """
         plot all vt relationships
         calls ipas and cpi vt methods
         additionally holds empirical relationships from other studies
         """
 
-        self.ipas_vt(mflag, Mitchell, result_rand, ylabel)
+        self.ipas_vt(mflag, study, result_rand, ylabel)
         if mflag == "area":
-            self.cpi_vt(Mitchell, result_rand, ylabel)
+            self.cpi_vt(study, result_rand, ylabel)
 
         # Zawadski 2010
         D = np.arange(1.0, 8.0, 0.001)  # [mm]
@@ -539,6 +545,8 @@ class Plots(relationships.Relationships):
 
             Ap = self.get_modes(self.Aps[self.phi_idx, self.r_idx, :, self.nm])
             Aps.append(Ap)
+            if self.phi_idx == 1:
+                print(Ap)
 
             Ac = self.get_modes(self.Acs[self.phi_idx, self.r_idx, :, self.nm])
             Acs.append(Ac)
@@ -614,13 +622,11 @@ class Plots(relationships.Relationships):
 
         m_areas, m_vols = [], []
         for self.phi_idx in self.phi_idxs:
-            Vr = self.Vrs[self.phi_idx, self.r_idx, :, self.nm]
-            m_ellipsoid_vol = self.mass_ellipsoid_volumes(Vr)  #  kg
+            m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
             m_ellipsoid_vol = self.get_modes(m_ellipsoid_vol)
             m_vols.append(m_ellipsoid_vol)
 
-            Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
-            m_spheroid_area = self.mass_spheroid_areas(Ar)  #  kg
+            m_spheroid_area = self.mass_spheroid_areas()  #  kg
             m_spheroid_area = self.get_modes(m_spheroid_area)
             m_areas.append(m_spheroid_area)
 
@@ -637,32 +643,97 @@ class Plots(relationships.Relationships):
         self.ax.set_ylabel("Mass [kg]", color="maroon")
         self.ax.set_title(title)
 
+    def Re_plot(self, title, xlabel):
+
+        Re_areas, Re_vols = [], []
+        for self.phi_idx in self.phi_idxs:
+
+            if self.ASPECT_RATIOS[self.phi_idx] < 1.0:
+                T = -15
+            else:
+                T = -5
+
+            self.RHO_A = (
+                1.2754 * (self.P / 1000) * (273.15 / (T + 273.15))
+            )  # air density for a given pressure and temp
+            self.dynamic_viscosity(T)
+
+            # D = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
+
+            # best number using area
+            Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
+            # Ap = self.Aps[self.phi_idx, self.r_idx, :, self.nm]
+            m_spheroid_area = self.mass_spheroid_areas()
+            # X_area = self.best_number_Mitchell(Ar, Ap, D, m_spheroid_area)  # shape of 300
+
+            Xs = self.best_number_Heymsfield(Ar, m_spheroid_area)
+            Res = self.reynolds_number_Heymsfield(Xs)
+            Re_areas.append(self.get_modes(Res))
+
+            # best number using volume
+            Vr = self.Vrs[self.phi_idx, self.r_idx, :, self.nm]
+            # Vp = self.Vps[self.phi_idx, self.r_idx, :, self.nm]
+            m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
+
+            Xs = self.best_number_Heymsfield(Vr, m_ellipsoid_vol)
+            Res = self.reynolds_number_Heymsfield(Xs)
+            Re_vols.append(self.get_modes(Res))
+
+        df = pd.DataFrame(
+            {"Re Area": Re_areas, "Re Volume": Re_vols}, index=self.ASPECT_RATIOS
+        )
+        color = {"Re Area": "#3d5a80", "Re Volume": "#E26610"}
+        self.ax = df.plot.bar(rot=0, color=color, width=0.7, ax=self.ax, legend=False)
+
+        self.ax.set_yscale("log")
+        self.ax.grid(which="major")
+        # self.ax.grid(which="minor")
+        # self.ax.grid(True)
+
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel("Reynolds Number", color="maroon")
+        self.ax.set_title(title)
+
     def best_number_plot(self, title, xlabel):
 
         X_areas, X_vols = [], []
         for self.phi_idx in self.phi_idxs:
 
-            self.dynamic_viscosity()
+            if self.ASPECT_RATIOS[self.phi_idx] < 1.0:
+                T = -15
+            else:
+                T = -5
+
+            self.RHO_A = (
+                1.2754 * (self.P / 1000) * (273.15 / (T + 273.15))
+            )  # air density for a given pressure and temp
+            self.dynamic_viscosity(T)
+
             D = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
 
             # best number using area
             Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
             Ap = self.Aps[self.phi_idx, self.r_idx, :, self.nm]
-            m_spheroid_area = self.mass_spheroid_areas(Ar)
-            X_area = self.best_number(Ar, D, Ap, m_spheroid_area)  # shape of 300
+            m_spheroid_area = self.mass_spheroid_areas()
+            X_area = self.best_number_Mitchell(
+                Ar, Ap, D, m_spheroid_area
+            )  # shape of 300
+
             X_area = self.get_modes(X_area)
             X_areas.append(X_area)
 
             # best number using volume
             Vr = self.Vrs[self.phi_idx, self.r_idx, :, self.nm]
             Vp = self.Vps[self.phi_idx, self.r_idx, :, self.nm]
-            m_ellipsoid_vol = self.mass_ellipsoid_volumes(Vr)  #  kg
-            X_vol = self.best_number(Vr, D, Vp, m_ellipsoid_vol)
+            m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
+            X_vol = self.best_number_Mitchell(Vr, Vp, D, m_ellipsoid_vol)
             X_vol = self.get_modes(X_vol)
             X_vols.append(X_vol)
 
-        df = pd.DataFrame({"Area": X_areas, "Volume": X_vols}, index=self.ASPECT_RATIOS)
-        color = {"Area": "#3d5a80", "Volume": "#E26610"}
+        df = pd.DataFrame(
+            {"X Area": X_areas, "X Volume": X_vols}, index=self.ASPECT_RATIOS
+        )
+        color = {"X Area": "#3d5a80", "X Volume": "#E26610"}
         self.ax = df.plot.bar(rot=0, color=color, width=0.7, ax=self.ax, legend=False)
 
         self.ax.set_yscale("log")
@@ -699,7 +770,47 @@ class Plots(relationships.Relationships):
         # self.ax.grid(True)
 
         self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel("Density [$kg/m^3$]", color="maroon")
+        self.ax.set_ylabel("Density [kg/$m^3$]", color="maroon")
+        self.ax.set_title(title)
+
+    def area_ratio_plot(self, title, xlabel):
+
+        Ars, Vrs = [], []
+        for self.phi_idx in self.phi_idxs:
+
+            Vr = self.Vrs[self.phi_idx, self.r_idx, :, self.nm]
+            Vr = self.get_modes(Vr)
+            Vrs.append(Vr)
+
+            Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
+            Ar = self.get_modes(Ar)
+            Ars.append(Ar)
+
+        df = pd.DataFrame({"Area": Ars, "Volume": Vrs}, index=self.ASPECT_RATIOS)
+        color = {"Area": "#3d5a80", "Volume": "#E26610"}
+        self.ax = df.plot.bar(rot=0, color=color, width=0.7, ax=self.ax, legend=False)
+
+        df = self.df_CPI[self.df_CPI["classification"] == "agg"]
+        df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
+        Ar_CPI = df["area_ratio"]
+        Ar_CPI = self.get_modes(Ar_CPI)
+
+        self.ax.hlines(
+            Ar_CPI,
+            xmin=-1.0,
+            xmax=50.0,
+            linewidth=self.linewidth,
+            color="#235347",
+            label="CPI",
+        )
+
+        # self.ax.set_yscale('log')
+        self.ax.grid(which="major")
+        # self.ax.grid(which="minor")
+        # self.ax.grid(True)
+
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel("Area or Volume Ratio", color="maroon")
         self.ax.set_title(title)
 
     def aspect_ratios_cpi(self):

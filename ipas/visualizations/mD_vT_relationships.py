@@ -93,16 +93,21 @@ class Relationships:
         agg_bs = self.agg_bs[self.phi_idx, self.r_idx, :, self.nm]
         agg_cs = self.agg_cs[self.phi_idx, self.r_idx, :, self.nm]
         Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
-
+        count_ob = 0
+        count_pro = 0
         m_spheroid = np.zeros((len(agg_as)))
         for n in range(len(agg_as)):
             rho_i = self.RHO_B * Ar[n]
             if (agg_bs[n] - agg_cs[n]) <= (agg_as[n] - agg_bs[n]):
                 # prolate
+                count_pro += 1
                 m_spheroid[n] = 4 / 3 * np.pi * agg_as[n] * agg_cs[n] ** 2 * rho_i  # kg
             else:
+                count_ob += 1
                 # oblate
                 m_spheroid[n] = 4 / 3 * np.pi * agg_as[n] ** 2 * agg_cs[n] * rho_i  # kg
+
+        # rint('percent oblate', np.round(count_ob/(count_ob+count_pro), 2)*100)
         return m_spheroid
 
     def best_number_Mitchell(self, Ar, Ap, D, m):
@@ -140,13 +145,9 @@ class Relationships:
             if x > 585 and x <= 1.56e5:
                 a = 0.2072
                 b = 0.638
-            if x > 1.56e5 and x < 1.0e8:
-                a = 1.0865
-                b = 0.499
-            if x > 1.0e8:
-                # print('bad')
-                a = 1.0
-                b = 0.4
+            if x > 1.56e5:
+                a = 1.6353
+                b = 0.465
             # return 8.5 * ((1 + 0.1519 * X ** (1 / 2)) ** (1 / 2) - 1) ** 2
             Res.append(a * x ** b)
         return Res
@@ -181,9 +182,51 @@ class Relationships:
         """
         eq 6 in Heymsfield and Westbrook 2010
         """
-
-        X = (self.RHO_A / self.eta ** 2) * (8 * m * self.GRAVITY / (np.pi * Ar))
+        X = (self.RHO_A / self.eta ** 2) * (
+            8 * m * self.GRAVITY / (np.pi * np.sqrt(Ar))
+        )
         return X
+
+    def best_number_Heymsfield2002(self, k, n, Ar, D):
+        """
+        eq 6 in Heymsfield 2002
+        """
+
+        X = (
+            (4 / 3)
+            * (self.GRAVITY * k * (Ar ** (n - 1) * D ** 3))
+            / (self.RHO_A * (self.kinematic_viscosity() ** 2))
+        )
+        X = self.get_modes(X)
+
+        if X <= 10:
+            af = 0.04394
+            bf = 0.970
+        if X > 10 and X <= 585:
+            af = 0.06049
+            bf = 0.831
+        if X > 585 and X <= 1.56e5:
+            af = 0.2072
+            bf = 0.638
+        if X > 1.56e5 and X < 1.0e8:
+            af = 1.6353
+            bf = 0.465
+        # print(af, bf)
+
+        return af, bf
+
+    def vt_Heymsfield(self, Ar, D):
+        k = 0.015
+        n = 1.5
+
+        af, bf = self.best_number_Heymsfield2002(k, n, Ar, D)
+        self.vt = af * (
+            ((4 * self.GRAVITY * k) / (3 * self.RHO_A) ** bf)
+            * (self.kinematic_viscosity() ** (1 - (2 * bf)))
+            * (D ** ((3 * bf) - 1))
+            * (Ar ** ((n - 1) * bf))
+        )
+        print(self.vt)
 
     def reynolds_number_Heymsfield(self, X):
         """
@@ -191,12 +234,9 @@ class Relationships:
         """
         Co = 0.35
         delta_o = 8.0
-        Re = (
-            delta_o ** 2
-            / 4
-            * (((1 + (4 * np.sqrt(X)) / (delta_o ** 2 * np.sqrt(Co))) ** (1 / 2)) - 1)
-            ** 2
-        )
+        Re = (delta_o ** 2 / 4) * (
+            (1 + (4 * np.sqrt(X)) / (delta_o ** 2 * np.sqrt(Co))) ** (1 / 2) - 1
+        ) ** 2
         return Re
 
     def dynamic_viscosity(self, T):

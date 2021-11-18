@@ -91,6 +91,7 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=False):
         # ----------------------------
         _, _ = cluster.complexity()
         Aps[l] = cluster.Ap
+        print("Ap", Aps[l])
         Acs[l] = cluster.Ac  # area of encompassing circle
         cluster.farthest_points()
         Dmaxs[l] = cluster.max_dimension()  # 3D
@@ -105,9 +106,9 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=False):
             cluster.plot_ellipsoid_aggs(
                 [cluster, crystal2], view="y", circle=None, agg_agg=False
             )
-            cluster.plot_ellipsoid_aggs(
-                [cluster, crystal2], view="w", circle=None, agg_agg=False
-            )
+        #             cluster.plot_ellipsoid_aggs(
+        #                 [cluster, crystal2], view="w", circle=None, agg_agg=False
+        #             )
 
         l += 1
 

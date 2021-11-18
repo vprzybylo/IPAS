@@ -112,7 +112,7 @@ def compute(
 def main():
     # monomer aspect ratios (all the same in agg)
     phioarr = [0.01, 0.10, 1.0, 10.0, 50.0]
-    reqarr = [10, 100, 1000]  # microns
+    reqarr = [10, 100, 1000]  # monomer radius in micrometers
     # how many aggregates to produce
     nclusters = 300
     # number of monomers per aggregate
