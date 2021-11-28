@@ -10,6 +10,18 @@ import statsmodels
 from scipy.optimize import curve_fit
 
 
+def auto_str(cls):
+    def __str__(self):
+        return "%s(%s)" % (
+            type(self).__name__,
+            ", ".join("%s=%s" % item for item in vars(self).items()),
+        )
+
+    cls.__str__ = __str__
+    return cls
+
+
+@auto_str
 class Plots(relationships.Relationships):
     """
     mass-dimensional and terminal velocity plotting code
@@ -43,10 +55,10 @@ class Plots(relationships.Relationships):
             "LH74 mix": "#ADC4DD",
             "LH74 dendrite": "#CAE9F5",
             "LH74 sideplane agg": "darkblue",
-            "Z": "k",
+            "Z": "darkgray",
         }
         self.colors = ["#3c1518", "#69140e", "#a44200", "#d58936", "#efd6ac"]  # ipas
-        self.colors_cpi = ["#132010", "#396031", "#4c8042", "#7fb375", "#9fc697"]
+        self.colors_cpi = ["#132010", "#396031", "#4c8042", "#7fb375", "#d3f8d3"]
 
         # colors_others = ["#072F5F", "#1261A0", "#ADC4DD", "#caf0f8"]
 
@@ -58,7 +70,6 @@ class Plots(relationships.Relationships):
             "planar_polycrystal",
             "compact_irreg",
         ]
-        self.samples = ["24,481", "11,432", "16,627", "14,363", "99,012", " "]
         self.P = 750  # pressure [hPa]
 
     def plot_poly_curve_fits(self, x, y):
@@ -70,6 +81,7 @@ class Plots(relationships.Relationships):
         # add catch for x<0 for planar
         x1 = x[x > 0]
         y = y[x > 0]
+
         m, c = np.polyfit(np.log(x1), np.log(y), 1)
         yfit = np.exp(m * np.log(x1) + c)
         return x1, yfit
@@ -105,7 +117,6 @@ class Plots(relationships.Relationships):
                 #                             c=colors[self.phi_idx],
                 #                         )
 
-                print(m)
                 # use a power law to fit a regression line for each IPAS monomer
                 # aspect ratio and radius grouping; fitting along increasing nm
                 # with 300 aggregates per nm
@@ -115,6 +126,7 @@ class Plots(relationships.Relationships):
                 self.ax.plot(
                     x1,
                     yfit,
+                    alpha=0.7,
                     color=self.colors[self.phi_idx],
                     linewidth=self.linewidth,
                     label=f"{self.ASPECT_RATIOS[self.phi_idx]} [n=90k]"
@@ -126,17 +138,27 @@ class Plots(relationships.Relationships):
         """calculate and plot mass from cpi observed particles"""
 
         cpi_lines = []
+        samples = []
+        linestyles = ["-", "--", "-", "-.", ":"]
         for i, part_type in enumerate(self.particle_types):
+            df = self.df_CPI[self.df_CPI["classification"] == part_type]
+            samples.append(f"{len(df):,}" if part_type != " " else " ")
             if part_type == " ":
                 x = 0
                 yfit = 0
                 label = " "
             else:
-                label = f"{part_type} [n={self.samples[i]}]"
+
                 df = self.df_CPI[self.df_CPI["classification"] == part_type]
                 part_type = (
                     "compact irregular" if part_type == "compact_irreg" else part_type
                 )
+                part_type = (
+                    "planar polycrystal"
+                    if part_type == "planar_polycrystal"
+                    else part_type
+                )
+                label = f"{part_type} [n={samples[i]}]"
                 df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
                 x = df["Dmax"] * 1000
                 y = self.mass_CPI(df)
@@ -146,8 +168,11 @@ class Plots(relationships.Relationships):
                 yfit,
                 linewidth=self.linewidth,
                 color=self.colors_cpi[i],
+                alpha=0.7,
+                linestyle=linestyles[i],
                 label=label,
             )
+
             cpi_lines.append(cpi)
 
         return cpi_lines
@@ -236,28 +261,32 @@ class Plots(relationships.Relationships):
         #             alpha=alpha,
         #         )
 
+        plt.rcParams["legend.title_fontsize"] = 12
+        plt.rcParams["legend.fontsize"] = 10
+
         # LEGEND
         if mflag == "area" and result_rand == True:
             x = 1.1
-            y = -2.1
+            y = -1.0
             self.ax.legend(cpi_lines, bbox_to_anchor=(x, y), loc="lower center")
             self.ax.legend(
                 bbox_to_anchor=(x, y),
                 loc="lower center",
                 ncol=3,
-                title="   IPAS                                CPI                                      OBSERVATIONS                ",
+                title="      IPAS                              CPI                                          OBSERVATIONS           ",
             )  # fmt: on/off
 
-        self.ax.grid(which="major")
-        self.ax.grid(which="minor")
-        self.ax.grid(True)
+        self.ax.grid(b=True, which="major", axis="both", color="gray", linestyle="-")
+        self.ax.grid(b=True, which="minor", axis="both", color="gray", linestyle=":")
+
         self.ax.set_yscale("log")
         self.ax.set_xscale("log")
-        if mflag != "area":
-            self.ax.set_xlabel("$D_{max}$ [mm]")
+        self.ax.set_xlabel("$D_{max}$ [mm]")
         self.ax.set_ylabel(ylabel)
         self.ax.set_ylim([1e-12, 2e-1])
-        self.ax.set_xlim([6e-3, 3e2])
+        self.ax.set_xlim([4e-3, 3e2])
+        #         self.ax.set_ylim([1e-13, 2e-1])
+        #         self.ax.set_xlim([1e-3, 1e3])
         self.ax.set_title(title)
 
     def bin_D(self, df, color, part_type, label):
@@ -275,10 +304,11 @@ class Plots(relationships.Relationships):
             df["binned"] = pd.qcut(df["Dmax"], 30)
             groups = df.groupby(df["binned"])
             vt_modes = groups.vt.agg(self.get_modes)
+
             # only plot modes
             self.ax.plot(
-                groups.mean().Dmax * 1000,
-                vt_modes,
+                groups.mean().Dmax[1:] * 1000,
+                vt_modes[1:],
                 linewidth=self.linewidth,
                 color=color,
                 zorder=3,
@@ -319,6 +349,15 @@ class Plots(relationships.Relationships):
         """
         calculate and plot terminal velocities of CPI observed ice particles
         """
+        self.particle_types = [
+            "agg",
+            "bullet",
+            "column",
+            "planar_polycrystal",
+            "compact_irreg",
+            " ",
+        ]  # added in extra space so labels line up
+        samples = []
         for i, part_type in enumerate(self.particle_types):
             T = [-10, -30, -5, -20, -10, 0]
             self.RHO_A = (
@@ -326,11 +365,15 @@ class Plots(relationships.Relationships):
             )  # air density for a given pressure and temp
             self.dynamic_viscosity(T[i])
             df = self.df_CPI[self.df_CPI["classification"] == part_type]
+            df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
             part_type = (
                 "compact irregular" if part_type == "compact_irreg" else part_type
             )
-            df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
-            # samples.append(len(df) if part_type != " " else " ")
+            part_type = (
+                "planar polycrystal" if part_type == "planar_polycrystal" else part_type
+            )
+
+            samples.append(f"{len(df):,}" if part_type != " " else " ")
             if part_type == " ":
                 color = "w"
                 df["vt"] = self.vt
@@ -355,7 +398,7 @@ class Plots(relationships.Relationships):
                 df["vt"] = self.vt
 
                 color = self.colors_cpi[i]
-                label = f"{part_type} [n={self.samples[i]}]"
+                label = f"{part_type} [n={samples[i]}]"
                 self.bin_D(df, color, part_type, label)
 
     def ipas_vt(self, mflag, study, result_rand, ylabel):
@@ -402,10 +445,10 @@ class Plots(relationships.Relationships):
                         self.vt_Heymsfield(Ar, D)
 
                     vt = self.get_modes(self.vt)
+                    # ar = self.get_modes(Ar)
                     D_modes = self.get_modes(
                         self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
                     )
-
                     self.ax.scatter(
                         D_modes * 1000,
                         vt,
@@ -438,7 +481,7 @@ class Plots(relationships.Relationships):
             c=self.obs_names["Z"],
             zorder=4,
             linewidth=self.linewidth,
-            label="Z10 [n=16,324]",
+            label="Z2010 [n=16,324]",
         )
 
         # Karrer 2020
@@ -511,26 +554,31 @@ class Plots(relationships.Relationships):
 
         if mflag == "area" and result_rand == True:
             x = 1.1
-            y = -2.5
+            y = -1.1
 
             self.ax.legend(
                 bbox_to_anchor=(x, y),
                 loc="lower center",
                 ncol=3,
-                title="    CPI                                                       OBSERVATIONS                                                                IPAS      ",
+                title="          CPI                                      OBSERVATIONS                                               IPAS    ",
             )  # fmt: on/off
 
-        self.ax.grid(which="major")
-        self.ax.grid(which="minor")
-        self.ax.grid(True)
+        plt.rcParams["legend.title_fontsize"] = 12
+        plt.rcParams["legend.fontsize"] = 10
+
+        self.ax.grid(b=True, which="major", axis="both", color="gray", linestyle="-")
+        self.ax.grid(b=True, which="minor", axis="both", color="gray", linestyle=":")
+
         self.ax.set_yscale("log")
         # self.ax.set_ylim(0.0, 1.0)
-        self.ax.set_ylim(0.002, 10.0)
-        self.ax.set_xlim([4e-2, 1e2])
+        self.ax.set_ylim(1e-2, 4e1)
+        self.ax.set_xlim([3e-2, 3e2])
+        self.ax.xaxis.get_ticklocs(minor=True)
+        self.ax.minorticks_on()
         # self.ax.set_xlim(0.0, 10)
         self.ax.set_xscale("log")
-        if mflag != "area":
-            self.ax.set_xlabel("$D_{max}$ [mm]")
+        # if mflag != "area":
+        self.ax.set_xlabel("$D_{max}$ [mm]")
         self.ax.set_ylabel(ylabel)
         self.ax.set_title(title)
 
@@ -545,8 +593,6 @@ class Plots(relationships.Relationships):
 
             Ap = self.get_modes(self.Aps[self.phi_idx, self.r_idx, :, self.nm])
             Aps.append(Ap)
-            if self.phi_idx == 1:
-                print(Ap)
 
             Ac = self.get_modes(self.Acs[self.phi_idx, self.r_idx, :, self.nm])
             Acs.append(Ac)
@@ -618,35 +664,114 @@ class Plots(relationships.Relationships):
         self.ax.set_ylabel("Area [$\mu m^2$] or Volume [$\mu m^3$]")
         self.ax.set_title(title)
 
-    def mass_plot(self, title, xlabel):
+    def mass_plot(self, title, xlabel, result_rand):
 
-        m_areas, m_vols = [], []
+        m_phi = []
+        D_phi = []
         for self.phi_idx in self.phi_idxs:
-            m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
-            m_ellipsoid_vol = self.get_modes(m_ellipsoid_vol)
-            m_vols.append(m_ellipsoid_vol)
+            m_areas = []
+            D_maxs = []
+            for nm in range(self.agg_as.shape[3]):
+                self.nm = nm
+                m_spheroid_area = self.mass_spheroid_areas()  #  kg
+                # m_spheroid_area = self.get_modes(m_spheroid_area)
+                m_areas.append(m_spheroid_area)
 
-            m_spheroid_area = self.mass_spheroid_areas()  #  kg
-            m_spheroid_area = self.get_modes(m_spheroid_area)
-            m_areas.append(m_spheroid_area)
+                D_mode = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm] * 1000
+                D_maxs.append(D_mode)
+            D_maxs = [item for sublist in D_maxs for item in sublist]
+            m_areas = [item for sublist in m_areas for item in sublist]
+            df = pd.DataFrame({"mass": m_areas, "Ds": D_maxs})
+            # print(df['Ds'].min(), df['Ds'].max())
+            # df["binned"] = pd.qcut(df['Ds'], 10)
+            # groups = df.groupby(df["binned"])
 
-        df = pd.DataFrame({"Area": m_areas, "Volume": m_vols}, index=self.ASPECT_RATIOS)
-        color = {"Area": "#3d5a80", "Volume": "#E26610"}
-        self.ax = df.plot.bar(rot=0, color=color, width=0.7, ax=self.ax, legend=False)
+            df["binned"] = pd.cut(df["Ds"], bins=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+            groups = df.groupby(df["binned"])
+            # print(groups.count())
+            mass_modes = groups.mass.agg(self.get_modes)
+            D_modes = groups.Ds.agg(self.get_modes)
+            # m_modes = groups.agg(self.get_modes)
+
+            m_phi.append(mass_modes[2])
+            D_phi.append(D_modes[2])
+
+        df = pd.DataFrame({"m_phi": m_phi}, index=self.ASPECT_RATIOS)
+        self.ax = df.plot.bar(rot=0, ax=self.ax, legend=False)
 
         self.ax.set_yscale("log")
         self.ax.grid(which="major")
         # self.ax.grid(which="minor")
         # self.ax.grid(True)
-
         self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel("Mass [kg]", color="maroon")
+        self.ax.set_ylabel("Mass [kg]" if result_rand else " ", color="k")
+        self.ax.set_title(title)
+        self.ax.set_ylim(1e-8, 1e-2)
+
+    def Re_plot(self, title, xlabel, result_rand):
+
+        Re_phi = []
+        D_phi = []
+        for self.phi_idx in self.phi_idxs:
+            Re_areas = []
+            D_maxs = []
+
+            if self.ASPECT_RATIOS[self.phi_idx] < 1.0:
+                T = -15
+            else:
+                T = -5
+
+            self.RHO_A = (
+                1.2754 * (self.P / 1000) * (273.15 / (T + 273.15))
+            )  # air density for a given pressure and temp
+            self.dynamic_viscosity(T)
+            for nm in range(self.agg_as.shape[3]):
+                self.nm = nm
+                # best number using area
+                Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
+                m_spheroid_area = self.mass_spheroid_areas()
+                Xs = self.best_number_Heymsfield(Ar, m_spheroid_area)
+                Res = self.reynolds_number_Heymsfield(Xs)
+                Re_areas.append(Res)
+
+                D_mode = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm] * 1000
+                D_maxs.append(D_mode)
+            D_maxs = [item for sublist in D_maxs for item in sublist]
+            Re_areas = [item for sublist in Re_areas for item in sublist]
+            df = pd.DataFrame({"Re": Re_areas, "Ds": D_maxs})
+            # print(df['Ds'].min(), df['Ds'].max())
+            # df["binned"] = pd.qcut(df['Ds'], 10)
+            # groups = df.groupby(df["binned"])
+
+            df["binned"] = pd.cut(df["Ds"], bins=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+            groups = df.groupby(df["binned"])
+            # print(groups.count())
+            Re_modes = groups.Re.agg(self.get_modes)
+            D_modes = groups.Ds.agg(self.get_modes)
+            # m_modes = groups.agg(self.get_modes)
+
+            Re_phi.append(Re_modes[2])
+            D_phi.append(D_modes[2])
+
+        df = pd.DataFrame({"Re_phi": Re_phi}, index=self.ASPECT_RATIOS)
+        self.ax = df.plot.bar(rot=0, ax=self.ax, legend=False)
+
+        self.ax.set_yscale("log")
+        self.ax.grid(which="major")
+        # self.ax.grid(which="minor")
+        # self.ax.grid(True)
+        self.ax.set_ylim(1e1, 1e6)
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel("Reynolds Number" if result_rand else " ", color="k")
         self.ax.set_title(title)
 
-    def Re_plot(self, title, xlabel):
+    def best_number_plot(self, title, xlabel, result_rand):
 
-        Re_areas, Re_vols = [], []
+        X_phi = []
+        D_phi = []
         for self.phi_idx in self.phi_idxs:
+            X_areas = []
+            D_maxs = []
 
             if self.ASPECT_RATIOS[self.phi_idx] < 1.0:
                 T = -15
@@ -658,91 +783,43 @@ class Plots(relationships.Relationships):
             )  # air density for a given pressure and temp
             self.dynamic_viscosity(T)
 
-            # D = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
+            for nm in range(self.agg_as.shape[3]):
+                self.nm = nm
 
-            # best number using area
-            Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
-            # Ap = self.Aps[self.phi_idx, self.r_idx, :, self.nm]
-            m_spheroid_area = self.mass_spheroid_areas()
-            # X_area = self.best_number_Mitchell(Ar, Ap, D, m_spheroid_area)  # shape of 300
+                D = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm] * 1000
+                D_maxs.append(D)
 
-            Xs = self.best_number_Heymsfield(Ar, m_spheroid_area)
-            Res = self.reynolds_number_Heymsfield(Xs)
-            Re_areas.append(self.get_modes(Res))
+                # best number using area
+                Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
+                Ap = self.Aps[self.phi_idx, self.r_idx, :, self.nm]
+                m_spheroid_area = self.mass_spheroid_areas()
+                X_area = self.best_number_Mitchell(
+                    Ar, Ap, D, m_spheroid_area
+                )  # shape of 300
 
-            # best number using volume
-            Vr = self.Vrs[self.phi_idx, self.r_idx, :, self.nm]
-            # Vp = self.Vps[self.phi_idx, self.r_idx, :, self.nm]
-            m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
+                # X_area = self.get_modes(X_area)
+                X_areas.append(X_area)
 
-            Xs = self.best_number_Heymsfield(Vr, m_ellipsoid_vol)
-            Res = self.reynolds_number_Heymsfield(Xs)
-            Re_vols.append(self.get_modes(Res))
+            D_maxs = [item for sublist in D_maxs for item in sublist]
+            X_areas = [item for sublist in X_areas for item in sublist]
+            df = pd.DataFrame({"X": X_areas, "Ds": D_maxs})
+            df["binned"] = pd.cut(df["Ds"], bins=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+            groups = df.groupby(df["binned"])
+            X_modes = groups.X.agg(self.get_modes)
+            D_modes = groups.Ds.agg(self.get_modes)
+            X_phi.append(X_modes[3])
+            D_phi.append(D_modes[3])
 
-        df = pd.DataFrame(
-            {"Re Area": Re_areas, "Re Volume": Re_vols}, index=self.ASPECT_RATIOS
-        )
-        color = {"Re Area": "#3d5a80", "Re Volume": "#E26610"}
-        self.ax = df.plot.bar(rot=0, color=color, width=0.7, ax=self.ax, legend=False)
-
-        self.ax.set_yscale("log")
-        self.ax.grid(which="major")
-        # self.ax.grid(which="minor")
-        # self.ax.grid(True)
-
-        self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel("Reynolds Number", color="maroon")
-        self.ax.set_title(title)
-
-    def best_number_plot(self, title, xlabel):
-
-        X_areas, X_vols = [], []
-        for self.phi_idx in self.phi_idxs:
-
-            if self.ASPECT_RATIOS[self.phi_idx] < 1.0:
-                T = -15
-            else:
-                T = -5
-
-            self.RHO_A = (
-                1.2754 * (self.P / 1000) * (273.15 / (T + 273.15))
-            )  # air density for a given pressure and temp
-            self.dynamic_viscosity(T)
-
-            D = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm]
-
-            # best number using area
-            Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
-            Ap = self.Aps[self.phi_idx, self.r_idx, :, self.nm]
-            m_spheroid_area = self.mass_spheroid_areas()
-            X_area = self.best_number_Mitchell(
-                Ar, Ap, D, m_spheroid_area
-            )  # shape of 300
-
-            X_area = self.get_modes(X_area)
-            X_areas.append(X_area)
-
-            # best number using volume
-            Vr = self.Vrs[self.phi_idx, self.r_idx, :, self.nm]
-            Vp = self.Vps[self.phi_idx, self.r_idx, :, self.nm]
-            m_ellipsoid_vol = self.mass_ellipsoid_volumes()  #  kg
-            X_vol = self.best_number_Mitchell(Vr, Vp, D, m_ellipsoid_vol)
-            X_vol = self.get_modes(X_vol)
-            X_vols.append(X_vol)
-
-        df = pd.DataFrame(
-            {"X Area": X_areas, "X Volume": X_vols}, index=self.ASPECT_RATIOS
-        )
-        color = {"X Area": "#3d5a80", "X Volume": "#E26610"}
-        self.ax = df.plot.bar(rot=0, color=color, width=0.7, ax=self.ax, legend=False)
+        df = pd.DataFrame({"X_phi": X_phi}, index=self.ASPECT_RATIOS)
+        self.ax = df.plot.bar(rot=0, ax=self.ax, legend=False)
 
         self.ax.set_yscale("log")
         self.ax.grid(which="major")
         # self.ax.grid(which="minor")
         # self.ax.grid(True)
-
-        self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel("Best Number", color="maroon")
+        self.ax.set_ylim(1e10, 1e13)
+        self.ax.set_xlabel("Monomer Aspect Ratio")
+        self.ax.set_ylabel("Best Number" if result_rand else " ", color="k")
         self.ax.set_title(title)
 
     def density_plot(self, title, xlabel):
@@ -758,11 +835,9 @@ class Plots(relationships.Relationships):
             rho_i = self.get_modes(self.RHO_B * Ar)
             rhoi_area.append(rho_i)
 
-        df = pd.DataFrame(
-            {"Area": rhoi_area, "Volume": rhoi_vol}, index=self.ASPECT_RATIOS
-        )
+        df = pd.DataFrame({"Area": rhoi_area}, index=self.ASPECT_RATIOS)
         color = {"Area": "#3d5a80", "Volume": "#E26610"}
-        self.ax = df.plot.bar(rot=0, color=color, width=0.7, ax=self.ax, legend=False)
+        self.ax = df.plot.bar(rot=0, color=color, ax=self.ax, legend=False)
 
         # self.ax.set_yscale('log')
         self.ax.grid(which="major")
@@ -770,51 +845,59 @@ class Plots(relationships.Relationships):
         # self.ax.grid(True)
 
         self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel("Density [kg/$m^3$]", color="maroon")
+        self.ax.set_ylabel("Density [kg/$m^3$]", color="k")
         self.ax.set_title(title)
 
-    def area_ratio_plot(self, title, xlabel):
+    def area_ratio_plot(self, title, xlabel, result_rand):
 
-        Ars, Vrs = [], []
+        Ar_phi = []
+        D_phi = []
         for self.phi_idx in self.phi_idxs:
+            Ar_areas = []
+            D_maxs = []
+            for nm in range(self.agg_as.shape[3]):
+                self.nm = nm
 
-            Vr = self.Vrs[self.phi_idx, self.r_idx, :, self.nm]
-            Vr = self.get_modes(Vr)
-            Vrs.append(Vr)
+                Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
+                Ar_areas.append(Ar)
 
-            Ar = self.Ars[self.phi_idx, self.r_idx, :, self.nm]
-            Ar = self.get_modes(Ar)
-            Ars.append(Ar)
+                D_mode = self.Dmaxs[self.phi_idx, self.r_idx, :, self.nm] * 1000
+                D_maxs.append(D_mode)
 
-        df = pd.DataFrame({"Area": Ars, "Volume": Vrs}, index=self.ASPECT_RATIOS)
-        color = {"Area": "#3d5a80", "Volume": "#E26610"}
-        self.ax = df.plot.bar(rot=0, color=color, width=0.7, ax=self.ax, legend=False)
+            D_maxs = [item for sublist in D_maxs for item in sublist]
+            Ar_areas = [item for sublist in Ar_areas for item in sublist]
+            df = pd.DataFrame({"Ar": Ar_areas, "Ds": D_maxs})
 
-        df = self.df_CPI[self.df_CPI["classification"] == "agg"]
-        df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
-        Ar_CPI = df["area_ratio"]
-        Ar_CPI = self.get_modes(Ar_CPI)
+            df["binned"] = pd.cut(df["Ds"], bins=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+            groups = df.groupby(df["binned"])
+            Ar_modes = groups.Ar.agg(self.get_modes)
+            D_modes = groups.Ds.agg(self.get_modes)
 
-        self.ax.hlines(
-            Ar_CPI,
-            xmin=-1.0,
-            xmax=50.0,
-            linewidth=self.linewidth,
-            color="#235347",
-            label="CPI",
-        )
+            Ar_phi.append(Ar_modes[2])
+            D_phi.append(D_modes[2])
+
+        df = pd.DataFrame({"Ar_phi": Ar_phi}, index=self.ASPECT_RATIOS)
+        self.ax = df.plot.bar(rot=0, ax=self.ax, legend=False)
+
+        #         df = self.df_CPI[self.df_CPI["classification"] == "agg"]
+        #         df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
+        #         Ar_CPI = df["area_ratio"]
+        #         Ar_CPI = self.get_modes(Ar_CPI)
+
+        #         self.ax.hlines(
+        #             Ar_CPI,
+        #             xmin=-1.0,
+        #             xmax=50.0,
+        #             linewidth=self.linewidth,
+        #             color="#235347",
+        #             label="CPI",
+        #         )
 
         # self.ax.set_yscale('log')
         self.ax.grid(which="major")
         # self.ax.grid(which="minor")
         # self.ax.grid(True)
-
+        self.ax.set_ylim(0.0, 0.5)
         self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel("Area or Volume Ratio", color="maroon")
+        self.ax.set_ylabel("Area Ratio" if result_rand else " ", color="k")
         self.ax.set_title(title)
-
-    def aspect_ratios_cpi(self):
-
-        for i, part_type in enumerate(self.particle_types):
-            df = self.df_CPI[self.df_CPI["classification"] == part_type]
-            self.ax.hist(df["phi"], color=self.colors_cpi[i])

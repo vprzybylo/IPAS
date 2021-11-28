@@ -18,7 +18,18 @@ import ipas.collection_from_db.cluster as clus
 import ipas.collection_from_db.plot as plot
 
 
-# subclass
+def auto_str(cls):
+    def __str__(self):
+        return "%s(%s)" % (
+            type(self).__name__,
+            ", ".join("%s=%s" % item for item in vars(self).items()),
+        )
+
+    cls.__str__ = __str__
+    return cls
+
+
+@auto_str
 class ClusterCalculations(plot.PlotCluster, clus.Cluster):
     def __init__(self, cluster):
         # call parent constructor

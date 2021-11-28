@@ -8,6 +8,18 @@ import plotly.graph_objs as go
 from ipas.collection_from_db.calculations import ClusterCalculations
 
 
+def auto_str(cls):
+    def __str__(self):
+        return "%s(%s)" % (
+            type(self).__name__,
+            ", ".join("%s=%s" % item for item in vars(self).items()),
+        )
+
+    cls.__str__ = __str__
+    return cls
+
+
+@auto_str
 class PlotAgg:
     def __init__(self, agg, crystal_num):
         self.agg = agg

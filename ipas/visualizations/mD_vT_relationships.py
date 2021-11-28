@@ -6,6 +6,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def auto_str(cls):
+    def __str__(self):
+        return "%s(%s)" % (
+            type(self).__name__,
+            ", ".join("%s=%s" % item for item in vars(self).items()),
+        )
+
+    cls.__str__ = __str__
+    return cls
+
+
+@auto_str
 class Relationships:
     """
     mass-dimensional and terminal velocity plotting code

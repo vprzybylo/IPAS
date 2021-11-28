@@ -21,7 +21,18 @@ import ipas.collection_no_db.cluster as clus
 import ipas.collection_no_db.plot as plot
 
 
-# subclass
+def auto_str(cls):
+    def __str__(self):
+        return "%s(%s)" % (
+            type(self).__name__,
+            ", ".join("%s=%s" % item for item in vars(self).items()),
+        )
+
+    cls.__str__ = __str__
+    return cls
+
+
+@auto_str
 class ClusterCalculations(plot.PlotCluster, clus.Cluster):
     def __init__(self, cluster):
         # call parent constructor
@@ -95,6 +106,7 @@ class ClusterCalculations(plot.PlotCluster, clus.Cluster):
         # D is a diagonal matrix
         rx, ry, rz = 1.0 / np.sqrt(D)
         self.a, self.b, self.c = sorted([rx, ry, rz], reverse=True)
+        # radii
         return rx, ry, rz
 
     def ellipsoid_axes_coords(self, rx, ry, rz):
