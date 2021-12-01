@@ -93,12 +93,13 @@ class Plot:
         y = "$\phi_{ca}$" if ba else "$\phi_{ba}$"
         coef = self.coefs_ba if ba else self.coefs_ca
         phi_eq = f"({self.phios[phi]})="
-        nm = "$n_m$"
         eq = "".join(
             [
-                "{:2.{prec}E}{}{}".format(j, nm, (len(coef) - i - 1), prec=prec)
+                "{:2.{prec}E}$n_m^{x}$".format(j, x=(len(coef) - i - 1), prec=prec)
                 if j < 0
-                else "+{:2.{prec}E}{}{}".format(j, nm, (len(coef) - i - 1), prec=prec)
+                else "+{:2.{prec}E}$n_m^{x}$".format(
+                    j, x=(len(coef) - i - 1), prec=prec
+                )
                 for i, j in enumerate(coef)
             ]
         )
@@ -112,7 +113,7 @@ class Plot:
             linestyle=linestyle,
             linewidth=linewidth,
             color=self.colors[phi],
-            # label=self.label(phi, ba=True),
+            label=self.label(phi, ba=True),
         )
 
         self.axs[1].plot(
@@ -159,7 +160,7 @@ class Plot:
     def plot(self, phi, linestyle):
 
         self.plot_fit(linestyle, phi)
-        self.scatter(phi)
+        # self.scatter(phi)
 
         x = 0.5
         y = -1.2
@@ -175,11 +176,11 @@ class Plot:
         y = -1.3
         plt.rcParams["legend.title_fontsize"] = 18
         plt.rcParams["legend.fontsize"] = 16
-        self.axs[1].legend(
-            bbox_to_anchor=(x, y),
-            loc="lower center",
-            ncol=2,
-            title="RANDOM                                                                                                                                    QUASI-HORIZONTAL",
-        )  # fmt: on/off
+        #         self.axs[1].legend(
+        #             bbox_to_anchor=(x, y),
+        #             loc="lower center",
+        #             ncol=2,
+        # title="RANDOM                                                                                                                                    QUASI-HORIZONTAL",
+        #        )  # fmt: on/off
 
         self.axis_layout()
