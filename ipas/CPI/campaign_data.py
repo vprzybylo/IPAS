@@ -191,3 +191,47 @@ class Plot:
         )
         plt.rcParams["legend.title_fontsize"] = "xx-large"
         plt.savefig(f"../plots/campaign_{var}.png", bbox_inches="tight")
+
+    def boxplot(self, df, var, ax):
+        sns.boxplot(
+            x="binned",
+            y=var,
+            data=df,
+            fliersize=0,
+            showmeans=True,
+            meanprops={
+                "marker": "o",
+                "markerfacecolor": "white",
+                "markeredgecolor": "black",
+                "markersize": "10",
+            },
+            ax=ax,
+        )
+
+    def complexity_area_ratio(self, part_type="agg"):
+        """
+        complexity (assuming increasing number of monomers with increase in C)
+        vs. area ratio and aspect ratio in subplot
+        """
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(5, 10), sharex=True)
+
+        # truncate CPI dataframe for a specific particle type
+        df = self.df_CPI[self.df_CPI["Classification"] == part_type].copy()
+
+        # bin complexity into 10 linearly spaced bins
+        df["binned"] = pd.cut(df["Complexity"], bins=np.linspace(0.0, 1.0, 10))
+        # df["binned"] = pd.qcut(df['complexity'], 15)
+
+        # plot aspect ratio for each complexity bin
+        self.boxplot(df, var="Aspect Ratio", ax=ax1)
+        plt.xticks(rotation=90)
+        ax1.set_ylabel("Aspect Ratio")
+        ax1.set_xlabel("")
+
+        # plot area ratio for each complexity bin
+        self.boxplot(df, var="Area Ratio", ax=ax2)
+        plt.xticks(rotation=90)
+        plt.ylabel("Area Ratio")
+        plt.xlabel("Complexity")
+        plt.savefig("../plots/complexity_phi_ar.png", bbox_inches="tight")
+        # each complexity bin count varies between 138 and 80758
