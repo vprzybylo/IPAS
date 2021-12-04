@@ -141,7 +141,7 @@ class Plots(relationships.Relationships):
         samples = []
         linestyles = ["-", "--", "-", "-.", ":"]
         for i, part_type in enumerate(self.particle_types):
-            df = self.df_CPI[self.df_CPI["classification"] == part_type]
+            df = self.df_CPI[self.df_CPI["Classification"] == part_type]
             samples.append(f"{len(df):,}" if part_type != " " else " ")
             if part_type == " ":
                 x = 0
@@ -149,7 +149,7 @@ class Plots(relationships.Relationships):
                 label = " "
             else:
 
-                df = self.df_CPI[self.df_CPI["classification"] == part_type]
+                df = self.df_CPI[self.df_CPI["Classification"] == part_type]
                 part_type = (
                     "compact irregular" if part_type == "compact_irreg" else part_type
                 )
@@ -364,7 +364,7 @@ class Plots(relationships.Relationships):
                 1.2754 * (self.P / 1000) * (273.15 / (T[i] + 273.15))
             )  # air density for a given pressure and temp
             self.dynamic_viscosity(T[i])
-            df = self.df_CPI[self.df_CPI["classification"] == part_type]
+            df = self.df_CPI[self.df_CPI["Classification"] == part_type]
             df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
             part_type = (
                 "compact irregular" if part_type == "compact_irreg" else part_type
@@ -380,8 +380,8 @@ class Plots(relationships.Relationships):
                 label = " "
                 self.bin_D(df, color, part_type, label)
             else:
-                Ar = df["area_ratio"]
-                Ap = df["cnt_area"]
+                Ar = df["Area Ratio"]
+                Ap = df["Contour Area"]
                 # print('CPI', Ap)
                 m = self.mass_CPI(df)
                 D = df["Dmax"]
@@ -611,7 +611,7 @@ class Plots(relationships.Relationships):
 
         df = self.df_CPI[self.df_CPI["classification"] == "agg"]
         df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
-        Ar_CPI = df["area_ratio"]
+        Ar_CPI = df["Area Ratio"]
         Ar_CPI = self.get_modes(Ar_CPI)
 
         Ap_CPI = df["cnt_area"]
@@ -881,7 +881,7 @@ class Plots(relationships.Relationships):
 
         #         df = self.df_CPI[self.df_CPI["classification"] == "agg"]
         #         df = df[df.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)]
-        #         Ar_CPI = df["area_ratio"]
+        #         Ar_CPI = df["Area Ratio"]
         #         Ar_CPI = self.get_modes(Ar_CPI)
 
         #         self.ax.hlines(

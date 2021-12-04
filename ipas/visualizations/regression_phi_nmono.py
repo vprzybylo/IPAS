@@ -54,8 +54,8 @@ class Plot:
     plot number of monomers vs aspect ratios
     """
 
-    def __init__(self, axs, modes_ba, modes_ca, phios):
-        self.axs = axs
+    def __init__(self, ax, modes_ba, modes_ca, phios):
+        self.ax = ax
         self.modes_ba = modes_ba
         self.modes_ca = modes_ca
         self.phios = phios
@@ -103,59 +103,60 @@ class Plot:
                 for i, j in enumerate(coef)
             ]
         )
+        print(y + phi_eq + eq)
         return y + phi_eq + eq
 
     def plot_fit(self, linestyle, phi, linewidth=3):
 
-        self.axs[0].plot(
-            self.Ns,
-            self.fit_ba(self.Ns),
-            linestyle=linestyle,
-            linewidth=linewidth,
-            color=self.colors[phi],
-            label=self.label(phi, ba=True),
-        )
+        #         self.ax.plot(
+        #             self.Ns,
+        #             self.fit_ba(self.Ns),
+        #             linestyle=linestyle,
+        #             linewidth=linewidth,
+        #             color=self.colors[phi],
+        #             label=self.label(phi, ba=True),
+        #         )
 
-        self.axs[1].plot(
+        self.ax.plot(
             self.Ns,
             self.fit_ca(self.Ns),
             linestyle=linestyle,
             linewidth=linewidth,
             color=self.colors[phi],
-            # label=self.label(phi, ba=False),
+            label=self.label(phi, ba=False),
         )
 
     def scatter(self, phi):
-        self.axs[0].scatter(
+        self.ax.scatter(
             self.Ns,
             self.modes_ba[phi, :: self.interval],
             color=self.colors[phi],
             alpha=0.3,
         )
 
-        self.axs[1].scatter(
-            self.Ns,
-            self.modes_ca[phi, :: self.interval],
-            color=self.colors[phi],
-            alpha=0.3,
-        )
+    #         self.axs[1].scatter(
+    #             self.Ns,
+    #             self.modes_ca[phi, :: self.interval],
+    #             color=self.colors[phi],
+    #             alpha=0.3,
+    #         )
 
     def axis_layout(self):
-        self.axs[0].set_xlim(0.0, 150)
-        self.axs[0].set_ylim(0.0, 1.0)
-        self.axs[1].set_ylim(0.0, 1.0)
-        self.axs[0].set_ylabel("$\phi_{ca}$", fontsize=30)
-        self.axs[1].set_ylabel("$\phi_{ba}$", fontsize=30)
-        self.axs[0].set_xlabel("Number of monomers ($\it{n}_m$)")
-        self.axs[1].set_xlabel("Number of monomers ($\it{n}_m$)")
-        self.axs[0].yaxis.grid(True, which="major")
-        self.axs[1].yaxis.grid(True, which="major")
-        self.axs[0].yaxis.set_ticks(np.arange(0.0, 1.0, 0.10))
-        self.axs[1].yaxis.set_ticks(np.arange(0.0, 1.0, 0.10))
+        self.ax.set_xlim(0.0, 150)
+        self.ax.set_ylim(0.0, 1.0)
+        self.ax.set_ylim(0.0, 1.0)
+        # self.ax.set_ylabel("$\phi_{ca}$", fontsize=30)
+        self.ax.set_ylabel("$\phi_{ca}$", fontsize=30)
+        self.ax.set_xlabel("Number of monomers ($\it{n}_m$)")
+        self.ax.set_xlabel("Number of monomers ($\it{n}_m$)")
+        self.ax.yaxis.grid(True, which="major")
+        self.ax.yaxis.grid(True, which="major")
+        self.ax.yaxis.set_ticks(np.arange(0.0, 1.0, 0.10))
+        self.ax.yaxis.set_ticks(np.arange(0.0, 1.0, 0.10))
         xlabels = np.arange(10, 150, 10)
         xlabels = np.insert(xlabels, 0, 2)
         xlabels = np.insert(xlabels, -1, 150)
-        self.axs[1].xaxis.set_ticks(xlabels)
+        self.ax.xaxis.set_ticks(xlabels)
 
     def plot(self, phi, linestyle):
 
@@ -163,13 +164,13 @@ class Plot:
         # self.scatter(phi)
 
         x = 0.5
-        y = -1.2
+        y = -1.9
 
-        self.axs[0].legend(
+        self.ax.legend(
             bbox_to_anchor=(x, y),
             loc="lower center",
-            ncol=2,
-            title="RANDOM                                                                                                                                    QUASI-HORIZONTAL",
+            ncol=1,
+            # title="RANDOM                                                                                                                                    QUASI-HORIZONTAL",
         )  # fmt: on/off
 
         x = 0.5
