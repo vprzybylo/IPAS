@@ -61,15 +61,23 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=False):
         cluster.add_points = cp.deepcopy(cluster.points)
         # ------------------
 
-        # a and c of monomers in cluster (all identical)
-        a_clus = np.power((np.power(cluster.mono_r, 3) / cluster.mono_phi), (1.0 / 3.0))
-        c_clus = cluster.mono_phi * a_clus
-        # volume of all monomers in cluster
-        V_clus = 3 * (np.sqrt(3) / 2) * np.power(a_clus, 2) * c_clus * cluster.ncrystals
+        # a and c radii of monomers in cluster (all identical)
+        # a_clus = np.power((np.power(cluster.mono_r, 3) / cluster.mono_phi), (1.0 / 3.0))
+        # c_clus = cluster.mono_phi * a_clus
+
+        # volume of all polygons in aggregate (Vp)
+        # V_clus = 3 * np.sqrt(3) / 2 * a_clus**2 * c_clus*2 * cluster.ncrystals
+        print("a, c", crystal2.a, crystal2.c)
+
+        V_clus = (
+            (3 * np.sqrt(3) / 2) * crystal2.a ** 2 * crystal2.c * 2 * cluster.ncrystals
+        )
         Vps[l] = V_clus
+        print("Vp", V_clus)
 
         # get fit-ellipsoid radii (a-major, c-minor) after aggregation
         A = cluster.fit_ellipsoid()
+
         cluster.ellipsoid_axes_lengths(A)
         agg_as[l] = cluster.a
         agg_bs[l] = cluster.b
@@ -77,7 +85,11 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=False):
 
         # volume of ellipsoid around cluster after aggregation
         Ve_clus = 4.0 / 3.0 * np.pi * cluster.a * cluster.b * cluster.c
+        print("a, b, c", cluster.a, cluster.b, cluster.c)
+        print("Ve", Ve_clus)
+
         Ves[l] = Ve_clus
+        print("Vr", Vps[l] / Ves[l])
 
         # ----------------------------
         # orient cluster after adding monomer
@@ -91,10 +103,11 @@ def collect_clusters_iceagg(phio, r, ncrystals, rand_orient, plot=False):
         # ----------------------------
         _, _ = cluster.complexity()
         Aps[l] = cluster.Ap
-        print("Ap", Aps[l])
         Acs[l] = cluster.Ac  # area of encompassing circle
+        # print("Vr", Vps[l], Ves[l], Vps[l]/Ves[l], Aps[l]/Acs[l])
         cluster.farthest_points()
         Dmaxs[l] = cluster.max_dimension()  # 3D
+        print("Dmax", Dmaxs[l])
 
         if plot:
             cluster.plot_ellipsoid_aggs(

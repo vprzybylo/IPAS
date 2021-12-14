@@ -6,6 +6,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def auto_str(cls):
+    def __str__(self):
+        return "%s(%s)" % (
+            type(self).__name__,
+            ", ".join("%s=%s" % item for item in vars(self).items()),
+        )
+
+    cls.__str__ = __str__
+    return cls
+
+
+@auto_str
 class Relationships:
     """
     mass-dimensional and terminal velocity plotting code
@@ -61,7 +73,7 @@ class Relationships:
         -calculate the mass of a CPI particle from the area ratio and axis lengths
         -assume oblate with a as the longer axis always
         """
-        rho_i = self.RHO_B * df["area_ratio"]
+        rho_i = self.RHO_B * df["Area Ratio"]
         m_spheroid = 4 / 3 * np.pi * df["a"] ** 2 * df["c"] * rho_i  # kg
         return m_spheroid
 

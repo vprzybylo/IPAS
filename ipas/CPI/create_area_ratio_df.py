@@ -16,20 +16,31 @@ from shapely.geometry import Point
 
 import ipas.cluster_calculations as cc
 
-sys.path.append("../collection_from_db")
+sys.path.append("/network/rit/lab/sulialab/share/IPAS/ipas/collection_from_db")
 
 
 pandarallel.initialize(progress_bar=False)
 
 
-# read in database of aggs (all the same monomers)
-files = [f for f in glob.glob("../instance_files/createdb_iceagg_rand*")]
-dfs = []
-for file in files:
-    print(file)
-    dfs.append(pd.read_pickle(file, None))
-dfs = [pd.DataFrame(i) for i in dfs]
-df = pd.concat(dfs, axis=0, ignore_index=True)
+# Read Database
+orientation = "rand"  # chose which orientation (rand or flat)
+if orientation == "rand":
+    rand_orient = (
+        True
+    )  # randomly orient the seed crystal and new crystal: uses first random orientation
+    files = glob.glob("../instance_files/createdb_iceagg_rand*")
+else:
+    rand_orient = (
+        False
+    )  # randomly orient the seed crystal and new crystal: uses first random orientation
+    files = glob.glob("../instance_files/createdb_iceagg_flat*")
+
+db = database.Database(files)
+db.read_database()
+db.append_shape()
+db.truncate_agg_r(5000)
+db.append_agg_phi()
+df = db.df  # get the dataframe (db is an instance of database.py module)
 
 
 def shape(a, b, c):

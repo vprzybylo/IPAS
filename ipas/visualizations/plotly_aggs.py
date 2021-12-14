@@ -5,9 +5,21 @@ plots aggregates from database using plotly
 import numpy as np
 import plotly.graph_objs as go
 
-import ipas.collection_from_db.calculations as clus
+from ipas.collection_from_db.calculations import ClusterCalculations
 
 
+def auto_str(cls):
+    def __str__(self):
+        return "%s(%s)" % (
+            type(self).__name__,
+            ", ".join("%s=%s" % item for item in vars(self).items()),
+        )
+
+    cls.__str__ = __str__
+    return cls
+
+
+@auto_str
 class PlotAgg:
     def __init__(self, agg, crystal_num):
         self.agg = agg
@@ -15,7 +27,24 @@ class PlotAgg:
         self.x = self.points["x"]
         self.y = self.points["y"]
         self.z = self.points["z"]
+        self.mono_a = (self.agg.mono_r ** 3 / self.agg.mono_phi) ** (1.0 / 3.0)
+        self.mono_c = self.agg.mono_phi * self.mono_a
         self.crystal_num = crystal_num  # the crystal to plot
+
+    def agg_volume_ellipsoid(self):
+        return 4.0 / 3.0 * np.pi * self.agg.a * self.agg.b * self.agg.c
+
+    def agg_volume_polygons(self):
+        return (
+            (3 * np.sqrt(3) / 2)
+            * self.mono_a ** 2
+            * self.mono_c
+            * 2
+            * self.agg.ncrystals
+        )
+
+    def volumetric_ratio(self):
+        return self.agg_volume_polygons() / self.agg_volume_ellipsoid()
 
     def min_max_all_points(self):
 
@@ -111,7 +140,7 @@ class PlotAgg:
 
     def ellipsoid_surface(self):
 
-        clus1 = clus.ClusterCalculations(self.agg)
+        clus1 = ClusterCalculations(self.agg)
         A = clus1.fit_ellipsoid()
         rx, ry, rz = clus1.ellipsoid_axes_lengths(A)
         x, y, z = clus1.ellipsoid_axes_coords(rx, ry, rz)

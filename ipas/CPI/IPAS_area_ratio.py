@@ -1,21 +1,21 @@
 """
-Calculate area ratio of IPAS aggregates
+Calculate area ratio of IPAS aggregates from database
 """
-
-import glob
 import sys
 
+sys.path.append("/network/rit/lab/sulialab/share/IPAS/ipas/collection_from_db")
+sys.path.append("..")
+sys.path.append("../collection_from_db")
+import glob
+
+import database  # noqa: E402
 import pandas as pd
-import scripts.database as database
 import shapely.geometry as geom
 import shapely.ops as shops
 from dask import dataframe as dd
 from shapely.geometry import Point
 
-import ipas.cluster_calculations as cc
-
-sys.path.append("..")
-sys.path.append("../collection_from_db")
+import ipas.cluster_calculations as cc  # noqa: E402
 
 
 def filled_circular_area_ratio(row, dims=["x", "z"]):

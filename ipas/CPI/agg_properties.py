@@ -1,8 +1,10 @@
 """
-calculates geometric parameters for IPAS aggregates
+calculates geometric parameters for IPAS aggregates to be used in CPI verification figure
 """
 
 import sys
+
+sys.path.append("../collection_from_db")
 
 import numpy as np
 import shapely.geometry as geom
@@ -10,8 +12,6 @@ import shapely.ops as shops
 from shapely.geometry import Point
 
 import ipas.cluster_calculations as cc
-
-sys.path.append("../collection_from_db")
 
 
 class Agg:
