@@ -96,7 +96,7 @@ class Database:
 
     def get_df_r(self, df_phi, r_bins, r):
         self.df_r = df_phi[(df_phi.agg_r > r_bins[r]) & (df_phi.agg_r < r_bins[r + 1])]
-        print("len of bin", len(self.df_r))
+        # print("len of bin", len(self.df_r))
 
     def get_avg_ncrystals(self):
         return self.df_r["ncrystals"].mean()
