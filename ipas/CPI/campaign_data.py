@@ -33,11 +33,13 @@ class CPI:
 
     def __init__(self):
         self.campaigns = []
+        self.filenames = []
         self.classifications = []
         self.ars = []  # area ratio
         self.cnt_area = []
         self.a = []  # larger radius
         self.c = []  # smaller radius
+        self.aspect_ratios = []
         self.Dmax = []  # max diameter
         self.aspect_ratios = []
         self.complexity = []
@@ -87,6 +89,9 @@ class CPI:
         for height, width in zip(df["particle height"] / 2, df["particle width"] / 2):
             a.append(height * 1e-6 if height > width else width * 1e-6)
             c.append(height * 1e-6 if height < width else width * 1e-6)  # [m]
+            #  height and width *2 in Dmax due to /2 in for loop above for radii
+            #  cv2.minAreaRect() returns full dimensions of rectangle fit around particle
+            #  for a and c we use half lengths
             Dmax.append(height * 2 * 1e-6 if height > width else width * 2 * 1e-6)
         return a, c, Dmax
 
@@ -94,32 +99,33 @@ class CPI:
 
         for self.campaign in self.all_campaigns:
             df = self.read_data(self.campaign)
+
+            self.filenames.append(df["filename"])
             self.cnt_area.append(df["cnt_area"])  # *5.29E-12) # [m2]
             self.ars.append(df["filled_circular_area_ratio"])
 
             self.rename_campaigns()
-            self.campaigns.append(
-                [self.campaign] * len(df["filled_circular_area_ratio"])
-            )
+            self.campaigns.append([self.campaign] * len(df))
+
             self.classifications.append(df["classification"])
             self.complexity.append(df["complexity"])
-
             a, c, Dmax = self.lengths(df)
             self.a.append(a)
             self.c.append(c)
+            self.aspect_ratios.append(np.array(c) / np.array(a))
             self.Dmax.append(Dmax)
 
     def make_df(self):
 
         d = {
             "Campaign": self.concat(self.campaigns),
+            "Filename": self.concat(self.filenames),
             "Classification": self.concat(self.classifications),
             "Area Ratio": self.concat(self.ars),
             "Contour Area": self.concat(self.cnt_area),
             "a": self.concat(self.a),
             "c": self.concat(self.c),
-            "Aspect Ratio": np.array(self.concat(self.c))
-            / np.array(self.concat(self.a)),
+            "Aspect Ratio": self.concat(self.aspect_ratios),
             "Dmax": self.concat(self.Dmax),
             "Complexity": self.concat(self.complexity),
         }

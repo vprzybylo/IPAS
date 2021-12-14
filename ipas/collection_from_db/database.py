@@ -55,12 +55,18 @@ class Database:
         else:
             return "oblate"
 
+    def shape_ratio(self, a, b, c):
+        if (b / a) / (c / b) < 1:
+            return "prolate"
+        else:
+            return "oblate"
+
     def append_shape(self):
         """
         appends a shape column to the dataframe as oblate or prolate spheroid
         based on a, b, and c of fit ellipsoid
         """
-        vfunc = np.vectorize(self.shape)
+        vfunc = np.vectorize(self.shape_ratio)
         self.df["shape"] = vfunc(self.df["a"], self.df["b"], self.df["c"])
         self.df = self.df.reset_index()
         self.df.loc[self.df["shape"] == "oblate", "agg_r"] = np.power(
@@ -90,6 +96,7 @@ class Database:
 
     def get_df_r(self, df_phi, r_bins, r):
         self.df_r = df_phi[(df_phi.agg_r > r_bins[r]) & (df_phi.agg_r < r_bins[r + 1])]
+        print("len of bin", len(self.df_r))
 
     def get_avg_ncrystals(self):
         return self.df_r["ncrystals"].mean()

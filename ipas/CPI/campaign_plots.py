@@ -32,6 +32,7 @@ def auto_str(cls):
 class Plot:
     def __init__(self, df_CPI):
         self.df_CPI = df_CPI
+        self.particle_types = list(self.df_CPI["Classification"].unique())
 
     def plot_part_type(self, df_type, campaign, i, var, part_type, axs, c, colors_cpi):
         sns.kdeplot(
@@ -72,6 +73,13 @@ class Plot:
             colors_cpi.append(matplotlib.colors.rgb2hex(rgba))
         return colors_cpi
 
+    def plot_Dmax_phi(self, part_type="agg"):
+
+        for part_type in self.particle_types:
+            df = self.df_CPI[self.df_CPI["Classification"] == part_type]
+            plt.figure(figsize=(5, 5))
+            sns.kdeplot(data=df, x="Aspect Ratio", y="Dmax")
+
     def part_type_subplots(self, var="Aspect Ratio"):
         """
         plot cpi data for a specified variable with each subplot representing a particle type
@@ -91,7 +99,6 @@ class Plot:
         # colors_cpi = ['k','#001219', '#005F73', '#0A9396','#94D2BD','#E9D8A6','#D4EDE5','gray','#EE9B00','#FFF1D6','#CA6702','#BB3E03','#AE2012','#962224','#430F10']
         lens = np.zeros(len(self.df_CPI["Campaign"].unique()))
         for c, campaign in enumerate(self.df_CPI["Campaign"].unique()):
-            self.df_CPI["Aspect Ratio"] = self.df_CPI["c"] / self.df_CPI["a"]
             df = self.df_CPI[self.df_CPI["Campaign"] == campaign]
             for i, part_type in enumerate(particle_types):
 
