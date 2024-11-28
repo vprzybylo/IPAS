@@ -57,7 +57,7 @@ jupyter-client==6.1.12
 jupyter-core==4.7.1
 jupyter-lsp==1.2.0
 jupyter-server==1.2.0
-jupyterlab==3.0.1
+jupyterlab==3.0.17
 jupyterlab-lsp==3.4.1
 jupyterlab-server==2.2.1
 jupyterlab-widgets==1.0.0
